@@ -16,19 +16,39 @@ async function homePage() {
   filtered.forEach(list => {
     list.entries.forEach(entry => entries.push(entry));
   });
-  // filtered[0].entries.forEach(entry => entries.push(entry));
-  // filtered[1].entries.forEach(entry => entries.push(entry));
 
   entries.sort((a, b) => a.updatedAt < b.updatedAt);
+  console.log(entries);
 
   entries.forEach(entry => {
+    const divElement = document.createElement('div');
+    divElement.classList.add('list-item-container');
+    const imgElement = document.createElement('img');
+    imgElement.src = entry.media.coverImage.medium;
+    imgElement.alt = entry.media.title.userPreferred;
+    imgElement.classList.add('list-item-img');
+    divElement.appendChild(imgElement);
+    listContainer.appendChild(divElement);
+    const popoverElement = document.createElement('div');
+    popoverElement.classList.add('hide');
+    popoverElement.classList.add('list-item-popover');
     const titleElement = document.createElement('p');
     titleElement.textContent = entry.media.title.userPreferred;
-    listContainer.appendChild(titleElement);
+    popoverElement.appendChild(titleElement);
+    const progressElement = document.createElement('p');
+    progressElement.textContent = `Progress: ${entry.progress} ${
+      entry.media.chapters ? '/' + entry.media.chapters : ''
+    }`;
+    popoverElement.appendChild(progressElement);
+    divElement.appendChild(popoverElement);
+    divElement.addEventListener('mouseenter', () =>
+      popoverElement.classList.remove('hide')
+    );
+    divElement.addEventListener('mouseleave', () => popoverElement.classList.add('hide'));
   });
 }
 
-// might not work like this lmao
+// might not work like this
 function unauthorized() {
   const buttonElement = document.getElementById('submit-token');
   const textareaElement = document.getElementById('token');

@@ -1,3 +1,25 @@
 .hide {
   display: none;
 }
+
+.container-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 15px;
+  padding: 10px;
+}
+
+.list-item-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+}
+
+.list-item-img {
+  height: 115px;
+  width: auto;
+}
+
+.list-item-popover {
+  grid-column: 2/3;
+  background: #e0dfdf;
+}
