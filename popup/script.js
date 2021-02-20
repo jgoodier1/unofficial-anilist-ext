@@ -5,47 +5,90 @@ async function homePage() {
   if (token) {
     unauthorizedContainer.classList.add('hide');
     listContainer.classList.remove('hide');
-  } else unauthorized();
 
-  const lists = await getList('MANGA');
-  const filtered = lists.filter(list => {
-    return list.entries[0].status === 'CURRENT' || list.entries[0].status === 'REPEATING';
-  });
+    // change this for production
+    // (only like this now so that I can work without DDOSing their servers)
+    let entries = (await browser.storage.local.get('entries')).entries;
+    if (entries === undefined) {
+      console.log('entries is undefined');
+      const lists = await getList('MANGA');
+      const filtered = lists.filter(list => {
+        return (
+          list.entries[0].status === 'CURRENT' || list.entries[0].status === 'REPEATING'
+        );
+      });
 
-  const entries = [];
-  filtered.forEach(list => {
-    list.entries.forEach(entry => entries.push(entry));
-  });
+      entries = [];
+      filtered.forEach(list => {
+        list.entries.forEach(entry => entries.push(entry));
+      });
 
-  entries.sort((a, b) => a.updatedAt < b.updatedAt);
-  console.log(entries);
+      entries.sort((a, b) => a.updatedAt < b.updatedAt);
+      browser.storage.local.set({ entries });
+    }
+    // console.log(entries);
 
-  entries.forEach(entry => {
-    const divElement = document.createElement('div');
-    divElement.classList.add('list-item-container');
-    const imgElement = document.createElement('img');
-    imgElement.src = entry.media.coverImage.medium;
-    imgElement.alt = entry.media.title.userPreferred;
-    imgElement.classList.add('list-item-img');
-    divElement.appendChild(imgElement);
-    listContainer.appendChild(divElement);
-    const popoverElement = document.createElement('div');
-    popoverElement.classList.add('hide');
-    popoverElement.classList.add('list-item-popover');
-    const titleElement = document.createElement('p');
-    titleElement.textContent = entry.media.title.userPreferred;
-    popoverElement.appendChild(titleElement);
-    const progressElement = document.createElement('p');
-    progressElement.textContent = `Progress: ${entry.progress} ${
-      entry.media.chapters ? '/' + entry.media.chapters : ''
-    }`;
-    popoverElement.appendChild(progressElement);
-    divElement.appendChild(popoverElement);
-    divElement.addEventListener('mouseenter', () =>
-      popoverElement.classList.remove('hide')
-    );
-    divElement.addEventListener('mouseleave', () => popoverElement.classList.add('hide'));
-  });
+    let leftPositions = [1, 2, 5, 6, 9, 10, 13, 14];
+    let position = 1;
+    entries.forEach(entry => {
+      const divElement = document.createElement('div');
+      divElement.classList.add('list-item-container');
+      const imgElement = document.createElement('img');
+      imgElement.src = entry.media.coverImage.medium;
+      imgElement.alt = entry.media.title.userPreferred;
+      imgElement.classList.add('list-item-img');
+      divElement.appendChild(imgElement);
+      listContainer.appendChild(divElement);
+
+      const popoverElement = document.createElement('div');
+      // addPopover(entry, popoverElement);
+
+      popoverElement.classList.add('list-item-popover');
+      if (leftPositions.includes(position))
+        popoverElement.classList.add('list-item-popover-left');
+      else popoverElement.classList.add('list-item-popover-right');
+
+      const titleElement = document.createElement('p');
+      titleElement.textContent = entry.media.title.userPreferred;
+      titleElement.classList.add('popover-title');
+      popoverElement.appendChild(titleElement);
+      const progressElement = document.createElement('p');
+      progressElement.textContent = `Progress: ${entry.progress} ${
+        entry.media.chapters ? '/' + entry.media.chapters : ''
+      }`;
+      progressElement.classList.add('popover-progress');
+      popoverElement.appendChild(progressElement);
+
+      const progressUpdateElement = document.createElement('div');
+      progressUpdateElement.textContent = `${entry.progress} +`;
+      progressUpdateElement.classList.add('popover-progress-updater');
+      progressUpdateElement.addEventListener('click', () => {
+        updateEntry(entry.id, entry.status, entry.progress + 1);
+        progressElement.textContent = `${entry.progress + 1} +`;
+      });
+
+      imgElement.addEventListener('mouseenter', () => {
+        divElement.appendChild(popoverElement);
+        divElement.appendChild(progressUpdateElement);
+      });
+      imgElement.addEventListener('mouseleave', () => {
+        divElement.removeChild(popoverElement);
+      });
+      // divElement.addEventListener('mouseleave', () => {
+      //   divElement.removeChild(progressUpdateElement);
+      // });
+      imgElement.addEventListener('click', () =>
+        browser.tabs.create({ url: entry.media.siteUrl })
+      );
+      position++;
+    });
+  } else {
+    unauthorized();
+  }
+}
+
+function addPopover(entry, element) {
+  // popoverElement.classList.add('hide');
 }
 
 // might not work like this
@@ -54,8 +97,10 @@ function unauthorized() {
   const textareaElement = document.getElementById('token');
 
   buttonElement.addEventListener('click', () => {
+    console.log(textareaElement.value);
     browser.storage.local.set({ token: textareaElement.value });
     textareaElement.value = '';
+    homePage();
   });
 }
 
@@ -65,10 +110,15 @@ function unauthorized() {
 async function getList(type) {
   const token = (await browser.storage.local.get('token')).token;
 
-  const userId = await getUser(token);
-  if (typeof userId !== 'number') {
-    userId;
-    return;
+  let userId = (await browser.storage.local.get('userId')).userId;
+  if (userId === undefined) {
+    userId = await getUser(token);
+    if (typeof userId !== 'number') {
+      userId;
+      return;
+    } else {
+      browser.storage.local.set({ userId });
+    }
   }
 
   const query = `
@@ -120,7 +170,7 @@ async function getList(type) {
     });
 }
 
-async function updateEntry() {
+async function updateEntry(id, status, progress) {
   const token = (await browser.storage.local.get('token')).token;
 
   const query = `
@@ -133,9 +183,12 @@ async function updateEntry() {
   }`;
 
   const variables = {
-    id: 23085633,
-    status: 'REPEATING',
-    progress: 159
+    id,
+    status,
+    progress
+    // id: 23085633,
+    // status: 'REPEATING',
+    // progress: 159
   };
   const options = {
     method: 'POST',

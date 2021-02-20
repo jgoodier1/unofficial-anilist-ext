@@ -6,19 +6,30 @@
   </head>
   <body>
     <div class="container-unauthorized" id="unauthorized">
-      <a
-        href="https://anilist.co/api/v2/oauth/authorize?client_id=4900&response_type=token"
-        >Log in with Anilist</a
+      <h1 class="heading">Unofficial AniList Extension</h1>
+      <p
+        >Step 1:
+        <a
+          class="link"
+          href="https://anilist.co/api/v2/oauth/authorize?client_id=4900&response_type=token"
+          >Authorize on Anilist</a
+        ></p
       >
-      <label for="token">Input your token</label>
-      <textarea id="token" name="token" required></textarea>
+      <p>Step 2: <label for="token">Input your token</label> </p>
+      <textarea
+        id="token"
+        name="token"
+        rows="15"
+        cols="30"
+        placeholder="input token"
+        required
+      ></textarea>
       <button id="submit-token" type="button">Submit</button>
-      <button id="show-list">Show List</button>
     </div>
 
     <div class="hide container-list" id="list">
       <!-- <h1> If you can see this, you must be authenticated </h1> -->
     </div>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
   </body>
 </html>
