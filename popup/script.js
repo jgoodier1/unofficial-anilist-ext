@@ -33,15 +33,18 @@ async function homePage() {
     entries.forEach(entry => {
       const divElement = document.createElement('div');
       divElement.classList.add('list-item-container');
-      const imgElement = document.createElement('img');
-      imgElement.src = entry.media.coverImage.medium;
-      imgElement.alt = entry.media.title.userPreferred;
-      imgElement.classList.add('list-item-img');
-      divElement.appendChild(imgElement);
+      const imgLinkElement = document.createElement('a');
+      imgLinkElement.href = entry.media.siteUrl;
+      imgLinkElement.style.setProperty(
+        'background-image',
+        `url(${entry.media.coverImage.medium})`
+      );
+      imgLinkElement.classList.add('list-item-img');
+      imgLinkElement.classList.add('cover');
+      divElement.appendChild(imgLinkElement);
       listContainer.appendChild(divElement);
 
       const popoverElement = document.createElement('div');
-      // addPopover(entry, popoverElement);
 
       popoverElement.classList.add('list-item-popover');
       if (leftPositions.includes(position))
@@ -62,33 +65,38 @@ async function homePage() {
       const progressUpdateElement = document.createElement('div');
       progressUpdateElement.textContent = `${entry.progress} +`;
       progressUpdateElement.classList.add('popover-progress-updater');
+      progressUpdateElement.classList.add('hide');
       progressUpdateElement.addEventListener('click', () => {
         updateEntry(entry.id, entry.status, entry.progress + 1);
-        progressElement.textContent = `${entry.progress + 1} +`;
+        progressUpdateElement.textContent = `${entry.progress + 1} +`;
+        progressElement.textContent = `Progress: ${entry.progress + 1} ${
+          entry.media.chapters ? '/' + entry.media.chapters : ''
+        }`;
+      });
+      imgLinkElement.appendChild(progressUpdateElement);
+
+      // this feel wrong, but I want the progress updater to be on top of the link (and
+      // nested under it in the DOM), but don't want the link to work when the updater is clicked
+      progressUpdateElement.addEventListener('mouseenter', () => {
+        imgLinkElement.removeAttribute('href');
+      });
+      progressUpdateElement.addEventListener('mouseleave', () => {
+        imgLinkElement.setAttribute('href', entry.media.siteUrl);
       });
 
-      imgElement.addEventListener('mouseenter', () => {
+      imgLinkElement.addEventListener('mouseenter', () => {
         divElement.appendChild(popoverElement);
-        divElement.appendChild(progressUpdateElement);
+        progressUpdateElement.classList.remove('hide');
       });
-      imgElement.addEventListener('mouseleave', () => {
+      imgLinkElement.addEventListener('mouseleave', () => {
         divElement.removeChild(popoverElement);
+        progressUpdateElement.classList.add('hide');
       });
-      // divElement.addEventListener('mouseleave', () => {
-      //   divElement.removeChild(progressUpdateElement);
-      // });
-      imgElement.addEventListener('click', () =>
-        browser.tabs.create({ url: entry.media.siteUrl })
-      );
       position++;
     });
   } else {
     unauthorized();
   }
-}
-
-function addPopover(entry, element) {
-  // popoverElement.classList.add('hide');
 }
 
 // might not work like this
