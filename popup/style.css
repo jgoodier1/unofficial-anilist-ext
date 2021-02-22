@@ -10,6 +10,21 @@ body {
   background: #fafafa;
 }
 
+nav {
+  display: flex;
+  justify-content: space-around;
+  background: #2a2d43;
+}
+
+nav button {
+  background: inherit;
+  border: none;
+  color: #b4b7d6;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 14px;
+}
+
 .hide {
   display: none !important;
 }
@@ -63,6 +78,7 @@ body {
   margin: 1rem;
   padding: 10px;
   background: var(--container-background);
+  width: 26rem;
 }
 
 .list-item-container {
@@ -98,8 +114,9 @@ body {
   left: 85px;
 }
 .list-item-popover-right {
-  right: 85px;
+  right: 92px;
   justify-items: end;
+  text-align: right;
 }
 
 .popover-title {

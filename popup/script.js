@@ -1,4 +1,19 @@
-async function homePage() {
+const animeButton = document.getElementById('anime-button');
+const mangaButton = document.getElementById('manga-button');
+
+animeButton.addEventListener('click', () => {
+  const listContainer = document.getElementById('list');
+  while (listContainer.firstChild) listContainer.removeChild(listContainer.firstChild);
+  homePage('ANIME');
+});
+
+mangaButton.addEventListener('click', () => {
+  const listContainer = document.getElementById('list');
+  while (listContainer.firstChild) listContainer.removeChild(listContainer.firstChild);
+  homePage('MANGA');
+});
+
+async function homePage(listType = 'ANIME') {
   const token = (await browser.storage.local.get('token')).token;
   const unauthorizedContainer = document.getElementById('unauthorized');
   const listContainer = document.getElementById('list');
@@ -11,13 +26,12 @@ async function homePage() {
     let entries = (await browser.storage.local.get('entries')).entries;
     if (entries === undefined) {
       console.log('entries is undefined');
-      const lists = await getList('MANGA');
+      const lists = await getList(listType);
       const filtered = lists.filter(list => {
         return (
           list.entries[0].status === 'CURRENT' || list.entries[0].status === 'REPEATING'
         );
       });
-
       entries = [];
       filtered.forEach(list => {
         list.entries.forEach(entry => entries.push(entry));
@@ -31,6 +45,9 @@ async function homePage() {
     let leftPositions = [1, 2, 5, 6, 9, 10, 13, 14];
     let position = 1;
     entries.forEach(entry => {
+      const totalContent =
+        listType === 'ANIME' ? entry.media.episodes : entry.media.chapters;
+
       const divElement = document.createElement('div');
       divElement.classList.add('list-item-container');
       const imgLinkElement = document.createElement('a');
@@ -57,7 +74,7 @@ async function homePage() {
       popoverElement.appendChild(titleElement);
       const progressElement = document.createElement('p');
       progressElement.textContent = `Progress: ${entry.progress} ${
-        entry.media.chapters ? '/' + entry.media.chapters : ''
+        totalContent ? '/' + totalContent : ''
       }`;
       progressElement.classList.add('popover-progress');
       popoverElement.appendChild(progressElement);
@@ -70,7 +87,7 @@ async function homePage() {
         updateEntry(entry.id, entry.status, entry.progress + 1);
         progressUpdateElement.textContent = `${entry.progress + 1} +`;
         progressElement.textContent = `Progress: ${entry.progress + 1} ${
-          entry.media.chapters ? '/' + entry.media.chapters : ''
+          totalContent ? '/' + totalContent : ''
         }`;
       });
       imgLinkElement.appendChild(progressUpdateElement);
@@ -142,6 +159,7 @@ async function getList(type) {
             title {
               userPreferred
             }
+            episodes
             chapters
             siteUrl
             coverImage {
@@ -248,4 +266,4 @@ async function getUser(token) {
     .catch(err => console.error(err));
 }
 
-homePage();
+homePage('MANGA');
