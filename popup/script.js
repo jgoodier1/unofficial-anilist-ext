@@ -1,50 +1,100 @@
+let currentListType = '';
+
 const animeButton = document.getElementById('anime-button');
 const mangaButton = document.getElementById('manga-button');
-
 animeButton.addEventListener('click', () => {
-  const listContainer = document.getElementById('list');
-  while (listContainer.firstChild) listContainer.removeChild(listContainer.firstChild);
+  const outerContainer = document.getElementById('list');
+  while (outerContainer.firstChild) outerContainer.removeChild(outerContainer.firstChild);
   homePage('ANIME');
 });
-
 mangaButton.addEventListener('click', () => {
-  const listContainer = document.getElementById('list');
-  while (listContainer.firstChild) listContainer.removeChild(listContainer.firstChild);
+  const outerContainer = document.getElementById('list');
+  while (outerContainer.firstChild) outerContainer.removeChild(outerContainer.firstChild);
   homePage('MANGA');
 });
 
-async function homePage(listType = 'ANIME') {
+const animeOption = document.getElementById('anime-option');
+const mangaOption = document.getElementById('manga-option');
+animeOption.addEventListener('click', () => {
+  browser.storage.local.set({ defaultListType: 'ANIME' });
+});
+mangaOption.addEventListener('click', () => {
+  browser.storage.local.set({ defaultListType: 'MANGA' });
+});
+
+const searchInput = document.getElementById('search-input');
+const searchQueryButton = document.getElementById('search-button-query');
+searchInput.addEventListener('keydown', e => {
+  if (searchInput.value === '') return;
+  if (e.code === 'Enter') {
+    e.preventDefault();
+    browser.tabs.create({
+      url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
+    });
+  }
+});
+searchQueryButton.addEventListener('click', () => {
+  if (searchInput.value === '') return;
+  browser.tabs.create({
+    url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
+  });
+});
+
+const signOutButton = document.getElementById('sign-out-button');
+signOutButton.addEventListener('click', () => {
+  browser.storage.local.remove('token');
+  const outerContainer = document.getElementById('list');
+  while (outerContainer.firstChild) outerContainer.removeChild(outerContainer.firstChild);
+  homePage();
+});
+
+async function homePage(listType) {
   const token = (await browser.storage.local.get('token')).token;
   const unauthorizedContainer = document.getElementById('unauthorized');
-  const listContainer = document.getElementById('list');
+  const outerContainer = document.getElementById('list');
   if (token) {
+    if (listType === undefined) {
+      listType = (await browser.storage.local.get('defaultListType')).defaultListType;
+      if (listType === undefined) listType = 'ANIME';
+    }
+    currentListType = listType;
     unauthorizedContainer.classList.add('hide');
-    listContainer.classList.remove('hide');
+    outerContainer.classList.remove('hide');
+
+    const headingElement = document.createElement('h1');
+    headingElement.classList.add('heading-list');
+    headingElement.textContent =
+      listType === 'ANIME' ? 'Anime In Progress' : 'Manga In Progress';
+    outerContainer.appendChild(headingElement);
+
+    const listContainer = document.createElement('div');
+    listContainer.classList.add('container-list');
+    outerContainer.appendChild(listContainer);
 
     // change this for production
     // (only like this now so that I can work without DDOSing their servers)
-    let entries = (await browser.storage.local.get('entries')).entries;
-    if (entries === undefined) {
-      console.log('entries is undefined');
-      const lists = await getList(listType);
-      const filtered = lists.filter(list => {
-        return (
-          list.entries[0].status === 'CURRENT' || list.entries[0].status === 'REPEATING'
-        );
-      });
-      entries = [];
-      filtered.forEach(list => {
-        list.entries.forEach(entry => entries.push(entry));
-      });
+    // let entries = (await browser.storage.local.get('entries')).entries;
+    // if (entries === undefined) {
+    const lists = await getList(listType);
+    const filtered = lists.filter(list => {
+      return (
+        list.entries[0].status === 'CURRENT' || list.entries[0].status === 'REPEATING'
+      );
+    });
+    const entries = [];
+    filtered.forEach(list => {
+      list.entries.forEach(entry => entries.push(entry));
+    });
 
-      entries.sort((a, b) => a.updatedAt < b.updatedAt);
-      browser.storage.local.set({ entries });
-    }
+    entries.sort((a, b) => a.updatedAt < b.updatedAt);
+    browser.storage.local.set({ entries });
+    // }
     // console.log(entries);
 
     let leftPositions = [1, 2, 5, 6, 9, 10, 13, 14];
     let position = 1;
     entries.forEach(entry => {
+      if (position > 16) return;
       const totalContent =
         listType === 'ANIME' ? entry.media.episodes : entry.media.chapters;
 
@@ -78,11 +128,11 @@ async function homePage(listType = 'ANIME') {
       }`;
       progressElement.classList.add('popover-progress');
       popoverElement.appendChild(progressElement);
+      divElement.appendChild(popoverElement);
 
       const progressUpdateElement = document.createElement('div');
       progressUpdateElement.textContent = `${entry.progress} +`;
       progressUpdateElement.classList.add('popover-progress-updater');
-      progressUpdateElement.classList.add('hide');
       progressUpdateElement.addEventListener('click', () => {
         updateEntry(entry.id, entry.status, entry.progress + 1);
         progressUpdateElement.textContent = `${entry.progress + 1} +`;
@@ -102,30 +152,45 @@ async function homePage(listType = 'ANIME') {
       });
 
       imgLinkElement.addEventListener('mouseenter', () => {
-        divElement.appendChild(popoverElement);
-        progressUpdateElement.classList.remove('hide');
+        // divElement.appendChild(popoverElement);
+        popoverElement.style.display = 'grid';
+
+        progressUpdateElement.style.opacity = 1;
       });
       imgLinkElement.addEventListener('mouseleave', () => {
-        divElement.removeChild(popoverElement);
-        progressUpdateElement.classList.add('hide');
+        // divElement.removeChild(popoverElement);
+        popoverElement.style.display = 'none';
+        progressUpdateElement.style.opacity = 0;
       });
       position++;
     });
   } else {
-    unauthorized();
+    unauthorized(listType);
   }
 }
 
-// might not work like this
-function unauthorized() {
+function unauthorized(listType) {
+  const unauthorizedContainer = document.getElementById('unauthorized');
+  const outerContainer = document.getElementById('list');
+  unauthorizedContainer.classList.remove('hide');
+  outerContainer.classList.add('hide');
+
   const buttonElement = document.getElementById('submit-token');
   const textareaElement = document.getElementById('token');
 
   buttonElement.addEventListener('click', () => {
-    console.log(textareaElement.value);
     browser.storage.local.set({ token: textareaElement.value });
     textareaElement.value = '';
-    homePage();
+    homePage(listType);
+  });
+
+  textareaElement.addEventListener('keydown', e => {
+    if (textareaElement.value === '') return;
+    if (e.code === 'Enter') {
+      browser.storage.local.set({ token: textareaElement.value });
+      textareaElement.value = '';
+      homePage(listType);
+    }
   });
 }
 
@@ -266,4 +331,4 @@ async function getUser(token) {
     .catch(err => console.error(err));
 }
 
-homePage('MANGA');
+homePage();
