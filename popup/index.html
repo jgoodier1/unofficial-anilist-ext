@@ -5,14 +5,15 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div id="backdrop" class="hide"></div>
     <nav>
       <button id="anime-button">Anime List</button>
       <button id="manga-button">Manga List</button>
-      <button id="search-button-open">Search</button>
+      <button id="search-nav-button">Search</button>
       <button id="settings-button">Settings</button>
     </nav>
     <div id="search-container">
-      <input type="search" id="search-input" />
+      <input type="search" id="search-input" placeholder="Search Anilist" />
       <span id="search-button-query">
         <svg
           version="1.1"
@@ -39,12 +40,17 @@
         </svg>
       </span>
     </div>
-    <div id="settings-options">
-      <label for="list-options">Default List:</label>
-      <select name="list-options" id="list-options">
-        <option id="anime-option"> Anime </option>
-        <option id="manga-option"> Manga </option>
-      </select>
+    <div id="settings-container" onload="selectedDefaultList()">
+      <h1 class="settings-heading">Settings</h1>
+      <div class="options-outer-div">
+        <label for="list-options">Default List:</label>
+        <div id="list-options-div">
+          <select id="list-options">
+            <option id="anime-option"> Anime </option>
+            <option id="manga-option"> Manga </option>
+          </select>
+        </div>
+      </div>
       <button id="sign-out-button">Sign Out</button>
     </div>
     <div class="container-unauthorized" id="unauthorized">

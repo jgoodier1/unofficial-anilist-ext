@@ -1,3 +1,5 @@
+// TOO MANY GLOBAL VARIABLES
+
 let currentListType = '';
 
 const animeButton = document.getElementById('anime-button');
@@ -22,6 +24,34 @@ mangaOption.addEventListener('click', () => {
   browser.storage.local.set({ defaultListType: 'MANGA' });
 });
 
+async function selectedDefaultList() {
+  const list = (await browser.storage.local.get('defaultListType')).defaultListType;
+  if (list === 'ANIME' || list === undefined) animeOption.selected = true;
+  if (list === 'MANGA') mangaOption.selected = true;
+}
+
+const backdrop = document.getElementById('backdrop');
+
+const searchNavButton = document.getElementById('search-nav-button');
+const searchContainer = document.getElementById('search-container');
+let searchState = 'closed';
+searchNavButton.addEventListener('click', () => {
+  if (searchState === 'closed') {
+    searchContainer.style.transform = 'translateY(250px)';
+    searchContainer.style.opacity = 1;
+    backdrop.classList.remove('hide');
+    searchInput.focus();
+    // searchContainer.style.position = 'relative';
+    searchState = 'open';
+  } else if (searchState === 'open') {
+    searchContainer.style.transform = 'translateY(-150px)';
+    searchContainer.style.opacity = 0;
+    backdrop.classList.add('hide');
+    // searchContainer.style.position = 'absolute';
+    searchState = 'closed';
+  }
+});
+
 const searchInput = document.getElementById('search-input');
 const searchQueryButton = document.getElementById('search-button-query');
 searchInput.addEventListener('keydown', e => {
@@ -31,6 +61,7 @@ searchInput.addEventListener('keydown', e => {
     browser.tabs.create({
       url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
     });
+    searchInput.value = '';
   }
 });
 searchQueryButton.addEventListener('click', () => {
@@ -38,14 +69,52 @@ searchQueryButton.addEventListener('click', () => {
   browser.tabs.create({
     url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
   });
+  searchInput.value = '';
 });
 
+const settingsButton = document.getElementById('settings-button');
+const settingsContainer = document.getElementById('settings-container');
+let settingsState = 'closed';
+settingsButton.addEventListener('click', () => {
+  if (settingsState === 'closed') {
+    settingsContainer.style.transform = 'translateY(350px)';
+    settingsContainer.style.opacity = 1;
+    // settingsContainer.style.position = 'relative';
+    backdrop.classList.remove('hide');
+    selectedDefaultList();
+    settingsState = 'open';
+  } else if (settingsState === 'open') {
+    settingsContainer.style.transform = 'translateY(-250px)';
+    settingsContainer.style.opacity = 0;
+    // settingsContainer.style.position = 'absolute';
+    backdrop.classList.add('hide');
+    settingsState = 'closed';
+  }
+});
 const signOutButton = document.getElementById('sign-out-button');
 signOutButton.addEventListener('click', () => {
   browser.storage.local.remove('token');
   const outerContainer = document.getElementById('list');
   while (outerContainer.firstChild) outerContainer.removeChild(outerContainer.firstChild);
   homePage();
+});
+
+backdrop.addEventListener('click', () => {
+  if (settingsState === 'open') {
+    settingsContainer.style.transform = 'translateY(-150px)';
+    settingsContainer.style.opacity = 0;
+    // settingsContainer.style.position = 'absolute';
+    backdrop.classList.add('hide');
+    settingsState = 'closed';
+  }
+  if (searchState === 'open') {
+    searchContainer.style.transform = 'translateY(-150px)';
+    searchContainer.style.opacity = 0;
+    backdrop.classList.add('hide');
+    // searchContainer.style.position = 'absolute';
+    searchState = 'closed';
+    searchInput.value = '';
+  }
 });
 
 async function homePage(listType) {
@@ -89,7 +158,6 @@ async function homePage(listType) {
     entries.sort((a, b) => a.updatedAt < b.updatedAt);
     browser.storage.local.set({ entries });
     // }
-    // console.log(entries);
 
     let leftPositions = [1, 2, 5, 6, 9, 10, 13, 14];
     let position = 1;
@@ -277,9 +345,6 @@ async function updateEntry(id, status, progress) {
     id,
     status,
     progress
-    // id: 23085633,
-    // status: 'REPEATING',
-    // progress: 159
   };
   const options = {
     method: 'POST',
