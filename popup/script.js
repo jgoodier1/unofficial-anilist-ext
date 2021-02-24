@@ -1,20 +1,25 @@
-// TOO MANY GLOBAL VARIABLES
+import { getList, updateEntry } from './queries.js';
 
+// used for searches and in the nav buttons, and changed by homePage
 let currentListType = '';
 
+// nav buttons that change which type of list is displayed
 const animeButton = document.getElementById('anime-button');
 const mangaButton = document.getElementById('manga-button');
 animeButton.addEventListener('click', () => {
+  if (currentListType === 'ANIME') return;
   const outerContainer = document.getElementById('list');
   while (outerContainer.firstChild) outerContainer.removeChild(outerContainer.firstChild);
   homePage('ANIME');
 });
 mangaButton.addEventListener('click', () => {
+  if (currentListType === 'MANGA') return;
   const outerContainer = document.getElementById('list');
   while (outerContainer.firstChild) outerContainer.removeChild(outerContainer.firstChild);
   homePage('MANGA');
 });
 
+// options in the settings that change which list is displayed when the popup is opened
 const animeOption = document.getElementById('anime-option');
 const mangaOption = document.getElementById('manga-option');
 animeOption.addEventListener('click', () => {
@@ -269,140 +274,6 @@ function unauthorized(listType) {
       homePage(listType);
     }
   });
-}
-
-/**
- *  @param type can be either 'MANGA' or 'ANIME'
- */
-async function getList(type) {
-  const token = (await browser.storage.local.get('token')).token;
-
-  let userId = (await browser.storage.local.get('userId')).userId;
-  if (userId === undefined) {
-    userId = await getUser(token);
-    if (typeof userId !== 'number') {
-      userId;
-      return;
-    } else {
-      browser.storage.local.set({ userId });
-    }
-  }
-
-  const query = `
-  query($userId: Int, $type: MediaType){
-    MediaListCollection(userId: $userId, type: $type) {
-      lists {
-        entries {
-          id
-          status
-          progress
-          updatedAt
-          media {
-            title {
-              userPreferred
-            }
-            episodes
-            chapters
-            siteUrl
-            coverImage {
-              medium
-            }
-          }
-        }
-      }
-    }
-  }
-  `;
-
-  const variables = {
-    userId: userId,
-    type: type
-  };
-
-  const options = {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify({
-      query: query,
-      variables: variables
-    })
-  };
-  return fetch('https://graphql.anilist.co', options)
-    .then(res => res.json())
-    .then(json => {
-      return json.data.MediaListCollection.lists;
-    });
-}
-
-async function updateEntry(id, status, progress) {
-  const token = (await browser.storage.local.get('token')).token;
-
-  const query = `
-  mutation($id: Int, $status: MediaListStatus, $progress:Int) {
-    SaveMediaListEntry(id: $id, status: $status, progress: $progress) {
-      id
-      status
-      progress
-    }
-  }`;
-
-  const variables = {
-    id,
-    status,
-    progress
-  };
-  const options = {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify({
-      query: query,
-      variables: variables
-    })
-  };
-  fetch('https://graphql.anilist.co', options)
-    .then(res => res.json())
-    .then(json => console.log(json));
-}
-
-/**
- * @param token is the auth token from storage
- * @returns a number (the userId) or an error message
- */
-async function getUser(token) {
-  const query = `
-  mutation {
-    UpdateUser {
-      id
-    }
-  }`;
-
-  const options = {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify({
-      query: query
-    })
-  };
-
-  return fetch('https://graphql.anilist.co', options)
-    .then(res => res.json())
-    .then(json => {
-      if (json.data.UpdateUser !== null) return json.data.UpdateUser.id;
-      else Promise.reject(json.errors);
-    })
-    .catch(err => console.error(err));
 }
 
 homePage();
