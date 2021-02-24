@@ -59,11 +59,11 @@ svg {
   width: max-content;
   position: absolute;
   top: -150px;
-  transition: all 0.3s ease-out;
-  z-index: 1001;
+  left: 40px;
   /* display: flex; */
   padding: 1rem;
-  margin-left: 2.9rem;
+  z-index: 1001;
+  transition: all 0.3s ease-out;
 }
 
 input[type='search'] {
@@ -175,18 +175,29 @@ select {
   text-decoration: underline 2px #4ccefa;
 }
 
+.container {
+  width: 464px;
+  min-height: 200px;
+}
+
 .container-unauthorized {
+  width: 432px;
   padding: 1rem;
-  margin: 1.5rem;
+  margin: 1rem;
   background: var(--container-background);
   border-radius: 2px;
   display: grid;
   place-items: center;
 }
 
+.container-unauthorized p {
+  color: var(--color-text);
+}
+
 .heading {
   font-size: 24px;
   margin: 0;
+  color: var(--color-text);
 }
 
 .link {
@@ -215,6 +226,12 @@ select {
   font-family: inherit;
   margin-top: 15px;
   border-radius: 2px;
+}
+
+.heading-empty {
+  color: var(--color-text);
+  font-size: 18px;
+  text-align: center;
 }
 
 .heading-list {
