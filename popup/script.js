@@ -77,14 +77,14 @@ const settingsContainer = document.getElementById('settings-container');
 let settingsState = 'closed';
 settingsButton.addEventListener('click', () => {
   if (settingsState === 'closed') {
-    settingsContainer.style.transform = 'translateY(350px)';
+    settingsContainer.style.transform = 'translateY(183px)';
     settingsContainer.style.opacity = 1;
     // settingsContainer.style.position = 'relative';
     backdrop.classList.remove('hide');
     selectedDefaultList();
     settingsState = 'open';
   } else if (settingsState === 'open') {
-    settingsContainer.style.transform = 'translateY(-250px)';
+    settingsContainer.style.transform = 'translateY(-150px)';
     settingsContainer.style.opacity = 0;
     // settingsContainer.style.position = 'absolute';
     backdrop.classList.add('hide');

@@ -88,13 +88,13 @@ input[type='search']:focus {
   flex-flow: column;
   align-items: center;
   position: absolute;
-  top: -250px;
+  top: -150px;
   transition: all 0.3s ease-out;
   z-index: 1001;
   background: var(--container-background);
-  padding: 2rem;
-  left: 4.5rem;
-  width: 20rem;
+  padding: 1rem;
+  right: 1rem;
+  width: 10rem;
 }
 
 .options-outer-div {
