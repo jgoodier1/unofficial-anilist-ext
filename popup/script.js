@@ -130,16 +130,6 @@ async function homePage(listType) {
     unauthorizedContainer.classList.add('hide');
     outerContainer.classList.remove('hide');
 
-    const headingElement = document.createElement('h1');
-    headingElement.classList.add('heading-list');
-    headingElement.textContent =
-      listType === 'ANIME' ? 'Anime In Progress' : 'Manga In Progress';
-    outerContainer.appendChild(headingElement);
-
-    const listContainer = document.createElement('div');
-    listContainer.classList.add('container-list');
-    outerContainer.appendChild(listContainer);
-
     // change this for production
     // (only like this now so that I can work without DDOSing their servers)
     // let entries = (await browser.storage.local.get('entries')).entries;
@@ -150,6 +140,15 @@ async function homePage(listType) {
         list.entries[0].status === 'CURRENT' || list.entries[0].status === 'REPEATING'
       );
     });
+    if (filtered.length === 0) {
+      const emptyListHeading = document.createElement('h1');
+      emptyListHeading.classList.add('heading-empty');
+      emptyListHeading.textContent = `You are not currently ${
+        listType === 'ANIME' ? 'watching' : 'reading'
+      } anything`;
+      outerContainer.appendChild(emptyListHeading);
+      return;
+    }
     const entries = [];
     filtered.forEach(list => {
       list.entries.forEach(entry => entries.push(entry));
@@ -158,6 +157,16 @@ async function homePage(listType) {
     entries.sort((a, b) => a.updatedAt < b.updatedAt);
     browser.storage.local.set({ entries });
     // }
+
+    const headingElement = document.createElement('h1');
+    headingElement.classList.add('heading-list');
+    headingElement.textContent =
+      listType === 'ANIME' ? 'Anime In Progress' : 'Manga In Progress';
+    outerContainer.appendChild(headingElement);
+
+    const listContainer = document.createElement('div');
+    listContainer.classList.add('container-list');
+    outerContainer.appendChild(listContainer);
 
     let leftPositions = [1, 2, 5, 6, 9, 10, 13, 14];
     let position = 1;
