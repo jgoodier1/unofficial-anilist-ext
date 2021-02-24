@@ -40,7 +40,7 @@
         </svg>
       </span>
     </div>
-    <div id="settings-container" onload="selectedDefaultList()">
+    <div id="settings-container">
       <h1 class="settings-heading">Settings</h1>
       <div class="options-outer-div">
         <label for="list-options">Default List:</label>
@@ -53,7 +53,8 @@
       </div>
       <button id="sign-out-button">Sign Out</button>
     </div>
-    <div class="container-unauthorized" id="unauthorized">
+
+    <div class="container container-unauthorized" id="unauthorized">
       <h1 class="heading">Unofficial AniList Extension</h1>
       <p
         >Step 1:
@@ -75,9 +76,7 @@
       <button id="submit-token" type="button">Submit</button>
     </div>
 
-    <div class="hide" id="list">
-      <!-- <h1> If you can see this, you must be authenticated </h1> -->
-    </div>
+    <div class="hide container" id="list"> </div>
     <script type="module" src="script.js"></script>
   </body>
 </html>
