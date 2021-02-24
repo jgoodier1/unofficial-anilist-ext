@@ -1,4 +1,4 @@
-import { getList, updateEntry } from './queries.js';
+import { getList, updateEntry, getUser } from './queries.js';
 
 // used for searches and in the nav buttons, and changed by homePage
 let currentListType = '';
@@ -94,6 +94,10 @@ signOutButton.addEventListener('click', () => {
   browser.storage.local.remove('token');
   const outerContainer = document.getElementById('list');
   while (outerContainer.firstChild) outerContainer.removeChild(outerContainer.firstChild);
+  settingsContainer.style.transform = 'translateY(-150px)';
+  settingsContainer.style.opacity = 0;
+  backdrop.classList.add('hide');
+  settingsState = 'closed';
   homePage();
 });
 
@@ -134,8 +138,10 @@ async function homePage(listType) {
 
     const unauthorizedContainer = document.getElementById('unauthorized');
     const outerContainer = document.getElementById('list');
+    const nav = document.getElementById('nav');
     unauthorizedContainer.classList.add('hide');
     outerContainer.classList.remove('hide');
+    nav.classList.remove('hide');
 
     // get the lists from the API, filter them so that you only have the current and repeating
     const lists = await getList(listType);
@@ -266,23 +272,46 @@ async function homePage(listType) {
 function unauthorized(listType) {
   const unauthorizedContainer = document.getElementById('unauthorized');
   const outerContainer = document.getElementById('list');
+  const nav = document.getElementById('nav');
   unauthorizedContainer.classList.remove('hide');
   outerContainer.classList.add('hide');
+  nav.classList.add('hide');
+
+  async function verifyToken() {
+    const token = textareaElement.value;
+    token.trim();
+    // verify the token
+    const res = await getUser(token);
+    // if return an id, show the lists
+    if (typeof res === 'number') {
+      browser.storage.local.set({ token: textareaElement.value });
+      textareaElement.value = '';
+      homePage(listType);
+    }
+    // else stay unauthorized and display an error
+    else {
+      const popupElement = document.createElement('div');
+      popupElement.classList.add('auth-error');
+      popupElement.textContent = res[0].message;
+      unauthorizedContainer.appendChild(popupElement);
+      const backdrop = document.getElementById('backdrop');
+      backdrop.classList.remove('hide');
+      backdrop.addEventListener('click', () => {
+        unauthorizedContainer.removeChild(popupElement);
+        textareaElement.value = '';
+        backdrop.classList.add('hide');
+      });
+    }
+  }
 
   // When the submit is pressed or enter is pressed, add token to storage and call homePage again
   const buttonElement = document.getElementById('submit-token');
   const textareaElement = document.getElementById('token');
-  buttonElement.addEventListener('click', () => {
-    browser.storage.local.set({ token: textareaElement.value });
-    textareaElement.value = '';
-    homePage(listType);
-  });
+  buttonElement.addEventListener('click', verifyToken);
   textareaElement.addEventListener('keydown', e => {
     if (textareaElement.value === '') return;
     if (e.code === 'Enter') {
-      browser.storage.local.set({ token: textareaElement.value });
-      textareaElement.value = '';
-      homePage(listType);
+      verifyToken();
     }
   });
 }

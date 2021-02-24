@@ -228,6 +228,17 @@ select {
   border-radius: 2px;
 }
 
+.auth-error {
+  position: absolute;
+  top: 150px;
+  left: 161px;
+  z-index: 1001;
+  background: var(--container-background);
+  color: var(--color-text);
+  font-size: 20px;
+  padding: 1rem;
+}
+
 .heading-empty {
   color: var(--color-text);
   font-size: 18px;

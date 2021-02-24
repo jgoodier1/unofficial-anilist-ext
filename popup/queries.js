@@ -112,7 +112,7 @@ export async function updateEntry(id, status, progress) {
  * @param {string} token - is the auth token from storage
  * @returns - a number (the userId) or an error message
  */
-async function getUser(token) {
+export async function getUser(token) {
   const query = `
   mutation {
     UpdateUser {
@@ -136,7 +136,10 @@ async function getUser(token) {
     .then(res => res.json())
     .then(json => {
       if (json.data.UpdateUser !== null) return json.data.UpdateUser.id;
-      else Promise.reject(json.errors);
+      else {
+        Promise.reject(json.errors);
+        return json.errors;
+      }
     })
     .catch(err => console.error(err));
 }
