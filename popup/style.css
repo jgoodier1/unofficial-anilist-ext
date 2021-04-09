@@ -1,6 +1,6 @@
 :root {
-  --container-background: white;
-  --color-text: #5c728a;
+  --container-background: #fafafa;
+  --color-text: black;
   --color-select: #3e5166;
 }
 
@@ -15,7 +15,7 @@ body {
   color: black;
   font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen, Ubuntu,
     Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-  background: #fafafa;
+  background: #edf1f5;
   box-sizing: border-box;
 }
 
@@ -35,23 +35,25 @@ body {
 nav {
   display: flex;
   justify-content: space-around;
-  background: #2a2d43;
+  background: #003d99;
   z-index: 2;
 }
 
 nav button {
   background: inherit;
   border: none;
-  color: #b4b7d6;
   cursor: pointer;
   padding: 8px;
-  font-size: 14px;
 }
 
-svg {
-  cursor: pointer;
-  width: 1em;
-  color: var(--color-text);
+nav button svg {
+  width: 25px;
+  height: 25px;
+}
+
+.list-button svg {
+  width: 30px;
+  height: 30px;
 }
 
 #search-container {
@@ -81,6 +83,11 @@ input[type='search']:focus {
   position: relative;
   right: 5px;
   padding: 5px;
+}
+#search-button-query svg {
+  cursor: pointer;
+  width: 1em;
+  color: var(--color-text);
 }
 
 #settings-container {
