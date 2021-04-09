@@ -3,7 +3,104 @@
  * @param {string} type - can be either 'MANGA' or 'ANIME'
  * @returns - an array of objects, each object is a list grouped by status
  */
-export async function getList(type) {
+export async function getCurrentList(type) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  let userId = (await browser.storage.local.get('userId')).userId;
+  if (userId === undefined) {
+    userId = await getUser(token);
+    if (typeof userId !== 'number') {
+      userId;
+      return;
+    } else {
+      browser.storage.local.set({ userId });
+    }
+  }
+
+  const lists = [];
+
+  const query = `
+  query($userId: Int, $type: MediaType, $status: MediaListStatus){
+    MediaListCollection(userId: $userId, type: $type, status: $status) {
+      lists {
+        entries {
+          id
+          status
+          progress
+          updatedAt
+          media {
+            title {
+              userPreferred
+            }
+            episodes
+            chapters
+            siteUrl
+            coverImage {
+              medium
+            }
+            status
+            nextAiringEpisode {
+              airingAt
+              timeUntilAiring
+              episode
+            }
+          }
+        }
+      }
+    }
+  }
+  `;
+
+  const options1 = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: {
+        userId: userId,
+        type: type,
+        status: 'CURRENT'
+      }
+    })
+  };
+  const options2 = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: {
+        userId: userId,
+        type: type,
+        status: 'REPEATING'
+      }
+    })
+  };
+
+  await fetch('https://graphql.anilist.co', options1)
+    .then(res => res.json())
+    .then(json => {
+      lists.push(json.data.MediaListCollection.lists[0].entries);
+    });
+  await fetch('https://graphql.anilist.co', options2)
+    .then(res => res.json())
+    .then(json => {
+      if (json.data.MediaListCollection.lists.length !== 0) {
+        lists.push(json.data.MediaListCollection.lists[0].entries);
+      }
+    });
+
+  return lists;
+}
+
+export async function getFullList(type) {
   const token = (await browser.storage.local.get('token')).token;
 
   let userId = (await browser.storage.local.get('userId')).userId;
@@ -24,18 +121,18 @@ export async function getList(type) {
         entries {
           id
           status
+          score
           progress
-          updatedAt
           media {
             title {
               userPreferred
             }
             episodes
             chapters
-            siteUrl
             coverImage {
               medium
             }
+            status
           }
         }
       }

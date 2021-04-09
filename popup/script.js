@@ -1,4 +1,4 @@
-import { getList, updateEntry, getUser } from './queries.js';
+import { getCurrentList, getFullList, updateEntry, getUser } from './queries.js';
 
 // used for searches and in the nav buttons, and changed by homePage
 let currentListType = '';
@@ -8,17 +8,9 @@ document.getElementById('home-button').addEventListener('click', () => {
   homePage();
 });
 document.getElementById('anime-button').addEventListener('click', () => {
-  // if (currentListType === 'ANIME') return;
-  // const homeWrapper = document.getElementById('home');
-  // while (homeWrapper.firstChild) homeWrapper.removeChild(homeWrapper.firstChild);
-  // homePage('ANIME');
   showList('ANIME');
 });
 document.getElementById('manga-button').addEventListener('click', () => {
-  // if (currentListType === 'MANGA') return;
-  // const homeWrapper = document.getElementById('home');
-  // while (homeWrapper.firstChild) homeWrapper.removeChild(homeWrapper.firstChild);
-  // homePage('MANGA');
   showList('MANGA');
 });
 
@@ -47,7 +39,7 @@ searchInput.addEventListener('keydown', e => {
   if (e.code === 'Enter') {
     e.preventDefault();
     browser.tabs.create({
-      url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
+      // url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
     });
     searchInput.value = '';
   }
@@ -55,7 +47,7 @@ searchInput.addEventListener('keydown', e => {
 searchQueryButton.addEventListener('click', () => {
   if (searchInput.value === '') return;
   browser.tabs.create({
-    url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
+    // url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
   });
   searchInput.value = '';
 });
@@ -137,7 +129,7 @@ async function homePage(listType) {
       if (listType === undefined) listType = 'ANIME';
     }
     // this is for search and to disable one of the nav buttons
-    currentListType = listType;
+    // currentListType = listType;
 
     const unauthorizedContainer = document.getElementById('unauthorized');
     const homeWrapper = document.getElementById('home');
@@ -146,6 +138,7 @@ async function homePage(listType) {
     homeWrapper.classList.remove('hide');
     nav.classList.remove('hide');
 
+    // if firstchild return ??
     await currentList('ANIME');
     await currentList('MANGA');
   } else {
@@ -154,15 +147,11 @@ async function homePage(listType) {
 }
 
 async function currentList(listType) {
-  // get the lists from the API, filter them so that you only have the current and repeating
-  const lists = await getList(listType);
-  const filtered = lists.filter(list => {
-    return list.entries[0].status === 'CURRENT' || list.entries[0].status === 'REPEATING';
-  });
   const homeWrapper = document.getElementById('home');
+  const lists = await getCurrentList(listType);
 
   // if there aren't any current or repeating, display a message to the user
-  if (filtered.length === 0) {
+  if (lists.length === 0) {
     const emptyListHeading = document.createElement('h1');
     emptyListHeading.classList.add('heading-empty');
     emptyListHeading.textContent = `You are not currently ${
@@ -174,8 +163,8 @@ async function currentList(listType) {
 
   // put all of the entries into one array and sort them
   const entries = [];
-  filtered.forEach(list => {
-    list.entries.forEach(entry => entries.push(entry));
+  lists.forEach(list => {
+    list.forEach(entry => entries.push(entry));
   });
   entries.sort((a, b) => a.updatedAt < b.updatedAt);
 
@@ -324,11 +313,114 @@ function unauthorized(listType) {
 }
 
 /**
- *
+ * Displays the entire list
  * @param {string} listType either 'ANIME' or 'MANGA'
  */
 async function showList(listType) {
-  await getList(listType);
+  const list = document.getElementById('list');
+  list.classList.remove('hide');
+  document.getElementById('home').classList.add('hide');
+
+  if (currentListType === listType) return;
+  currentListType = listType;
+  while (list.firstChild) list.removeChild(list.firstChild);
+  const lists = await getFullList(listType);
+
+  const current = lists.filter(list => {
+    return list.entries[0].status === 'CURRENT';
+  });
+  const completed = lists.filter(list => {
+    return list.entries[0].status === 'COMPLETED';
+  });
+  const planning = lists.filter(list => {
+    return list.entries[0].status === 'PLANNING';
+  });
+  const dropped = lists.filter(list => {
+    return list.entries[0].status === 'DROPPED';
+  });
+  const paused = lists.filter(list => {
+    return list.entries[0].status === 'PAUSED';
+  });
+  const repeating = lists.filter(list => {
+    return list.entries[0].status === 'REPEATING';
+  });
+
+  if (current.length !== 0) {
+    const header = list.appendChild(document.createElement('h2'));
+    header.classList.add('list-header');
+    header.textContent = 'Watching';
+    showListByStatus(current);
+  }
+  if (repeating.length !== 0) {
+    const header = list.appendChild(document.createElement('h2'));
+    header.classList.add('list-header');
+    header.textContent = 'Rewatching';
+    showListByStatus(repeating);
+  }
+  if (completed.length !== 0) {
+    const header = list.appendChild(document.createElement('h2'));
+    header.classList.add('list-header');
+    header.textContent = 'Completed';
+    showListByStatus(completed);
+  }
+  if (paused.length !== 0) {
+    const header = list.appendChild(document.createElement('h2'));
+    header.classList.add('list-header');
+    header.textContent = 'Paused';
+    showListByStatus(paused);
+  }
+  if (dropped.length !== 0) {
+    const header = list.appendChild(document.createElement('h2'));
+    header.classList.add('list-header');
+    header.textContent = 'Dropped';
+    showListByStatus(dropped);
+  }
+  if (planning.length !== 0) {
+    const header = list.appendChild(document.createElement('h2'));
+    header.classList.add('list-header');
+    header.textContent = 'Planning';
+    showListByStatus(planning);
+  }
+}
+
+function showListByStatus(status) {
+  const list = document.getElementById('list');
+  const section = list.appendChild(document.createElement('section'));
+  const heading = section.appendChild(document.createElement('div'));
+  heading.classList.add('list-row');
+  const titleHeading = heading.appendChild(document.createElement('p'));
+  titleHeading.classList.add('title-heading', 'list-heading');
+  titleHeading.textContent = 'Title';
+  const scoreHeading = heading.appendChild(document.createElement('p'));
+  scoreHeading.classList.add('score-heading', 'list-heading');
+  scoreHeading.textContent = 'Score';
+  const progressHeading = heading.appendChild(document.createElement('p'));
+  progressHeading.classList.add('progress-heading', 'list-heading');
+  progressHeading.textContent = 'Progress';
+
+  status.forEach(list => {
+    const entries = list.entries;
+    entries.sort((a, b) => a.media.title.userPreferred > b.media.title.userPreferred);
+    entries.forEach(entry => {
+      const row = section.appendChild(document.createElement('div'));
+      row.classList.add('list-row');
+      const image = row.appendChild(document.createElement('img'));
+      image.src = entry.media.coverImage.medium;
+
+      const title = row.appendChild(document.createElement('h3'));
+      title.classList.add('title');
+      title.textContent = entry.media.title.userPreferred;
+
+      const score = row.appendChild(document.createElement('p'));
+      score.classList.add('score');
+      if (entry.score === 0) score.textContent = '';
+      else score.textContent = entry.score;
+
+      const progress = row.appendChild(document.createElement('p'));
+      progress.classList.add('progress');
+      progress.textContent = entry.progress;
+    });
+  });
 }
 
 // call homePage when the popup is opened
