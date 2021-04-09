@@ -1,0 +1,11 @@
+{
+  "name": "anilist-unofficial-ext",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/jgoodier1/unofficial-anilist-ext.git",
+  "author": "Jacob Goodier <jgoodier21@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^7.23.0"
+  }
+}
