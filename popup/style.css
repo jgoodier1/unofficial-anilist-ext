@@ -37,6 +37,8 @@ nav {
   justify-content: space-around;
   background: #003d99;
   z-index: 2;
+  position: sticky;
+  top: 0;
 }
 
 nav button {
@@ -269,6 +271,7 @@ select {
   padding: 1rem;
   background: var(--container-background);
   width: 27rem;
+  isolation: isolate;
 }
 
 .list-item-container {
@@ -293,19 +296,13 @@ select {
 
 .list-item-popover {
   z-index: 5;
-  /* z-index: 1; */
   display: none;
-  /* display: grid; */
   background: #fafafa;
   padding: 0 0.5rem;
   position: absolute;
   width: 210px;
   height: 118px;
   top: -1px;
-  /* opacity: 0; */
-
-  /* DOESN'T DO ANYTHING */
-  transition: 1s;
 }
 
 .list-item-popover-left {
@@ -342,6 +339,13 @@ select {
   opacity: 0;
   transition: 0.2s;
   border-radius: 0 0 3px 3px;
+}
+
+.list-item-img:hover + .list-item-popover {
+  display: grid;
+}
+.list-item-img:hover .popover-progress-updater {
+  opacity: 1;
 }
 
 /* Full List */

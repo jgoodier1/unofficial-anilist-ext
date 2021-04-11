@@ -131,14 +131,13 @@ async function homePage(listType) {
     // this is for search and to disable one of the nav buttons
     // currentListType = listType;
 
-    const unauthorizedContainer = document.getElementById('unauthorized');
     const homeWrapper = document.getElementById('home');
-    const nav = document.getElementById('nav');
-    unauthorizedContainer.classList.add('hide');
     homeWrapper.classList.remove('hide');
-    nav.classList.remove('hide');
+    document.getElementById('nav').classList.remove('hide');
+    document.getElementById('unauthorized').classList.add('hide');
+    document.getElementById('list').classList.add('hide');
 
-    // if firstchild return ??
+    if (homeWrapper.firstChild) return;
     await currentList('ANIME');
     await currentList('MANGA');
   } else {
@@ -229,14 +228,16 @@ async function currentList(listType) {
 
     // the popover at the bottom of the image that lets you update the entry
     const progressUpdateElement = document.createElement('div');
-    progressUpdateElement.textContent = `${entry.progress} +`;
+    let progress = entry.progress;
+    progressUpdateElement.textContent = `${progress} +`;
     progressUpdateElement.classList.add('popover-progress-updater');
     progressUpdateElement.addEventListener('click', () => {
-      updateEntry(entry.id, entry.status, entry.progress + 1);
-      progressUpdateElement.textContent = `${entry.progress + 1} +`;
-      progressElement.textContent = `Progress: ${entry.progress + 1} ${
+      updateEntry(entry.id, entry.status, progress + 1);
+      progressUpdateElement.textContent = `${progress + 1} +`;
+      progressElement.textContent = `Progress: ${progress + 1} ${
         totalContent ? '/' + totalContent : ''
       }`;
+      progress += 1;
     });
     imgLinkElement.appendChild(progressUpdateElement);
 
@@ -248,15 +249,6 @@ async function currentList(listType) {
       imgLinkElement.setAttribute('href', entry.media.siteUrl);
     });
 
-    // hover over the image, show popover
-    imgLinkElement.addEventListener('mouseenter', () => {
-      popoverElement.style.display = 'grid';
-      progressUpdateElement.style.opacity = 1;
-    });
-    imgLinkElement.addEventListener('mouseleave', () => {
-      popoverElement.style.display = 'none';
-      progressUpdateElement.style.opacity = 0;
-    });
     position++;
   });
 }
