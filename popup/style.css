@@ -1,7 +1,9 @@
 :root {
-  --container-background: #fafafa;
-  --color-text: black;
-  --color-select: #3e5166;
+  --colour-container: #fafafa;
+  --colour-background: #edf1f5;
+  --colour-nav: #003d99;
+  --colour-text: black;
+  --colour-select: #3e5166;
 }
 
 *,
@@ -15,7 +17,7 @@ body {
   color: black;
   font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen, Ubuntu,
     Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-  background: #edf1f5;
+  background-color: var(--colour-background);
   box-sizing: border-box;
 }
 
@@ -35,7 +37,7 @@ body {
 nav {
   display: flex;
   justify-content: space-around;
-  background: #003d99;
+  background: var(--colour-nav);
   z-index: 2;
   position: sticky;
   top: 0;
@@ -59,7 +61,7 @@ nav button svg {
 }
 
 #search-container {
-  background: var(--container-background);
+  background: var(--colour-container);
   width: max-content;
   position: absolute;
   top: -150px;
@@ -89,7 +91,7 @@ input[type='search']:focus {
 #search-button-query svg {
   cursor: pointer;
   width: 1em;
-  color: var(--color-text);
+  color: var(--colour-text);
 }
 
 #settings-container {
@@ -100,7 +102,7 @@ input[type='search']:focus {
   top: -150px;
   transition: all 0.3s ease-out;
   z-index: 1001;
-  background: var(--container-background);
+  background: var(--colour-container);
   padding: 1rem;
   right: 1rem;
   width: 10rem;
@@ -114,18 +116,18 @@ input[type='search']:focus {
 .settings-heading {
   font-size: 18px;
   padding: 0;
-  color: var(--color-text);
+  color: var(--colour-text);
 }
 
 #list-options-div {
   width: max-content;
-  border: 1px solid var(--color-select);
+  border: 1px solid var(--colour-select);
   border-radius: 0.25em;
   padding: 0.25em 0.5em;
   font-size: 1rem;
   cursor: pointer;
   line-height: 1.1;
-  background: var(--container-background);
+  background: var(--colour-container);
   display: grid;
   grid-template-areas: 'select';
   align-items: center;
@@ -139,7 +141,7 @@ input[type='search']:focus {
   width: 0.8em;
   height: 0.5em;
   clip-path: polygon(100% 0%, 0 0%, 50% 100%);
-  background-color: var(--color-select);
+  background-color: var(--colour-select);
   justify-self: end;
 }
 
@@ -149,7 +151,7 @@ input[type='search']:focus {
 }
 
 label {
-  color: var(--color-text);
+  color: var(--colour-text);
 }
 
 select {
@@ -165,7 +167,7 @@ select {
   /* background: url('../icons/drop-down-arrow.png') right center no-repeat; */
   padding: 0 2rem 0 0;
   grid-area: select;
-  color: var(--color-text);
+  color: var(--colour-text);
 }
 
 #sign-out-button {
@@ -177,7 +179,7 @@ select {
   background: inherit;
   border: none;
   cursor: pointer;
-  color: var(--color-text);
+  color: var(--colour-text);
 }
 
 #sign-out-button:hover {
@@ -193,20 +195,20 @@ select {
   width: 432px;
   padding: 1rem;
   margin: 1rem;
-  background: var(--container-background);
+  background: var(--colour-container);
   border-radius: 2px;
   display: grid;
   place-items: center;
 }
 
 .container-unauthorized p {
-  color: var(--color-text);
+  color: var(--colour-text);
 }
 
 .heading {
   font-size: 24px;
   margin: 0;
-  color: var(--color-text);
+  color: var(--colour-text);
 }
 
 .link {
@@ -242,14 +244,14 @@ select {
   top: 150px;
   left: 161px;
   z-index: 1001;
-  background: var(--container-background);
-  color: var(--color-text);
+  background: var(--colour-container);
+  color: var(--colour-text);
   font-size: 20px;
   padding: 1rem;
 }
 
 .heading-empty {
-  color: var(--color-text);
+  color: var(--colour-text);
   font-size: 18px;
   text-align: center;
 }
@@ -257,7 +259,7 @@ select {
 .heading-list {
   margin-left: 2rem;
   margin-bottom: 0;
-  color: var(--color-text);
+  color: var(--colour-text);
   font-size: 14px;
   font-weight: 300;
 }
@@ -269,7 +271,7 @@ select {
   margin: 1rem;
   margin-top: 0.5rem;
   padding: 1rem;
-  background: var(--container-background);
+  background: var(--colour-container);
   width: 27rem;
   isolation: isolate;
 }
@@ -297,10 +299,10 @@ select {
 .list-item-popover {
   z-index: 5;
   display: none;
-  background: #fafafa;
+  background: var(--colour-background);
   padding: 0 0.5rem;
   position: absolute;
-  width: 210px;
+  width: 226px;
   height: 118px;
   top: -1px;
 }
@@ -315,7 +317,7 @@ select {
 }
 
 .popover-title {
-  color: var(--color-text);
+  color: var(--colour-text);
   font-size: 14px;
   font-weight: lighter;
 }
@@ -359,7 +361,7 @@ select {
   grid-template-columns: 50px 245px 55px 80px;
   grid-gap: 5px;
   align-items: center;
-  background-color: var(--container-background);
+  background-color: var(--colour-container);
   padding: 0 10px;
   width: 100%;
 }
