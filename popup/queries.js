@@ -165,6 +165,43 @@ export async function getFullList(type) {
 }
 
 /**
+ * Fetches the users id from the Anilist API
+ * @param {string} token - is the auth token from storage
+ * @returns - a number (the userId) or an error message
+ */
+export async function getUser(token) {
+  const query = `
+  mutation {
+    UpdateUser {
+      id
+    }
+  }`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query
+    })
+  };
+
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      if (json.data.UpdateUser !== null) return json.data.UpdateUser.id;
+      else {
+        Promise.reject(json.errors);
+        return json.errors;
+      }
+    })
+    .catch(err => console.error(err));
+}
+
+/**
  * Updates the list on the Anilist API
  * @param {number} id - the entry id for the list
  * @param {string} status - 'CURRENT' or 'REPEATING
@@ -204,18 +241,26 @@ export async function updateEntry(id, status, progress) {
     .then(json => console.log(json));
 }
 
-/**
- * Fetches the users id from the Anilist API
- * @param {string} token - is the auth token from storage
- * @returns - a number (the userId) or an error message
- */
-export async function getUser(token) {
+export async function editEntry(id, status, score, progress) {
+  const token = (await browser.storage.local.get('token')).token;
+
   const query = `
-  mutation {
-    UpdateUser {
+  mutation($id: Int, $status: MediaListStatus, $score: Float, $progress: Int){
+    SaveMediaListEntry(id: $id, status: $status, score: $score, progress: $progress) {
       id
+      status
+      score
+      progress
     }
-  }`;
+  }
+  `;
+
+  const variables = {
+    id,
+    status,
+    score,
+    progress
+  };
 
   const options = {
     method: 'POST',
@@ -225,18 +270,39 @@ export async function getUser(token) {
       Accept: 'application/json'
     },
     body: JSON.stringify({
-      query: query
+      query: query,
+      variables: variables
     })
   };
-
-  return fetch('https://graphql.anilist.co', options)
+  fetch('https://graphql.anilist.co', options)
     .then(res => res.json())
-    .then(json => {
-      if (json.data.UpdateUser !== null) return json.data.UpdateUser.id;
-      else {
-        Promise.reject(json.errors);
-        return json.errors;
+    .then(json => console.log(json));
+}
+
+export async function deleteEntry(id) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+    mutation($id:Int) {
+      DeleteMediaListEntry(id:$id) {
+        deleted
       }
+    }
+  `;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id }
     })
-    .catch(err => console.error(err));
+  };
+  fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => console.log(json));
 }

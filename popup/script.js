@@ -1,4 +1,11 @@
-import { getCurrentList, getFullList, updateEntry, getUser } from './queries.js';
+import {
+  getCurrentList,
+  getFullList,
+  getUser,
+  updateEntry,
+  editEntry,
+  deleteEntry
+} from './queries.js';
 
 // used for searches and in the nav buttons, and changed by homePage
 let currentListType = '';
@@ -128,14 +135,12 @@ async function homePage(listType) {
       listType = (await browser.storage.local.get('defaultListType')).defaultListType;
       if (listType === undefined) listType = 'ANIME';
     }
-    // this is for search and to disable one of the nav buttons
-    // currentListType = listType;
 
+    const allContainers = document.querySelectorAll('.container');
+    allContainers.forEach(container => container.classList.add('hide'));
     const homeWrapper = document.getElementById('home');
     homeWrapper.classList.remove('hide');
     document.getElementById('nav').classList.remove('hide');
-    document.getElementById('unauthorized').classList.add('hide');
-    document.getElementById('list').classList.add('hide');
 
     if (homeWrapper.firstChild) return;
     await currentList('ANIME');
@@ -258,12 +263,10 @@ async function currentList(listType) {
  * @param {string} listType - either 'ANIME' or 'MANGA'
  */
 function unauthorized(listType) {
+  const allContainers = document.querySelectorAll('.container');
+  allContainers.forEach(container => container.classList.add('hide'));
   const unauthorizedContainer = document.getElementById('unauthorized');
-  const homeWrapper = document.getElementById('home');
-  const nav = document.getElementById('nav');
   unauthorizedContainer.classList.remove('hide');
-  homeWrapper.classList.add('hide');
-  nav.classList.add('hide');
 
   async function verifyToken() {
     const token = textareaElement.value;
@@ -309,9 +312,10 @@ function unauthorized(listType) {
  * @param {string} listType either 'ANIME' or 'MANGA'
  */
 async function showList(listType) {
+  const allContainers = document.querySelectorAll('.container');
+  allContainers.forEach(container => container.classList.add('hide'));
   const list = document.getElementById('list');
   list.classList.remove('hide');
-  document.getElementById('home').classList.add('hide');
 
   if (currentListType === listType) return;
   currentListType = listType;
@@ -340,42 +344,42 @@ async function showList(listType) {
   if (current.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
-    header.textContent = 'Watching';
-    showListByStatus(current);
+    header.textContent = listType === 'ANIME' ? 'Watching' : 'Reading';
+    showListByStatus(current, listType);
   }
   if (repeating.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
-    header.textContent = 'Rewatching';
-    showListByStatus(repeating);
+    header.textContent = listType === 'ANIME' ? 'Rewatching' : 'Rereading';
+    showListByStatus(repeating, listType);
   }
   if (completed.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Completed';
-    showListByStatus(completed);
+    showListByStatus(completed, listType);
   }
   if (paused.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Paused';
-    showListByStatus(paused);
+    showListByStatus(paused, listType);
   }
   if (dropped.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Dropped';
-    showListByStatus(dropped);
+    showListByStatus(dropped, listType);
   }
   if (planning.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Planning';
-    showListByStatus(planning);
+    showListByStatus(planning, listType);
   }
 }
 
-function showListByStatus(status) {
+function showListByStatus(status, listType) {
   const list = document.getElementById('list');
   const section = list.appendChild(document.createElement('section'));
   const heading = section.appendChild(document.createElement('div'));
@@ -399,6 +403,35 @@ function showListByStatus(status) {
       const image = row.appendChild(document.createElement('img'));
       image.src = entry.media.coverImage.medium;
 
+      const editButton = row.appendChild(document.createElement('button'));
+      editButton.classList.add('list-row-button');
+      const svg = editButton.appendChild(
+        document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      );
+      svg.setAttributeNS(null, 'viewBox', '0 -1 401.52289 401');
+      svg.setAttributeNS(null, 'fill', 'white');
+      svg.classList.add('list-row-svg');
+      const path1 = svg.appendChild(
+        document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      );
+      path1.setAttributeNS(
+        null,
+        'd',
+        'm370.589844 250.972656c-5.523438 0-10 4.476563-10 10v88.789063c-.019532 16.5625-13.4375 29.984375-30 30h-280.589844c-16.5625-.015625-29.980469-13.4375-30-30v-260.589844c.019531-16.558594 13.4375-29.980469 30-30h88.789062c5.523438 0 10-4.476563 10-10 0-5.519531-4.476562-10-10-10h-88.789062c-27.601562.03125-49.96875 22.398437-50 50v260.59375c.03125 27.601563 22.398438 49.96875 50 50h280.589844c27.601562-.03125 49.96875-22.398437 50-50v-88.792969c0-5.523437-4.476563-10-10-10zm0 0'
+      );
+      const path2 = svg.appendChild(
+        document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      );
+      path2.setAttributeNS(
+        null,
+        'd',
+        'm376.628906 13.441406c-17.574218-17.574218-46.066406-17.574218-63.640625 0l-178.40625 178.40625c-1.222656 1.222656-2.105469 2.738282-2.566406 4.402344l-23.460937 84.699219c-.964844 3.472656.015624 7.191406 2.5625 9.742187 2.550781 2.546875 6.269531 3.527344 9.742187 2.566406l84.699219-23.464843c1.664062-.460938 3.179687-1.34375 4.402344-2.566407l178.402343-178.410156c17.546875-17.585937 17.546875-46.054687 0-63.640625zm-220.257812 184.90625 146.011718-146.015625 47.089844 47.089844-146.015625 146.015625zm-9.40625 18.875 37.621094 37.625-52.039063 14.417969zm227.257812-142.546875-10.605468 10.605469-47.09375-47.09375 10.609374-10.605469c9.761719-9.761719 25.589844-9.761719 35.351563 0l11.738281 11.734375c9.746094 9.773438 9.746094 25.589844 0 35.359375zm0 0'
+      );
+
+      editButton.addEventListener('click', () => {
+        openEditView(entry, listType);
+      });
+
       const title = row.appendChild(document.createElement('h3'));
       title.classList.add('title');
       title.textContent = entry.media.title.userPreferred;
@@ -412,6 +445,123 @@ function showListByStatus(status) {
       progress.classList.add('progress');
       progress.textContent = entry.progress;
     });
+  });
+}
+
+function openEditView(entry, listType) {
+  // i guess this works??
+  const allContainers = document.querySelectorAll('.container');
+  allContainers.forEach(container => container.classList.add('hide'));
+
+  const editContainer = document.getElementById('edit');
+  editContainer.classList.remove('hide');
+  while (editContainer.firstChild) editContainer.removeChild(editContainer.firstChild);
+
+  //status, score, progress
+  const wrapper = editContainer.appendChild(document.createElement('div'));
+  wrapper.classList.add('edit-wrapper');
+
+  const image = wrapper.appendChild(document.createElement('img'));
+  image.classList.add('edit-image');
+  image.src = entry.media.coverImage.medium;
+
+  const title = wrapper.appendChild(document.createElement('h1'));
+  title.classList.add('edit-title');
+  title.textContent = entry.media.title.userPreferred;
+
+  const xButton = wrapper.appendChild(document.createElement('button'));
+  xButton.classList.add('edit-close');
+  xButton.textContent = 'X';
+  xButton.addEventListener('click', () => {
+    editContainer.removeChild(wrapper);
+    editContainer.classList.add('hide');
+    document.getElementById('list').classList.remove('hide');
+  });
+
+  const form = wrapper.appendChild(document.createElement('form'));
+  form.classList.add('edit-form');
+
+  const statusLabel = form.appendChild(document.createElement('label'));
+  statusLabel.classList.add('edit-status');
+  statusLabel.textContent = 'Status';
+  statusLabel.setAttribute('for', 'status-select');
+
+  const statusSelect = statusLabel.appendChild(document.createElement('select'));
+  statusSelect.id = 'status-select';
+
+  const optionCurrent = statusSelect.appendChild(document.createElement('option'));
+  optionCurrent.value = 'CURRENT';
+  optionCurrent.textContent = listType === 'ANIME' ? 'Watching' : 'Reading';
+  const optionCompleted = statusSelect.appendChild(document.createElement('option'));
+  optionCompleted.value = 'COMPLETED';
+  optionCompleted.textContent = 'Completed';
+  const optionPaused = statusSelect.appendChild(document.createElement('option'));
+  optionPaused.value = 'PAUSED';
+  optionPaused.textContent = 'Paused';
+  const optionDropped = statusSelect.appendChild(document.createElement('option'));
+  optionDropped.value = 'DROPPED';
+  optionDropped.textContent = 'Dropped';
+  const optionPlanning = statusSelect.appendChild(document.createElement('option'));
+  optionPlanning.value = 'PLANNING';
+  optionPlanning.textContent = 'Planning to ' + listType === 'ANIME' ? 'Watch' : 'Read';
+  const optionRepeating = statusSelect.appendChild(document.createElement('option'));
+  optionRepeating.value = 'REPEATING';
+  optionRepeating.textContent = listType === 'ANIME' ? 'Rewatching' : 'Rereading';
+
+  statusSelect.value = entry.status;
+
+  const scoreLabel = form.appendChild(document.createElement('label'));
+  scoreLabel.classList.add('edit-score');
+  scoreLabel.setAttribute('for', 'score-input');
+  scoreLabel.textContent = 'Score';
+
+  const scoreInput = scoreLabel.appendChild(document.createElement('input'));
+  scoreInput.id = 'score-input';
+  scoreInput.setAttribute('type', 'number');
+  scoreInput.setAttribute('min', '0');
+  scoreInput.setAttribute('max', '10');
+  scoreInput.setAttribute('step', '0.5');
+  scoreInput.value = entry.score;
+
+  const progressLabel = form.appendChild(document.createElement('label'));
+  progressLabel.classList.add('edit-progress');
+  progressLabel.setAttribute('for', 'progress-input');
+  progressLabel.textContent = 'Progress';
+
+  let maxProgress;
+  if (listType === 'ANIME' && entry.media.episodes !== null) {
+    maxProgress = entry.media.episodes;
+  } else if (listType === 'MANGA' && entry.media.chapters !== null) {
+    maxProgress = entry.media.chapters;
+  } else maxProgress = 99999;
+
+  const progressInput = progressLabel.appendChild(document.createElement('input'));
+  progressInput.id = 'progress-input';
+  progressInput.setAttribute('type', 'number');
+  progressInput.setAttribute('min', '0');
+  progressInput.setAttribute('max', maxProgress);
+  progressInput.setAttribute('step', '1');
+  progressInput.value = entry.progress;
+
+  const saveButton = form.appendChild(document.createElement('button'));
+  saveButton.classList.add('edit-save', 'edit-button');
+  saveButton.setAttribute('type', 'submit');
+  saveButton.textContent = 'Save';
+
+  const deleteButton = form.appendChild(document.createElement('button'));
+  deleteButton.classList.add('edit-delete', 'edit-button');
+  deleteButton.setAttribute('type', 'button');
+  deleteButton.textContent = 'Delete';
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    editEntry(entry.id, statusSelect.value, scoreInput.value, progressInput.value);
+    // decide how to update the old list without refreshing or re-querying
+  });
+
+  deleteButton.addEventListener('click', () => {
+    // delete entry
+    deleteEntry(entry.id);
   });
 }
 
