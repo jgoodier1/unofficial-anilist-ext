@@ -39,6 +39,7 @@ export async function getCurrentList(type) {
               medium
             }
             status
+            type
             nextAiringEpisode {
               airingAt
               timeUntilAiring
@@ -132,6 +133,7 @@ export async function getFullList(type) {
             coverImage {
               medium
             }
+            type
             status
           }
         }

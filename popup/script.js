@@ -7,6 +7,9 @@ import {
   deleteEntry
 } from './queries.js';
 
+// for displaying the popover on the home page
+const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
+
 // used for searches and in the nav buttons, and changed by homePage
 let currentListType = '';
 
@@ -124,18 +127,10 @@ backdrop.addEventListener('click', () => {
 
 /**
  * Function that displays the selected list
- * @param {string} listType - either 'ANIME' or 'MANGA'
  */
-async function homePage(listType) {
+async function homePage() {
   const token = (await browser.storage.local.get('token')).token;
   if (token) {
-    // if the listType is not given, check storage to see if they've set a preferred type
-    // if not, render the anime list
-    if (listType === undefined) {
-      listType = (await browser.storage.local.get('defaultListType')).defaultListType;
-      if (listType === undefined) listType = 'ANIME';
-    }
-
     const allContainers = document.querySelectorAll('.container');
     allContainers.forEach(container => container.classList.add('hide'));
     const homeWrapper = document.getElementById('home');
@@ -146,7 +141,7 @@ async function homePage(listType) {
     await currentList('ANIME');
     await currentList('MANGA');
   } else {
-    unauthorized(listType);
+    unauthorized();
   }
 }
 
@@ -154,14 +149,8 @@ async function currentList(listType) {
   const homeWrapper = document.getElementById('home');
   const lists = await getCurrentList(listType);
 
-  // if there aren't any current or repeating, display a message to the user
+  // if there aren't any current or repeating, don't show anything
   if (lists.length === 0) {
-    const emptyListHeading = document.createElement('h1');
-    emptyListHeading.classList.add('heading-empty');
-    emptyListHeading.textContent = `You are not currently ${
-      listType === 'ANIME' ? 'watching' : 'reading'
-    } anything`;
-    homeWrapper.appendChild(emptyListHeading);
     return;
   }
 
@@ -181,88 +170,108 @@ async function currentList(listType) {
 
   // create the container for the list entries
   const listContainer = document.createElement('div');
+  listContainer.id = 'home-' + listType;
   listContainer.classList.add('container-list');
   homeWrapper.appendChild(listContainer);
 
-  // want the popover to show up to the right for items on the left half
-  let leftPositions = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
   let position = 1;
-
   // creates the list items
   entries.forEach(entry => {
     if (position > 32) return;
-    const totalContent =
-      listType === 'ANIME' ? entry.media.episodes : entry.media.chapters;
-
-    // the div for the individual entry
-    const divElement = document.createElement('div');
-    divElement.classList.add('list-item-container');
-    listContainer.appendChild(divElement);
-
-    // the cover art. Clicking it opens the page for the entry on Anilist
-    const imgLinkElement = document.createElement('a');
-    imgLinkElement.href = entry.media.siteUrl;
-    imgLinkElement.style.setProperty(
-      'background-image',
-      `url(${entry.media.coverImage.medium})`
-    );
-    imgLinkElement.classList.add('list-item-img');
-    imgLinkElement.classList.add('cover');
-    divElement.appendChild(imgLinkElement);
-
-    // the popover element that shows the title and progress
-    // popover is on the right if the entry is on the left, vice versa
-    const popoverElement = document.createElement('div');
-    popoverElement.classList.add('list-item-popover');
-    if (leftPositions.includes(position))
-      popoverElement.classList.add('list-item-popover-left');
-    else popoverElement.classList.add('list-item-popover-right');
-
-    // the content of the popover
-    const titleElement = document.createElement('p');
-    titleElement.textContent = entry.media.title.userPreferred;
-    titleElement.classList.add('popover-title');
-    popoverElement.appendChild(titleElement);
-    const progressElement = document.createElement('p');
-    progressElement.textContent = `Progress: ${entry.progress} ${
-      totalContent ? '/' + totalContent : ''
-    }`;
-    progressElement.classList.add('popover-progress');
-    popoverElement.appendChild(progressElement);
-    divElement.appendChild(popoverElement);
-
-    // the popover at the bottom of the image that lets you update the entry
-    const progressUpdateElement = document.createElement('div');
-    let progress = entry.progress;
-    progressUpdateElement.textContent = `${progress} +`;
-    progressUpdateElement.classList.add('popover-progress-updater');
-    progressUpdateElement.addEventListener('click', () => {
-      updateEntry(entry.id, entry.status, progress + 1);
-      progressUpdateElement.textContent = `${progress + 1} +`;
-      progressElement.textContent = `Progress: ${progress + 1} ${
-        totalContent ? '/' + totalContent : ''
-      }`;
-      progress += 1;
-    });
-    imgLinkElement.appendChild(progressUpdateElement);
-
-    // remove and add the href so that the user can update the entry without opening the link
-    progressUpdateElement.addEventListener('mouseenter', () => {
-      imgLinkElement.removeAttribute('href');
-    });
-    progressUpdateElement.addEventListener('mouseleave', () => {
-      imgLinkElement.setAttribute('href', entry.media.siteUrl);
-    });
+    createHomeCard(entry, position);
 
     position++;
   });
 }
 
+function createHomeCard(entry, position, moved) {
+  const totalContent =
+    entry.media.type === 'ANIME' ? entry.media.episodes : entry.media.chapters;
+
+  // the div for the individual entry
+  const divElement = document.createElement('div');
+  divElement.id = 'home-' + entry.id;
+  divElement.classList.add('list-item-container');
+
+  let listContainer = document.getElementById('home-' + entry.media.type);
+  // might not exist
+  if (!listContainer) {
+    listContainer = document.createElement('div');
+    listContainer.id = 'home-' + entry.media.type;
+    listContainer.classList.add('container-list');
+    document.getElementById('home').appendChild(listContainer);
+  }
+  if (moved) {
+    listContainer.insertBefore(divElement, listContainer.children[0]);
+  } else {
+    listContainer.appendChild(divElement);
+  }
+
+  // the cover art. Clicking it opens the page for the entry on Anilist
+  const imgLinkElement = document.createElement('a');
+  imgLinkElement.href = entry.media.siteUrl;
+  imgLinkElement.style.setProperty(
+    'background-image',
+    `url(${entry.media.coverImage.medium})`
+  );
+  imgLinkElement.classList.add('list-item-img');
+  imgLinkElement.classList.add('cover');
+  divElement.appendChild(imgLinkElement);
+
+  // the popover element that shows the title and progress
+  // popover is on the right if the entry is on the left, vice versa
+  const popoverElement = document.createElement('div');
+  if (moved) {
+    popoverElement.setAttribute('data-position', '0'); // 0 because it get updated immediately
+  } else {
+    popoverElement.setAttribute('data-position', position);
+  }
+  popoverElement.classList.add('list-item-popover', 'home-popover-' + entry.media.type);
+  if (LEFT_POSITIONS.includes(position))
+    popoverElement.classList.add('list-item-popover-left');
+  else popoverElement.classList.add('list-item-popover-right');
+
+  // the content of the popover
+  const titleElement = document.createElement('p');
+  titleElement.textContent = entry.media.title.userPreferred;
+  titleElement.classList.add('popover-title');
+  popoverElement.appendChild(titleElement);
+  const progressElement = document.createElement('p');
+  progressElement.textContent = `Progress: ${entry.progress} ${
+    totalContent ? '/' + totalContent : ''
+  }`;
+  progressElement.classList.add('popover-progress');
+  popoverElement.appendChild(progressElement);
+  divElement.appendChild(popoverElement);
+
+  // the popover at the bottom of the image that lets you update the entry
+  const progressUpdateElement = document.createElement('div');
+  let progress = entry.progress;
+  progressUpdateElement.textContent = `${progress} +`;
+  progressUpdateElement.classList.add('popover-progress-updater');
+  progressUpdateElement.addEventListener('click', () => {
+    updateEntry(entry.id, entry.status, progress + 1);
+    progressUpdateElement.textContent = `${progress + 1} +`;
+    progressElement.textContent = `Progress: ${progress + 1} ${
+      totalContent ? '/' + totalContent : ''
+    }`;
+    progress += 1;
+  });
+  imgLinkElement.appendChild(progressUpdateElement);
+
+  // remove and add the href so that the user can update the entry without opening the link
+  progressUpdateElement.addEventListener('mouseenter', () => {
+    imgLinkElement.removeAttribute('href');
+  });
+  progressUpdateElement.addEventListener('mouseleave', () => {
+    imgLinkElement.setAttribute('href', entry.media.siteUrl);
+  });
+}
+
 /**
  * Function that shows the log in page
- * @param {string} listType - either 'ANIME' or 'MANGA'
  */
-function unauthorized(listType) {
+function unauthorized() {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
   const unauthorizedContainer = document.getElementById('unauthorized');
@@ -277,7 +286,7 @@ function unauthorized(listType) {
     if (typeof res === 'number') {
       browser.storage.local.set({ token: textareaElement.value });
       textareaElement.value = '';
-      homePage(listType);
+      homePage();
     }
     // else stay unauthorized and display an error
     else {
@@ -345,43 +354,44 @@ async function showList(listType) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = listType === 'ANIME' ? 'Watching' : 'Reading';
-    showListByStatus(current, listType);
+    showListByStatus(current, 'CURRENT', listType);
   }
   if (repeating.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = listType === 'ANIME' ? 'Rewatching' : 'Rereading';
-    showListByStatus(repeating, listType);
+    showListByStatus(repeating, 'REPEATING', listType);
   }
   if (completed.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Completed';
-    showListByStatus(completed, listType);
+    showListByStatus(completed, 'COMPLETED', listType);
   }
   if (paused.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Paused';
-    showListByStatus(paused, listType);
+    showListByStatus(paused, 'PAUSED', listType);
   }
   if (dropped.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Dropped';
-    showListByStatus(dropped, listType);
+    showListByStatus(dropped, 'DROPPED', listType);
   }
   if (planning.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Planning';
-    showListByStatus(planning, listType);
+    showListByStatus(planning, 'PLANNING', listType);
   }
 }
 
-function showListByStatus(status, listType) {
+function showListByStatus(statusList, statusType, listType) {
   const list = document.getElementById('list');
   const section = list.appendChild(document.createElement('section'));
+  section.id = 'list-' + statusType;
   const heading = section.appendChild(document.createElement('div'));
   heading.classList.add('list-row');
   const titleHeading = heading.appendChild(document.createElement('p'));
@@ -394,11 +404,12 @@ function showListByStatus(status, listType) {
   progressHeading.classList.add('progress-heading', 'list-heading');
   progressHeading.textContent = 'Progress';
 
-  status.forEach(list => {
+  statusList.forEach(list => {
     const entries = list.entries;
     entries.sort((a, b) => a.media.title.userPreferred > b.media.title.userPreferred);
     entries.forEach(entry => {
       const row = section.appendChild(document.createElement('div'));
+      row.id = 'list-' + entry.id;
       row.classList.add('list-row');
       const image = row.appendChild(document.createElement('img'));
       image.src = entry.media.coverImage.medium;
@@ -449,7 +460,6 @@ function showListByStatus(status, listType) {
 }
 
 function openEditView(entry, listType) {
-  // i guess this works??
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
 
@@ -457,7 +467,6 @@ function openEditView(entry, listType) {
   editContainer.classList.remove('hide');
   while (editContainer.firstChild) editContainer.removeChild(editContainer.firstChild);
 
-  //status, score, progress
   const wrapper = editContainer.appendChild(document.createElement('div'));
   wrapper.classList.add('edit-wrapper');
 
@@ -556,13 +565,99 @@ function openEditView(entry, listType) {
   form.addEventListener('submit', event => {
     event.preventDefault();
     editEntry(entry.id, statusSelect.value, scoreInput.value, progressInput.value);
-    // decide how to update the old list without refreshing or re-querying
+    updatedListAndHome(entry, {
+      status: statusSelect.value,
+      score: scoreInput.value,
+      progress: progressInput.value
+    });
+    editContainer.classList.add('hide');
+    document.getElementById('list').classList.remove('hide');
   });
 
   deleteButton.addEventListener('click', () => {
-    // delete entry
     deleteEntry(entry.id);
+    deleteFromListAndHome(entry);
+
+    editContainer.classList.add('hide');
+    document.getElementById('list').classList.remove('hide');
   });
+}
+
+function updatedListAndHome(oldEntry, editedEntry) {
+  let updatedStatus;
+  if (oldEntry.status !== editedEntry.status) updatedStatus = editedEntry.status;
+
+  let updatedScore;
+  if (oldEntry.score !== editedEntry.score) updatedScore = editedEntry.score;
+
+  let updatedProgress;
+  if (oldEntry.progress !== editedEntry.progress) updatedProgress = editedEntry.progress;
+
+  // update home
+  if (
+    (oldEntry.status === 'CURRENT' || oldEntry.status === 'REPEATING') &&
+    (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')
+  ) {
+    const homeEntry = document.getElementById('home-' + oldEntry.id);
+    if (updatedProgress)
+      homeEntry.querySelector('.progress').textContent = updatedProgress;
+
+    // remove from home if status changes from current/repeating to something else
+    if (updatedStatus && updatedStatus !== 'CURRENT' && updatedStatus !== 'REPEATING') {
+      document.getElementById('home-' + oldEntry.media.status).removeChild(homeEntry);
+    }
+  }
+
+  if (updatedStatus && (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')) {
+    // add it to the home page in the right spot.
+    createHomeCard(oldEntry, 1, true);
+    const allPopovers = document.querySelectorAll('.home-popover-' + oldEntry.media.type);
+    allPopovers.forEach(popover => {
+      const oldPosition = popover.getAttribute('data-position');
+      const newPosition = +oldPosition + 1;
+      popover.setAttribute('data-position', newPosition);
+      if (LEFT_POSITIONS.includes(newPosition)) {
+        popover.classList.add('list-item-popover-left');
+        popover.classList.remove('list-item-popover-right');
+      } else {
+        popover.classList.add('list-item-popover-right');
+        popover.classList.remove('list-item-popover-left');
+      }
+    });
+  }
+
+  // update the list
+  const listEntry = document.getElementById('list-' + oldEntry.id);
+  if (updatedScore) listEntry.querySelector('.score').textContent = updatedScore;
+  if (updatedProgress) listEntry.querySelector('.progress').textContent = updatedProgress;
+
+  if (updatedStatus) {
+    // remove it from it's current spot.
+    const currentSection = document.getElementById('list-' + oldEntry.status);
+    const removedEntry = currentSection.removeChild(listEntry);
+
+    // add it to the new one.
+    const newSection = document.getElementById('list-' + updatedStatus);
+    const titleNodes = document.querySelectorAll('#list-' + updatedStatus + ' .title');
+    const allTitles = [];
+    titleNodes.forEach(title => allTitles.push(title.textContent));
+    allTitles.push(oldEntry.media.title.userPreferred);
+    const sortedTitles = allTitles.sort((a, b) => a > b);
+    const newIndex = sortedTitles.indexOf(oldEntry.media.title.userPreferred);
+    newSection.insertBefore(removedEntry, newSection.children[newIndex + 1]);
+  }
+}
+
+function deleteFromListAndHome(entry) {
+  if (entry.status === 'CURRENT' || entry.status === 'REPEATING') {
+    const homeEntry = document.getElementById('home-' + entry.id);
+    const homeWrapper = document.getElementById('home-' + entry.media.type);
+    homeWrapper.removeChild(homeEntry);
+  }
+
+  const listEntry = document.getElementById('list-' + entry.id);
+  const sectionWrapper = document.getElementById('section-' + entry.status);
+  sectionWrapper.removeChild(listEntry);
 }
 
 // call homePage when the popup is opened
