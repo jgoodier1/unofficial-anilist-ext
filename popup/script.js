@@ -77,7 +77,14 @@ async function currentList(listType) {
   lists.forEach(list => {
     list.forEach(entry => entries.push(entry));
   });
-  entries.sort((a, b) => a.updatedAt < b.updatedAt);
+  const currentlyAiring = entries.filter(entry => entry.media.nextAiringEpisode !== null);
+  currentlyAiring.sort(
+    (a, b) =>
+      a.media.nextAiringEpisode.timeUntilAiring >
+      b.media.nextAiringEpisode.timeUntilAiring
+  );
+  const finishedAiring = entries.filter(entry => entry.media.nextAiringEpisode === null);
+  finishedAiring.sort((a, b) => a.updatedAt < b.updatedAt);
 
   // the heading above the list
   const headingElement = document.createElement('h1');
@@ -94,7 +101,13 @@ async function currentList(listType) {
 
   let position = 1;
   // creates the list items
-  entries.forEach(entry => {
+  currentlyAiring.forEach(entry => {
+    if (position > 32) return;
+    createHomeCard(entry.media, position, false, entry);
+
+    position++;
+  });
+  finishedAiring.forEach(entry => {
     if (position > 32) return;
     createHomeCard(entry.media, position, false, entry);
 
@@ -159,11 +172,36 @@ function createHomeCard(media, position, moved, entry) {
   popoverElement.appendChild(progressElement);
   divElement.appendChild(popoverElement);
 
+  if (media.nextAiringEpisode !== null) {
+    const nextEpisodeElement = imgLinkElement.appendChild(document.createElement('div'));
+    nextEpisodeElement.classList.add('list-item-next-episode', 'list-item-on-img');
+    const episodeNumber = nextEpisodeElement.appendChild(document.createElement('p'));
+    episodeNumber.textContent = `Ep ${media.nextAiringEpisode.episode}`;
+
+    const DAY = 86400;
+    const HOUR = 3600;
+    const MINUTE = 60;
+    const days = Math.trunc(media.nextAiringEpisode.timeUntilAiring / DAY);
+    const dayRemainder = media.nextAiringEpisode.timeUntilAiring % DAY;
+    const hours = Math.trunc(dayRemainder / HOUR);
+    const hourRemainder = dayRemainder % HOUR;
+    const minutes = Math.trunc(hourRemainder / MINUTE);
+
+    const timeUntilEpisode = nextEpisodeElement.appendChild(document.createElement('p'));
+    if (days === 0) timeUntilEpisode.textContent = `${hours}h ${minutes}m`;
+    if (days === 0 && hours === 0) timeUntilEpisode.textContent = `$ ${minutes}m`;
+    else timeUntilEpisode.textContent = `${days}d ${hours}h ${minutes}m`;
+
+    if (media.nextAiringEpisode.episode - entry.progress > 1) {
+      nextEpisodeElement.style.borderBottom = '4px solid #ff6d6d';
+    }
+  }
+
   // the popover at the bottom of the image that lets you update the entry
   const progressUpdateElement = document.createElement('div');
   let progress = entry.progress;
   progressUpdateElement.textContent = `${progress} +`;
-  progressUpdateElement.classList.add('popover-progress-updater');
+  progressUpdateElement.classList.add('popover-progress-updater', 'list-item-on-img');
   progressUpdateElement.addEventListener('click', () => {
     updateEntry(entry.id, entry.status, progress + 1);
     progressUpdateElement.textContent = `${progress + 1} +`;
