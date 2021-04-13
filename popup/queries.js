@@ -310,7 +310,6 @@ export async function deleteEntry(id) {
 }
 
 export async function search(searchValue) {
-  console.log(searchValue);
   const results = [];
 
   const mediaQuery = `
@@ -391,7 +390,6 @@ export async function search(searchValue) {
     .then(res => res.json())
     .then(json => {
       results.push(json.data.Page.characters);
-      console.log(json);
     });
 
   const staffQuery = `
@@ -425,4 +423,141 @@ export async function search(searchValue) {
     .then(json => results.push(json.data.Page.staff));
 
   return results;
+}
+
+export async function checkIfOnList(mediaId) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  let userId = (await browser.storage.local.get('userId')).userId;
+  if (userId === undefined) {
+    userId = await getUser(token);
+    if (typeof userId !== 'number') {
+      userId;
+      return;
+    } else {
+      browser.storage.local.set({ userId });
+    }
+  }
+
+  const query = `
+  query($mediaId: Int, $userId: Int){
+    MediaList(mediaId: $mediaId, userId: $userId) {
+      id
+      status
+      progress
+      score
+      media {
+        id
+        chapters
+        episodes
+        title {
+          userPreferred
+        }
+        coverImage {
+          medium
+        }
+        type
+      }
+    }
+  }`;
+
+  const query2 = `
+  query($mediaId: Int){
+    Media(id: $mediaId) {
+      id
+      episodes
+      chapters
+      title {
+        userPreferred
+      }
+      coverImage {
+        medium
+      }
+      type
+    }
+  }`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { mediaId, userId }
+    })
+  };
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(async json => {
+      if (json.errors && json.errors[0].message === 'Not Found.') {
+        // it's not on their list
+        return fetch('https://graphql.anilist.co', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+          },
+          body: JSON.stringify({
+            query: query2,
+            variables: { mediaId }
+          })
+        })
+          .then(res => res.json())
+          .then(json => {
+            return { data: json.data.Media, exists: false };
+          });
+      } else {
+        return { data: json.data.MediaList, exists: true };
+      }
+    });
+}
+
+export async function addEntry(mediaId, status, score, progress) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  mutation ($mediaId: Int, $status: MediaListStatus, $score: Float, $progress: Int){
+    SaveMediaListEntry(mediaId: $mediaId status: $status progress: $progress score:$score) {
+      id
+      mediaId
+      status
+      score
+      progress
+      media {
+        title {
+          userPreferred
+        }
+        coverImage {
+          medium
+        }
+      }
+    }
+  }`;
+
+  const variables = {
+    mediaId,
+    status,
+    score,
+    progress
+  };
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: variables
+    })
+  };
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.MediaList;
+    });
 }

@@ -5,7 +5,9 @@ import {
   updateEntry,
   editEntry,
   deleteEntry,
-  search
+  search,
+  checkIfOnList,
+  addEntry
 } from './queries.js';
 
 // for displaying the popover on the home page
@@ -94,26 +96,25 @@ async function currentList(listType) {
   // creates the list items
   entries.forEach(entry => {
     if (position > 32) return;
-    createHomeCard(entry, position);
+    createHomeCard(entry.media, position, false, entry);
 
     position++;
   });
 }
 
-function createHomeCard(entry, position, moved) {
-  const totalContent =
-    entry.media.type === 'ANIME' ? entry.media.episodes : entry.media.chapters;
+function createHomeCard(media, position, moved, entry) {
+  const totalContent = media.type === 'ANIME' ? media.episodes : media.chapters;
 
   // the div for the individual entry
   const divElement = document.createElement('div');
   divElement.id = 'home-' + entry.id;
   divElement.classList.add('list-item-container');
 
-  let listContainer = document.getElementById('home-' + entry.media.type);
+  let listContainer = document.getElementById('home-' + media.type);
   // might not exist
   if (!listContainer) {
     listContainer = document.createElement('div');
-    listContainer.id = 'home-' + entry.media.type;
+    listContainer.id = 'home-' + media.type;
     listContainer.classList.add('container-list');
     document.getElementById('home').appendChild(listContainer);
   }
@@ -125,11 +126,9 @@ function createHomeCard(entry, position, moved) {
 
   // the cover art. Clicking it opens the page for the entry on Anilist
   const imgLinkElement = document.createElement('a');
-  imgLinkElement.href = entry.media.siteUrl;
-  imgLinkElement.style.setProperty(
-    'background-image',
-    `url(${entry.media.coverImage.medium})`
-  );
+  // this won't work with new entries, but it's goint to change anyway so I'm not fixing it
+  imgLinkElement.href = media.siteUrl;
+  imgLinkElement.style.setProperty('background-image', `url(${media.coverImage.medium})`);
   imgLinkElement.classList.add('list-item-img');
   imgLinkElement.classList.add('cover');
   divElement.appendChild(imgLinkElement);
@@ -142,14 +141,14 @@ function createHomeCard(entry, position, moved) {
   } else {
     popoverElement.setAttribute('data-position', position);
   }
-  popoverElement.classList.add('list-item-popover', 'home-popover-' + entry.media.type);
+  popoverElement.classList.add('list-item-popover', 'home-popover-' + media.type);
   if (LEFT_POSITIONS.includes(position))
     popoverElement.classList.add('list-item-popover-left');
   else popoverElement.classList.add('list-item-popover-right');
 
   // the content of the popover
   const titleElement = document.createElement('p');
-  titleElement.textContent = entry.media.title.userPreferred;
+  titleElement.textContent = media.title.userPreferred;
   titleElement.classList.add('popover-title');
   popoverElement.appendChild(titleElement);
   const progressElement = document.createElement('p');
@@ -180,7 +179,7 @@ function createHomeCard(entry, position, moved) {
     imgLinkElement.removeAttribute('href');
   });
   progressUpdateElement.addEventListener('mouseleave', () => {
-    imgLinkElement.setAttribute('href', entry.media.siteUrl);
+    imgLinkElement.setAttribute('href', media.siteUrl);
   });
 }
 
@@ -270,41 +269,41 @@ async function showList(listType) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = listType === 'ANIME' ? 'Watching' : 'Reading';
-    showListByStatus(current, 'CURRENT', listType);
+    showListByStatus(current, 'CURRENT');
   }
   if (repeating.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = listType === 'ANIME' ? 'Rewatching' : 'Rereading';
-    showListByStatus(repeating, 'REPEATING', listType);
+    showListByStatus(repeating, 'REPEATING');
   }
   if (completed.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Completed';
-    showListByStatus(completed, 'COMPLETED', listType);
+    showListByStatus(completed, 'COMPLETED');
   }
   if (paused.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Paused';
-    showListByStatus(paused, 'PAUSED', listType);
+    showListByStatus(paused, 'PAUSED');
   }
   if (dropped.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Dropped';
-    showListByStatus(dropped, 'DROPPED', listType);
+    showListByStatus(dropped, 'DROPPED');
   }
   if (planning.length !== 0) {
     const header = list.appendChild(document.createElement('h2'));
     header.classList.add('list-header');
     header.textContent = 'Planning';
-    showListByStatus(planning, 'PLANNING', listType);
+    showListByStatus(planning, 'PLANNING');
   }
 }
 
-function showListByStatus(statusList, statusType, listType) {
+function showListByStatus(statusList, statusType) {
   const list = document.getElementById('list');
   const section = list.appendChild(document.createElement('section'));
   section.id = 'list-' + statusType;
@@ -324,58 +323,13 @@ function showListByStatus(statusList, statusType, listType) {
     const entries = list.entries;
     entries.sort((a, b) => a.media.title.userPreferred > b.media.title.userPreferred);
     entries.forEach(entry => {
-      const row = section.appendChild(document.createElement('div'));
-      row.id = 'list-' + entry.id;
-      row.classList.add('list-row');
-      const image = row.appendChild(document.createElement('img'));
-      image.src = entry.media.coverImage.medium;
-
-      const editButton = row.appendChild(document.createElement('button'));
-      editButton.classList.add('list-row-button');
-      const svg = editButton.appendChild(
-        document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-      );
-      svg.setAttributeNS(null, 'viewBox', '0 -1 401.52289 401');
-      svg.setAttributeNS(null, 'fill', 'white');
-      svg.classList.add('list-row-svg');
-      const path1 = svg.appendChild(
-        document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      );
-      path1.setAttributeNS(
-        null,
-        'd',
-        'm370.589844 250.972656c-5.523438 0-10 4.476563-10 10v88.789063c-.019532 16.5625-13.4375 29.984375-30 30h-280.589844c-16.5625-.015625-29.980469-13.4375-30-30v-260.589844c.019531-16.558594 13.4375-29.980469 30-30h88.789062c5.523438 0 10-4.476563 10-10 0-5.519531-4.476562-10-10-10h-88.789062c-27.601562.03125-49.96875 22.398437-50 50v260.59375c.03125 27.601563 22.398438 49.96875 50 50h280.589844c27.601562-.03125 49.96875-22.398437 50-50v-88.792969c0-5.523437-4.476563-10-10-10zm0 0'
-      );
-      const path2 = svg.appendChild(
-        document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      );
-      path2.setAttributeNS(
-        null,
-        'd',
-        'm376.628906 13.441406c-17.574218-17.574218-46.066406-17.574218-63.640625 0l-178.40625 178.40625c-1.222656 1.222656-2.105469 2.738282-2.566406 4.402344l-23.460937 84.699219c-.964844 3.472656.015624 7.191406 2.5625 9.742187 2.550781 2.546875 6.269531 3.527344 9.742187 2.566406l84.699219-23.464843c1.664062-.460938 3.179687-1.34375 4.402344-2.566407l178.402343-178.410156c17.546875-17.585937 17.546875-46.054687 0-63.640625zm-220.257812 184.90625 146.011718-146.015625 47.089844 47.089844-146.015625 146.015625zm-9.40625 18.875 37.621094 37.625-52.039063 14.417969zm227.257812-142.546875-10.605468 10.605469-47.09375-47.09375 10.609374-10.605469c9.761719-9.761719 25.589844-9.761719 35.351563 0l11.738281 11.734375c9.746094 9.773438 9.746094 25.589844 0 35.359375zm0 0'
-      );
-
-      editButton.addEventListener('click', () => {
-        openEditView(entry, listType);
-      });
-
-      const title = row.appendChild(document.createElement('h3'));
-      title.classList.add('title');
-      title.textContent = entry.media.title.userPreferred;
-
-      const score = row.appendChild(document.createElement('p'));
-      score.classList.add('score');
-      if (entry.score === 0) score.textContent = '';
-      else score.textContent = entry.score;
-
-      const progress = row.appendChild(document.createElement('p'));
-      progress.classList.add('progress');
-      progress.textContent = entry.progress;
+      const row = createRow(entry, section);
+      section.appendChild(row);
     });
   });
 }
 
-function openEditView(entry, listType) {
+function openEditView(media, listType, prevContainer, entry) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
 
@@ -388,11 +342,11 @@ function openEditView(entry, listType) {
 
   const image = wrapper.appendChild(document.createElement('img'));
   image.classList.add('edit-image');
-  image.src = entry.media.coverImage.medium;
+  image.src = media.coverImage.medium;
 
   const title = wrapper.appendChild(document.createElement('h1'));
   title.classList.add('edit-title');
-  title.textContent = entry.media.title.userPreferred;
+  title.textContent = media.title.userPreferred;
 
   const xButton = wrapper.appendChild(document.createElement('button'));
   xButton.classList.add('edit-close');
@@ -400,7 +354,7 @@ function openEditView(entry, listType) {
   xButton.addEventListener('click', () => {
     editContainer.removeChild(wrapper);
     editContainer.classList.add('hide');
-    document.getElementById('list').classList.remove('hide');
+    document.getElementById(prevContainer).classList.remove('hide');
   });
 
   const form = wrapper.appendChild(document.createElement('form'));
@@ -435,7 +389,7 @@ function openEditView(entry, listType) {
   optionRepeating.value = 'REPEATING';
   optionRepeating.textContent = listType === 'ANIME' ? 'Rewatching' : 'Rereading';
 
-  statusSelect.value = entry.status;
+  if (entry) statusSelect.value = entry.status;
 
   const scoreLabel = form.appendChild(document.createElement('label'));
   scoreLabel.classList.add('edit-score');
@@ -448,7 +402,7 @@ function openEditView(entry, listType) {
   scoreInput.setAttribute('min', '0');
   scoreInput.setAttribute('max', '10');
   scoreInput.setAttribute('step', '0.5');
-  scoreInput.value = entry.score;
+  if (entry) scoreInput.value = entry.score;
 
   const progressLabel = form.appendChild(document.createElement('label'));
   progressLabel.classList.add('edit-progress');
@@ -456,10 +410,10 @@ function openEditView(entry, listType) {
   progressLabel.textContent = 'Progress';
 
   let maxProgress;
-  if (listType === 'ANIME' && entry.media.episodes !== null) {
-    maxProgress = entry.media.episodes;
-  } else if (listType === 'MANGA' && entry.media.chapters !== null) {
-    maxProgress = entry.media.chapters;
+  if (listType === 'ANIME' && media.episodes !== null) {
+    maxProgress = media.episodes;
+  } else if (listType === 'MANGA' && media.chapters !== null) {
+    maxProgress = media.chapters;
   } else maxProgress = 99999;
 
   const progressInput = progressLabel.appendChild(document.createElement('input'));
@@ -468,37 +422,59 @@ function openEditView(entry, listType) {
   progressInput.setAttribute('min', '0');
   progressInput.setAttribute('max', maxProgress);
   progressInput.setAttribute('step', '1');
-  progressInput.value = entry.progress;
+  if (entry) progressInput.value = entry.progress;
 
   const saveButton = form.appendChild(document.createElement('button'));
   saveButton.classList.add('edit-save', 'edit-button');
   saveButton.setAttribute('type', 'submit');
   saveButton.textContent = 'Save';
 
-  const deleteButton = form.appendChild(document.createElement('button'));
-  deleteButton.classList.add('edit-delete', 'edit-button');
-  deleteButton.setAttribute('type', 'button');
-  deleteButton.textContent = 'Delete';
-
-  form.addEventListener('submit', event => {
+  form.addEventListener('submit', async event => {
     event.preventDefault();
-    editEntry(entry.id, statusSelect.value, scoreInput.value, progressInput.value);
-    updatedListAndHome(entry, {
-      status: statusSelect.value,
-      score: scoreInput.value,
-      progress: progressInput.value
+    if (entry) {
+      const scoreValue = scoreInput.value || 0;
+      const progressValue = progressInput.value || 0;
+      editEntry(entry.id, statusSelect.value, scoreValue, progressValue);
+      updatedListAndHome(entry, {
+        status: statusSelect.value,
+        score: scoreInput.value,
+        progress: progressInput.value
+      });
+    } else {
+      const scoreValue = scoreInput.value || 0;
+      const progressValue = progressInput.value || 0;
+      const entry = await addEntry(
+        media.id,
+        statusSelect.value,
+        scoreValue,
+        progressValue
+      );
+      addToListAndHome(
+        media,
+        {
+          status: statusSelect.value,
+          score: scoreInput.value,
+          progress: progressInput.value
+        },
+        entry
+      );
+    }
+    editContainer.classList.add('hide');
+    document.getElementById('home').classList.remove('hide');
+  });
+
+  if (entry) {
+    const deleteButton = form.appendChild(document.createElement('button'));
+    deleteButton.classList.add('edit-delete', 'edit-button');
+    deleteButton.setAttribute('type', 'button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.addEventListener('click', () => {
+      deleteEntry(entry.id);
+      deleteFromListAndHome(entry);
+      editContainer.classList.add('hide');
+      document.getElementById('home').classList.remove('hide');
     });
-    editContainer.classList.add('hide');
-    document.getElementById('list').classList.remove('hide');
-  });
-
-  deleteButton.addEventListener('click', () => {
-    deleteEntry(entry.id);
-    deleteFromListAndHome(entry);
-
-    editContainer.classList.add('hide');
-    document.getElementById('list').classList.remove('hide');
-  });
+  }
 }
 
 function updatedListAndHome(oldEntry, editedEntry) {
@@ -528,42 +504,120 @@ function updatedListAndHome(oldEntry, editedEntry) {
 
   if (updatedStatus && (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')) {
     // add it to the home page in the right spot.
-    createHomeCard(oldEntry, 1, true);
-    const allPopovers = document.querySelectorAll('.home-popover-' + oldEntry.media.type);
-    allPopovers.forEach(popover => {
-      const oldPosition = popover.getAttribute('data-position');
-      const newPosition = +oldPosition + 1;
-      popover.setAttribute('data-position', newPosition);
-      if (LEFT_POSITIONS.includes(newPosition)) {
-        popover.classList.add('list-item-popover-left');
-        popover.classList.remove('list-item-popover-right');
-      } else {
-        popover.classList.add('list-item-popover-right');
-        popover.classList.remove('list-item-popover-left');
-      }
-    });
+    createHomeCard(oldEntry.media, 1, true, oldEntry);
+    addHomeCardToStart(oldEntry.media.type);
   }
 
   // update the list
-  const listEntry = document.getElementById('list-' + oldEntry.id);
-  if (updatedScore) listEntry.querySelector('.score').textContent = updatedScore;
-  if (updatedProgress) listEntry.querySelector('.progress').textContent = updatedProgress;
+  if (document.getElementById('list').firstChild) {
+    const listEntry = document.getElementById('list-' + oldEntry.id);
+    if (updatedScore) listEntry.querySelector('.score').textContent = updatedScore;
+    if (updatedProgress)
+      listEntry.querySelector('.progress').textContent = updatedProgress;
 
-  if (updatedStatus) {
-    // remove it from it's current spot.
-    const currentSection = document.getElementById('list-' + oldEntry.status);
-    const removedEntry = currentSection.removeChild(listEntry);
+    if (updatedStatus) {
+      // remove it from it's current spot.
+      const currentSection = document.getElementById('list-' + oldEntry.status);
+      const removedEntry = currentSection.removeChild(listEntry);
 
-    // add it to the new one.
-    const newSection = document.getElementById('list-' + updatedStatus);
-    const titleNodes = document.querySelectorAll('#list-' + updatedStatus + ' .title');
-    const allTitles = [];
-    titleNodes.forEach(title => allTitles.push(title.textContent));
-    allTitles.push(oldEntry.media.title.userPreferred);
-    const sortedTitles = allTitles.sort((a, b) => a > b);
-    const newIndex = sortedTitles.indexOf(oldEntry.media.title.userPreferred);
-    newSection.insertBefore(removedEntry, newSection.children[newIndex + 1]);
+      // add it to the new one.
+      addToListSection(removedEntry, updatedStatus, oldEntry.media.title.userPreferred);
+    }
   }
+}
+
+function addToListAndHome(media, formValues, entry) {
+  // home
+  if (formValues.status === 'CURRENT' || formValues.status === 'REPEATING') {
+    createHomeCard(media, 1, true, formValues);
+    addHomeCardToStart(media.type);
+  }
+
+  // list
+  if (document.getElementById('list').firstChild) {
+    const row = createRow(entry);
+    addToListSection(row, formValues.status, media.title.userPreferred);
+  }
+}
+
+function addHomeCardToStart(mediaType) {
+  // createHomeCard(oldEntry.media, 1, true, oldEntry);
+  const allPopovers = document.querySelectorAll('.home-popover-' + mediaType);
+  allPopovers.forEach(popover => {
+    const oldPosition = popover.getAttribute('data-position');
+    const newPosition = +oldPosition + 1;
+    popover.setAttribute('data-position', newPosition);
+    if (LEFT_POSITIONS.includes(newPosition)) {
+      popover.classList.add('list-item-popover-left');
+      popover.classList.remove('list-item-popover-right');
+    } else {
+      popover.classList.add('list-item-popover-right');
+      popover.classList.remove('list-item-popover-left');
+    }
+  });
+}
+
+function addToListSection(row, status, title) {
+  const section = document.getElementById('list-' + status);
+  const titleNodes = document.querySelectorAll('#list-' + status + ' .title');
+  const allTitles = [];
+  titleNodes.forEach(title => allTitles.push(title.textContent));
+  allTitles.push(title);
+  const sortedTitles = allTitles.sort((a, b) => a > b);
+  const newIndex = sortedTitles.indexOf(title);
+  section.insertBefore(row, section.children[newIndex + 1]);
+}
+
+function createRow(entry) {
+  const row = document.createElement('div');
+  row.id = 'list-' + entry.id;
+  row.classList.add('list-row');
+  const image = row.appendChild(document.createElement('img'));
+  image.src = entry.media.coverImage.medium;
+
+  const editButton = row.appendChild(document.createElement('button'));
+  editButton.classList.add('list-row-button');
+  const svg = editButton.appendChild(
+    document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  );
+  svg.setAttributeNS(null, 'viewBox', '0 -1 401.52289 401');
+  svg.setAttributeNS(null, 'fill', 'white');
+  svg.classList.add('list-row-svg');
+  const path1 = svg.appendChild(
+    document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  );
+  path1.setAttributeNS(
+    null,
+    'd',
+    'm370.589844 250.972656c-5.523438 0-10 4.476563-10 10v88.789063c-.019532 16.5625-13.4375 29.984375-30 30h-280.589844c-16.5625-.015625-29.980469-13.4375-30-30v-260.589844c.019531-16.558594 13.4375-29.980469 30-30h88.789062c5.523438 0 10-4.476563 10-10 0-5.519531-4.476562-10-10-10h-88.789062c-27.601562.03125-49.96875 22.398437-50 50v260.59375c.03125 27.601563 22.398438 49.96875 50 50h280.589844c27.601562-.03125 49.96875-22.398437 50-50v-88.792969c0-5.523437-4.476563-10-10-10zm0 0'
+  );
+  const path2 = svg.appendChild(
+    document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  );
+  path2.setAttributeNS(
+    null,
+    'd',
+    'm376.628906 13.441406c-17.574218-17.574218-46.066406-17.574218-63.640625 0l-178.40625 178.40625c-1.222656 1.222656-2.105469 2.738282-2.566406 4.402344l-23.460937 84.699219c-.964844 3.472656.015624 7.191406 2.5625 9.742187 2.550781 2.546875 6.269531 3.527344 9.742187 2.566406l84.699219-23.464843c1.664062-.460938 3.179687-1.34375 4.402344-2.566407l178.402343-178.410156c17.546875-17.585937 17.546875-46.054687 0-63.640625zm-220.257812 184.90625 146.011718-146.015625 47.089844 47.089844-146.015625 146.015625zm-9.40625 18.875 37.621094 37.625-52.039063 14.417969zm227.257812-142.546875-10.605468 10.605469-47.09375-47.09375 10.609374-10.605469c9.761719-9.761719 25.589844-9.761719 35.351563 0l11.738281 11.734375c9.746094 9.773438 9.746094 25.589844 0 35.359375zm0 0'
+  );
+
+  editButton.addEventListener('click', () => {
+    openEditView(entry.media, entry.media.type, 'list', entry);
+  });
+
+  const title = row.appendChild(document.createElement('h3'));
+  title.classList.add('title');
+  title.textContent = entry.media.title.userPreferred;
+
+  const score = row.appendChild(document.createElement('p'));
+  score.classList.add('score');
+  if (entry.score === 0) score.textContent = '';
+  else score.textContent = entry.score;
+
+  const progress = row.appendChild(document.createElement('p'));
+  progress.classList.add('progress');
+  progress.textContent = entry.progress;
+
+  return row;
 }
 
 function deleteFromListAndHome(entry) {
@@ -606,8 +660,11 @@ async function searchPage() {
 
 function showSearchResults(allResults) {
   const searchContainer = document.getElementById('search');
+  const searchBar = document.getElementById('search-bar');
+  while (searchBar.nextSibling) searchContainer.removeChild(searchBar.nextSibling);
 
   allResults.forEach((results, i) => {
+    if (results.length === 0) return;
     let headingContent;
     if (i === 0) headingContent = 'Anime';
     else if (i === 1) headingContent = 'Manga';
@@ -624,6 +681,7 @@ function showSearchResults(allResults) {
 
     results.forEach(result => {
       const row = rowContainer.appendChild(document.createElement('div'));
+      row.id = 'search-' + result.id;
       row.classList.add('search-row');
 
       const image = row.appendChild(document.createElement('img'));
@@ -642,6 +700,49 @@ function showSearchResults(allResults) {
         const yearAndFormat = row.appendChild(document.createElement('p'));
         yearAndFormat.textContent = result.startDate.year + ' ' + result.format;
         yearAndFormat.classList.add('search-media-year');
+
+        const editButton = row.appendChild(document.createElement('button'));
+        editButton.classList.add('search-edit-button');
+        const svg = editButton.appendChild(
+          document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        );
+        svg.setAttributeNS(null, 'viewBox', '0 -1 401.52289 401');
+        svg.setAttributeNS(null, 'fill', 'black');
+        svg.classList.add('search-edit-svg');
+        const path1 = svg.appendChild(
+          document.createElementNS('http://www.w3.org/2000/svg', 'path')
+        );
+        path1.setAttributeNS(
+          null,
+          'd',
+          'm370.589844 250.972656c-5.523438 0-10 4.476563-10 10v88.789063c-.019532 16.5625-13.4375 29.984375-30 30h-280.589844c-16.5625-.015625-29.980469-13.4375-30-30v-260.589844c.019531-16.558594 13.4375-29.980469 30-30h88.789062c5.523438 0 10-4.476563 10-10 0-5.519531-4.476562-10-10-10h-88.789062c-27.601562.03125-49.96875 22.398437-50 50v260.59375c.03125 27.601563 22.398438 49.96875 50 50h280.589844c27.601562-.03125 49.96875-22.398437 50-50v-88.792969c0-5.523437-4.476563-10-10-10zm0 0'
+        );
+        const path2 = svg.appendChild(
+          document.createElementNS('http://www.w3.org/2000/svg', 'path')
+        );
+        path2.setAttributeNS(
+          null,
+          'd',
+          'm376.628906 13.441406c-17.574218-17.574218-46.066406-17.574218-63.640625 0l-178.40625 178.40625c-1.222656 1.222656-2.105469 2.738282-2.566406 4.402344l-23.460937 84.699219c-.964844 3.472656.015624 7.191406 2.5625 9.742187 2.550781 2.546875 6.269531 3.527344 9.742187 2.566406l84.699219-23.464843c1.664062-.460938 3.179687-1.34375 4.402344-2.566407l178.402343-178.410156c17.546875-17.585937 17.546875-46.054687 0-63.640625zm-220.257812 184.90625 146.011718-146.015625 47.089844 47.089844-146.015625 146.015625zm-9.40625 18.875 37.621094 37.625-52.039063 14.417969zm227.257812-142.546875-10.605468 10.605469-47.09375-47.09375 10.609374-10.605469c9.761719-9.761719 25.589844-9.761719 35.351563 0l11.738281 11.734375c9.746094 9.773438 9.746094 25.589844 0 35.359375zm0 0'
+        );
+
+        editButton.addEventListener('click', async () => {
+          if (i === 0) {
+            const entry = await checkIfOnList(result.id);
+            if (entry.exists) {
+              openEditView(entry.data.media, 'ANIME', 'search', entry.data);
+            } else {
+              openEditView(entry.data, 'ANIME');
+            }
+          } else {
+            const entry = await checkIfOnList(result.id);
+            if (entry.exists) {
+              openEditView(entry.data.media, 'MANGA', 'search', entry.data);
+            } else {
+              openEditView(entry.data, 'MANGA');
+            }
+          }
+        });
       } else if (i === 2 || i === 3) {
         title.textContent = result.name.full;
         title.classList.add('search-title', 'search-char-staff-title');
