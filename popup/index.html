@@ -116,33 +116,6 @@
       </button>
     </nav>
 
-    <div id="search-container">
-      <input type="search" id="search-input" placeholder="Search Anilist" />
-      <span id="search-button-query">
-        <svg
-          version="1.1"
-          xmlns="http://www.w3.org/2000/svg"
-          x="0px"
-          y="0px"
-          viewBox="0 0 512.005 512.005"
-          style="enable-background: new 0 0 512.005 512.005"
-          xml:space="preserve"
-          style="width: 1em"
-        >
-          <g>
-            <g>
-              <path
-                fill="currentColor"
-                d="M505.749,475.587l-145.6-145.6c28.203-34.837,45.184-79.104,45.184-127.317c0-111.744-90.923-202.667-202.667-202.667
-           S0,90.925,0,202.669s90.923,202.667,202.667,202.667c48.213,0,92.48-16.981,127.317-45.184l145.6,145.6
-           c4.16,4.16,9.621,6.251,15.083,6.251s10.923-2.091,15.083-6.251C514.091,497.411,514.091,483.928,505.749,475.587z
-            M202.667,362.669c-88.235,0-160-71.765-160-160s71.765-160,160-160s160,71.765,160,160S290.901,362.669,202.667,362.669z"
-              />
-            </g>
-          </g>
-        </svg>
-      </span>
-    </div>
     <div id="settings-container">
       <div class="options-outer-div">
         <label for="list-options">Default List:</label>
@@ -181,10 +154,42 @@
     <div class="hide container" id="home"></div>
     <div class="hide container" id="list"></div>
     <div class="hide container" id="edit"></div>
-    <div class="hide container" id="search"></div>
+    <div class="hide container" id="search">
+      <div class="search-bar">
+        <input
+          type="seach"
+          placeholder="Search Anilist"
+          id="search-input"
+          class="search-input"
+        />
+        <button id="search-button" class="search-button">
+          <svg
+            version="1.1"
+            xmlns="http://www.w3.org/2000/svg"
+            x="0px"
+            y="0px"
+            viewBox="0 0 512.005 512.005"
+            style="enable-background: new 0 0 512.005 512.005"
+            xml:space="preserve"
+            style="width: 1em"
+          >
+            <g>
+              <g>
+                <path
+                  fill="currentColor"
+                  d="M505.749,475.587l-145.6-145.6c28.203-34.837,45.184-79.104,45.184-127.317c0-111.744-90.923-202.667-202.667-202.667
+         S0,90.925,0,202.669s90.923,202.667,202.667,202.667c48.213,0,92.48-16.981,127.317-45.184l145.6,145.6
+         c4.16,4.16,9.621,6.251,15.083,6.251s10.923-2.091,15.083-6.251C514.091,497.411,514.091,483.928,505.749,475.587z
+          M202.667,362.669c-88.235,0-160-71.765-160-160s71.765-160,160-160s160,71.765,160,160S290.901,362.669,202.667,362.669z"
+                />
+              </g>
+            </g>
+          </svg>
+        </button>
+      </div>
+    </div>
     <div class="hide container" id="media"></div>
 
-    <div id="backdrop" class="hide"></div>
     <script type="module" src="script.js"></script>
   </body>
 </html>

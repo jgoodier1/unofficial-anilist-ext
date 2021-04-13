@@ -4,7 +4,8 @@ import {
   getUser,
   updateEntry,
   editEntry,
-  deleteEntry
+  deleteEntry,
+  search
 } from './queries.js';
 
 // for displaying the popover on the home page
@@ -13,7 +14,7 @@ const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 3
 // used for searches and in the nav buttons, and changed by homePage
 let currentListType = '';
 
-// nav buttons that change which type of list is displayed
+// nav buttons
 document.getElementById('home-button').addEventListener('click', () => {
   homePage();
 });
@@ -23,107 +24,22 @@ document.getElementById('anime-button').addEventListener('click', () => {
 document.getElementById('manga-button').addEventListener('click', () => {
   showList('MANGA');
 });
-
-// nav button that opens and closes the search bar
-const searchNavButton = document.getElementById('search-nav-button');
-const searchContainer = document.getElementById('search-container');
-let searchState = 'closed';
-searchNavButton.addEventListener('click', () => {
-  const backdrop = document.getElementById('backdrop');
-  if (searchState === 'closed') {
-    searchContainer.style.transform = 'translateY(250px)';
-    searchContainer.style.opacity = 1;
-    backdrop.classList.remove('hide');
-    searchInput.focus();
-    searchState = 'open';
-  }
+document.getElementById('search-nav-button').addEventListener('click', () => {
+  searchPage();
 });
 
-// the search bar
-// takes the values of the search input and the currentListType
-// and opens a new tab with the search query on Anilist
-const searchInput = document.getElementById('search-input');
-const searchQueryButton = document.getElementById('search-button-query');
-searchInput.addEventListener('keydown', e => {
-  if (searchInput.value === '') return;
-  if (e.code === 'Enter') {
-    e.preventDefault();
-    browser.tabs.create({
-      // url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
-    });
-    searchInput.value = '';
-  }
-});
-searchQueryButton.addEventListener('click', () => {
-  if (searchInput.value === '') return;
-  browser.tabs.create({
-    // url: `https://anilist.co/search/${currentListType}?search=${searchInput.value}`
-  });
-  searchInput.value = '';
-});
-
-// nav button that opens the settings menu
-const settingsButton = document.getElementById('settings-button');
-const settingsContainer = document.getElementById('settings-container');
-let settingsState = 'closed';
-settingsButton.addEventListener('click', () => {
-  if (settingsState === 'closed') {
-    settingsContainer.style.transform = 'translateY(183px)';
-    settingsContainer.style.opacity = 1;
-    backdrop.classList.remove('hide');
-    selectedDefaultList();
-    settingsState = 'open';
-  }
-});
-
-// options in the settings that change which list is displayed when the popup is opened
-const animeOption = document.getElementById('anime-option');
-const mangaOption = document.getElementById('manga-option');
-animeOption.addEventListener('click', () => {
-  browser.storage.local.set({ defaultListType: 'ANIME' });
-});
-mangaOption.addEventListener('click', () => {
-  browser.storage.local.set({ defaultListType: 'MANGA' });
-});
-
-// function that changes which option is selected in the settings
-async function selectedDefaultList() {
-  const list = (await browser.storage.local.get('defaultListType')).defaultListType;
-  if (list === 'ANIME' || list === undefined) animeOption.selected = true;
-  if (list === 'MANGA') mangaOption.selected = true;
-}
-
-// the sign out button within the settings menu
-const signOutButton = document.getElementById('sign-out-button');
-signOutButton.addEventListener('click', () => {
-  browser.storage.local.remove('token');
-  const homeWrapper = document.getElementById('home');
-  while (homeWrapper.firstChild) homeWrapper.removeChild(homeWrapper.firstChild);
-  settingsContainer.style.transform = 'translateY(-150px)';
-  settingsContainer.style.opacity = 0;
-  backdrop.classList.add('hide');
-  settingsState = 'closed';
-  homePage();
-});
-
-// a backdrop that appears when the searchbar or settings menu are open
-// clicking it closes them
-const backdrop = document.getElementById('backdrop');
-backdrop.addEventListener('click', () => {
-  if (settingsState === 'open') {
-    settingsContainer.style.transform = 'translateY(-150px)';
-    settingsContainer.style.opacity = 0;
-    backdrop.classList.add('hide');
-    settingsState = 'closed';
-  }
-  if (searchState === 'open') {
-    searchContainer.style.transform = 'translateY(-150px)';
-    searchContainer.style.opacity = 0;
-    backdrop.classList.add('hide');
-    searchState = 'closed';
-    searchInput.value = '';
-  }
-});
+// // the sign out button within the settings menu
+// const signOutButton = document.getElementById('sign-out-button');
+// signOutButton.addEventListener('click', () => {
+//   browser.storage.local.remove('token');
+//   const homeWrapper = document.getElementById('home');
+//   while (homeWrapper.firstChild) homeWrapper.removeChild(homeWrapper.firstChild);
+//   settingsContainer.style.transform = 'translateY(-150px)';
+//   settingsContainer.style.opacity = 0;
+//   backdrop.classList.add('hide');
+//   settingsState = 'closed';
+//   homePage();
+// });
 
 /**
  * Function that displays the selected list
@@ -512,7 +428,9 @@ function openEditView(entry, listType) {
   optionDropped.textContent = 'Dropped';
   const optionPlanning = statusSelect.appendChild(document.createElement('option'));
   optionPlanning.value = 'PLANNING';
-  optionPlanning.textContent = 'Planning to ' + listType === 'ANIME' ? 'Watch' : 'Read';
+  // this alway say 'Read' if it's not in its own variable
+  const planningContent = listType === 'ANIME' ? 'Watch' : 'Read';
+  optionPlanning.textContent = 'Planning to ' + planningContent;
   const optionRepeating = statusSelect.appendChild(document.createElement('option'));
   optionRepeating.value = 'REPEATING';
   optionRepeating.textContent = listType === 'ANIME' ? 'Rewatching' : 'Rereading';
@@ -658,6 +576,78 @@ function deleteFromListAndHome(entry) {
   const listEntry = document.getElementById('list-' + entry.id);
   const sectionWrapper = document.getElementById('section-' + entry.status);
   sectionWrapper.removeChild(listEntry);
+}
+
+async function searchPage() {
+  const allContainers = document.querySelectorAll('.container');
+  allContainers.forEach(container => container.classList.add('hide'));
+  const searchContainer = document.getElementById('search');
+  searchContainer.classList.remove('hide');
+
+  const searchInput = document.getElementById('search-input');
+  searchInput.value = '';
+  searchInput.focus();
+  const searchQueryButton = document.getElementById('search-button');
+
+  searchInput.addEventListener('keydown', async e => {
+    if (searchInput.value === '') return;
+    if (e.code === 'Enter') {
+      e.preventDefault();
+      const results = await search(searchInput.value);
+      showSearchResults(results);
+    }
+  });
+  searchQueryButton.addEventListener('click', async () => {
+    if (searchInput.value === '') return;
+    const results = await search(searchInput.value);
+    showSearchResults(results);
+  });
+}
+
+function showSearchResults(allResults) {
+  const searchContainer = document.getElementById('search');
+
+  allResults.forEach((results, i) => {
+    let headingContent;
+    if (i === 0) headingContent = 'Anime';
+    else if (i === 1) headingContent = 'Manga';
+    else if (i === 2) headingContent = 'Characters';
+    else if (i === 3) headingContent = 'Staff';
+
+    const resultsSection = searchContainer.appendChild(document.createElement('section'));
+    const heading = resultsSection.appendChild(document.createElement('h2'));
+    heading.classList.add('search-section-heading');
+
+    heading.textContent = headingContent;
+    const rowContainer = resultsSection.appendChild(document.createElement('div'));
+    rowContainer.classList.add('search-row-container');
+
+    results.forEach(result => {
+      const row = rowContainer.appendChild(document.createElement('div'));
+      row.classList.add('search-row');
+
+      const image = row.appendChild(document.createElement('img'));
+      if (i === 0 || i === 1) {
+        image.src = result.coverImage.medium;
+      } else if (i === 2 || i === 3) {
+        image.src = result.image.medium;
+      }
+      image.classList.add('search-image');
+
+      const title = row.appendChild(document.createElement('h3'));
+
+      if (i === 0 || i === 1) {
+        title.textContent = result.title.userPreferred;
+        title.classList.add('search-title');
+        const yearAndFormat = row.appendChild(document.createElement('p'));
+        yearAndFormat.textContent = result.startDate.year + ' ' + result.format;
+        yearAndFormat.classList.add('search-media-year');
+      } else if (i === 2 || i === 3) {
+        title.textContent = result.name.full;
+        title.classList.add('search-title', 'search-char-staff-title');
+      }
+    });
+  });
 }
 
 // call homePage when the popup is opened

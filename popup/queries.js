@@ -308,3 +308,121 @@ export async function deleteEntry(id) {
     .then(res => res.json())
     .then(json => console.log(json));
 }
+
+export async function search(searchValue) {
+  console.log(searchValue);
+  const results = [];
+
+  const mediaQuery = `
+  query($search:String, $type: MediaType){
+    Page(perPage: 6) {
+        media(search: $search type: $type isAdult: false) {
+        id
+        title {
+          userPreferred
+        }
+        startDate {
+          year
+        }
+        format
+        coverImage {
+          medium
+        }
+      }
+    }
+  }
+  `;
+  const animeOptions = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: mediaQuery,
+      variables: { search: searchValue, type: 'ANIME' }
+    })
+  };
+  await fetch('https://graphql.anilist.co', animeOptions)
+    .then(res => res.json())
+    .then(json => results.push(json.data.Page.media));
+
+  const mangaOptions = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: mediaQuery,
+      variables: { search: searchValue, type: 'MANGA' }
+    })
+  };
+  await fetch('https://graphql.anilist.co', mangaOptions)
+    .then(res => res.json())
+    .then(json => results.push(json.data.Page.media));
+
+  const characterQuery = `
+  query($search:String){
+    Page(perPage: 6) {
+      characters(search: $search) {
+        id
+        name {
+          full
+        }
+        image{
+          medium
+        }
+      }
+    }
+  }`;
+  const characterOptions = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: characterQuery,
+      variables: { search: searchValue }
+    })
+  };
+  await fetch('https://graphql.anilist.co', characterOptions)
+    .then(res => res.json())
+    .then(json => {
+      results.push(json.data.Page.characters);
+      console.log(json);
+    });
+
+  const staffQuery = `
+  query($search:String){
+    Page(perPage: 6) {
+        staff(search: $search) {
+        id
+        name {
+          full
+        }
+        image {
+          medium
+        }
+      }
+    }
+  }`;
+
+  const staffOptions = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: staffQuery,
+      variables: { search: searchValue }
+    })
+  };
+  await fetch('https://graphql.anilist.co', staffOptions)
+    .then(res => res.json())
+    .then(json => results.push(json.data.Page.staff));
+
+  return results;
+}
