@@ -310,6 +310,8 @@ export async function deleteEntry(id) {
 }
 
 export async function search(searchValue) {
+  const token = (await browser.storage.local.get('token')).token;
+
   const results = [];
 
   const mediaQuery = `
@@ -334,6 +336,7 @@ export async function search(searchValue) {
   const animeOptions = {
     method: 'POST',
     headers: {
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json',
       Accept: 'application/json'
     },
@@ -349,6 +352,7 @@ export async function search(searchValue) {
   const mangaOptions = {
     method: 'POST',
     headers: {
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json',
       Accept: 'application/json'
     },
@@ -378,6 +382,7 @@ export async function search(searchValue) {
   const characterOptions = {
     method: 'POST',
     headers: {
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json',
       Accept: 'application/json'
     },
@@ -410,6 +415,7 @@ export async function search(searchValue) {
   const staffOptions = {
     method: 'POST',
     headers: {
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json',
       Accept: 'application/json'
     },
