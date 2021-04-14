@@ -7,7 +7,8 @@ import {
   deleteEntry,
   search,
   checkIfOnList,
-  addEntry
+  addEntry,
+  getMediaPage
 } from './queries.js';
 
 // for displaying the popover on the home page
@@ -138,13 +139,16 @@ function createHomeCard(media, position, moved, entry) {
   }
 
   // the cover art. Clicking it opens the page for the entry on Anilist
-  const imgLinkElement = document.createElement('a');
-  // this won't work with new entries, but it's goint to change anyway so I'm not fixing it
-  imgLinkElement.href = media.siteUrl;
+  // DON'T LEAVE AS DIV
+  const imgLinkElement = document.createElement('div');
   imgLinkElement.style.setProperty('background-image', `url(${media.coverImage.medium})`);
   imgLinkElement.classList.add('list-item-img');
   imgLinkElement.classList.add('cover');
   divElement.appendChild(imgLinkElement);
+
+  imgLinkElement.addEventListener('click', () => {
+    showMediaPage(media.id, media.type);
+  });
 
   // the popover element that shows the title and progress
   // popover is on the right if the entry is on the left, vice versa
@@ -787,6 +791,52 @@ function showSearchResults(allResults) {
       }
     });
   });
+}
+
+async function showMediaPage(id, type) {
+  const allContainers = document.querySelectorAll('.container');
+  allContainers.forEach(container => container.classList.add('hide'));
+
+  const pageContainer = document.getElementById('page');
+  pageContainer.classList.remove('hide');
+  while (pageContainer.firstChild) pageContainer.removeChild(pageContainer.firstChild);
+
+  const media = await getMediaPage(id, type);
+  console.log(media);
+
+  if (media.bannerImage !== null) {
+    const bannerImage = pageContainer.appendChild(document.createElement('img'));
+    bannerImage.src = media.bannerImage;
+    bannerImage.classList.add('page-banner-img');
+  }
+
+  const topContainer = pageContainer.appendChild(document.createElement('div'));
+  topContainer.classList.add('page-top-container');
+  const coverImage = topContainer.appendChild(document.createElement('img'));
+  coverImage.src = media.coverImage.large;
+  coverImage.classList.add('page-cover-img');
+
+  const topContent = topContainer.appendChild(document.createElement('div'));
+  topContent.classList.add('page-top-content');
+  const title = topContent.appendChild(document.createElement('h1'));
+  title.textContent = media.title.userPreferred;
+  title.classList.add('page-top-title');
+  const button = topContent.appendChild(document.createElement('button'));
+  button.textContent = media.mediaListEntry.status;
+  button.classList.add('page-top-button');
+
+  const descriptionSection = pageContainer.appendChild(document.createElement('section'));
+  descriptionSection.classList.add('page-desc-section');
+
+  const descriptionHeading = descriptionSection.appendChild(document.createElement('h2'));
+  descriptionHeading.textContent = 'Description';
+  descriptionHeading.classList.add('page-desc-heading');
+
+  const descriptionParagraph = descriptionSection.appendChild(
+    document.createElement('p')
+  );
+  descriptionParagraph.innerHTML = media.description;
+  descriptionParagraph.classList.add('page-desc-p');
 }
 
 // call homePage when the popup is opened

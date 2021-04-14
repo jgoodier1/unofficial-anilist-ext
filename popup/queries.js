@@ -29,6 +29,7 @@ export async function getCurrentList(type) {
           progress
           updatedAt
           media {
+            id
             title {
               userPreferred
             }
@@ -565,5 +566,198 @@ export async function addEntry(mediaId, status, score, progress) {
     .then(res => res.json())
     .then(json => {
       return json.data.MediaList;
+    });
+}
+
+export async function getMediaPage(id, type) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  query($id:Int,$type:MediaType){
+    Media(id:$id, type: $type) {
+      id
+      title {
+        userPreferred
+        romaji
+        english
+        native
+      }
+      coverImage {
+        extraLarge
+        large
+      }
+      bannerImage
+      startDate {
+        year
+        month
+        day
+      }
+      endDate {
+        year
+        month
+        day
+      }
+      description
+      season
+      seasonYear
+      type
+      format
+      status(version: 2)
+      episodes
+      duration
+      chapters
+      volumes
+      genres
+      synonyms
+      source(version: 2)
+      isAdult
+      meanScore
+      averageScore
+      popularity
+      favourites
+      hashtag
+      countryOfOrigin
+      isFavourite
+      nextAiringEpisode {
+        airingAt
+        timeUntilAiring
+        episode
+      }
+      relations {
+        edges {
+          id
+          relationType(version: 2)
+          node {
+            id
+            title {
+              userPreferred
+            }
+            format
+            status(version: 2)
+            bannerImage
+            coverImage {
+              large
+            }
+          }
+        }
+      }
+      characters(perPage: 6, sort: [ROLE, RELEVANCE, ID]) {
+        edges {
+          id
+          role
+          name
+          voiceActors(language: JAPANESE, sort: [RELEVANCE, ID]) {
+            id
+            name {
+              full
+            }
+            language: languageV2
+            image {
+              medium
+            }
+          }
+          node {
+            id
+            name {
+              full
+            }
+            image {
+              medium
+            }
+          }
+        }
+      }
+      staffPreview: staff(perPage: 4, sort: [RELEVANCE, ID]) {
+        edges {
+          id
+          role
+          node {
+            id
+            name {
+              full
+            }
+            image {
+              medium
+            }
+          }
+        }
+      }
+      studios {
+        edges {
+          isMain
+          node {
+            id
+            name
+          }
+        }
+      }
+      recommendations(perPage: 7, sort: [RATING_DESC, ID]) {
+        pageInfo {
+          total
+        }
+        nodes {
+          id
+          rating
+          mediaRecommendation {
+            id
+            title {
+              userPreferred
+            }
+            coverImage {
+              large
+            }
+          }
+        }
+      }
+      externalLinks {
+        site
+        url
+      }
+      trailer {
+        id
+        site
+      }
+      tags {
+        id
+        name
+        description
+        rank
+        isMediaSpoiler
+        isGeneralSpoiler
+      }
+      mediaListEntry {
+        id
+        status
+        score
+      }
+      stats {
+        statusDistribution {
+          status
+          amount
+        }
+        scoreDistribution {
+          score
+          amount
+        }
+      }
+    }
+  }`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id, type }
+    })
+  };
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.Media;
     });
 }
