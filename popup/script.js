@@ -11,6 +11,18 @@ import {
   getMediaPage
 } from './queries.js';
 
+import {
+  DataComponent,
+  RelationCard,
+  CharacterCard,
+  StaffCard
+} from './webComponents.js';
+
+customElements.define('data-comp', DataComponent);
+customElements.define('relation-card', RelationCard);
+customElements.define('character-card', CharacterCard);
+customElements.define('staff-card', StaffCard);
+
 // for displaying the popover on the home page
 const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
 
@@ -793,7 +805,7 @@ function showSearchResults(allResults) {
   });
 }
 
-async function showMediaPage(id, type) {
+export async function showMediaPage(id, type) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
 
@@ -810,11 +822,12 @@ async function showMediaPage(id, type) {
     bannerImage.classList.add('page-banner-img');
   }
 
-  const topContainer = pageContainer.appendChild(document.createElement('div'));
+  const topContainer = pageContainer.appendChild(document.createElement('section'));
   topContainer.classList.add('page-top-container');
   const coverImage = topContainer.appendChild(document.createElement('img'));
   coverImage.src = media.coverImage.large;
   coverImage.classList.add('page-cover-img');
+  if (media.bannerImage === null) coverImage.style.marginTop = '16px';
 
   const topContent = topContainer.appendChild(document.createElement('div'));
   topContent.classList.add('page-top-content');
@@ -822,21 +835,248 @@ async function showMediaPage(id, type) {
   title.textContent = media.title.userPreferred;
   title.classList.add('page-top-title');
   const button = topContent.appendChild(document.createElement('button'));
-  button.textContent = media.mediaListEntry.status;
+  button.textContent = media.mediaListEntry ? media.mediaListEntry.status : 'Add to List';
   button.classList.add('page-top-button');
 
+  // this is going to be really long, so bear with me
+  const dataSection = pageContainer.appendChild(document.createElement('section'));
+  dataSection.classList.add('page-section', 'page-data-section');
+
+  if (media.nextAiringEpisode !== null) {
+    const airingData = document.createElement('data-comp');
+    airingData.setAttribute('data-title', 'Airing');
+    airingData.setAttribute('data-value', `Ep ${media.nextAiringEpisode.episode}`);
+    dataSection.append(airingData);
+  }
+  const formatData = document.createElement('data-comp');
+  formatData.setAttribute('data-title', 'Format');
+  formatData.setAttribute('data-value', media.format);
+  dataSection.append(formatData);
+
+  if (media.type === 'ANIME') {
+    if (media.episodes !== null) {
+      const episodesData = document.createElement('data-comp');
+      episodesData.setAttribute('data-title', 'Episodes');
+      episodesData.setAttribute('data-value', media.episodes);
+      dataSection.append(episodesData);
+    }
+    const durationData = document.createElement('data-comp');
+    durationData.setAttribute('data-title', 'Episode Duration');
+    durationData.setAttribute('data-value', `${media.duration} min`);
+    dataSection.append(durationData);
+  } else if (media.type === 'MANGA') {
+    if (media.chapters !== null) {
+      const chapterssData = document.createElement('data-comp');
+      chapterssData.setAttribute('data-title', 'Chapters');
+      chapterssData.setAttribute('data-value', media.chapters);
+      dataSection.append(chapterssData);
+    }
+    if (media.volumes !== null) {
+      const volumesData = document.createElement('data-comp');
+      volumesData.setAttribute('data-title', 'Volumes');
+      volumesData.setAttribute('data-value', media.volumes);
+      dataSection.append(volumesData);
+    }
+  }
+
+  const MONTHS = [
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'June',
+    'July',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ];
+
+  const startDateData = document.createElement('data-comp');
+  startDateData.setAttribute('data-title', 'Start Date');
+  startDateData.setAttribute(
+    'data-value',
+    `${MONTHS[media.startDate.month]} ${media.startDate.day}, ${media.startDate.year}`
+  );
+  dataSection.append(startDateData);
+
+  if (media.endDate.day !== null) {
+    const endDateData = document.createElement('data-comp');
+    endDateData.setAttribute('data-title', 'End Date');
+    endDateData.setAttribute(
+      'data-value',
+      `${MONTHS[media.endDate.month]} ${media.endDate.day}, ${media.endDate.year}`
+    );
+    dataSection.append(endDateData);
+  }
+
+  if (media.type === 'ANIME' && media.season !== null) {
+    const seasonData = document.createElement('data-comp');
+    seasonData.setAttribute('data-title', 'Season');
+    seasonData.setAttribute('data-value', media.season + ' ' + media.seasonYear);
+    dataSection.append(seasonData);
+  }
+
+  const avgScoreData = document.createElement('data-comp');
+  avgScoreData.setAttribute('data-title', 'Average Score');
+  avgScoreData.setAttribute('data-value', media.averageScore + '%');
+  dataSection.append(avgScoreData);
+  const meanScoreData = document.createElement('data-comp');
+  meanScoreData.setAttribute('data-title', 'Mean Score');
+  meanScoreData.setAttribute('data-value', media.meanScore + '%');
+  dataSection.append(meanScoreData);
+  const popularityData = document.createElement('data-comp');
+  popularityData.setAttribute('data-title', 'Popularity');
+  popularityData.setAttribute('data-value', media.popularity);
+  dataSection.append(popularityData);
+  const favouritesData = document.createElement('data-comp');
+  favouritesData.setAttribute('data-title', 'Favourites');
+  favouritesData.setAttribute('data-value', media.favourites);
+  dataSection.append(favouritesData);
+
+  if (media.type === 'ANIME') {
+    if (media.studios !== null) {
+      const mainStudio = media.studios.edges.filter(studio => studio.isMain);
+      const studioData = document.createElement('data-comp');
+      studioData.setAttribute('data-title', 'Studios');
+      studioData.setAttribute('data-value', mainStudio[0].node.name);
+      dataSection.append(studioData);
+      const producers = media.studios.edges.filter(studio => !studio.isMain);
+      const producerName = producers.map(prod => prod.node.name);
+      const producersString = producerName.join(', ');
+      const producerData = document.createElement('data-comp');
+      producerData.setAttribute('data-title', 'Producers');
+      producerData.setAttribute('data-value', producersString);
+      dataSection.append(producerData);
+    }
+  }
+  const sourceData = document.createElement('data-comp');
+  sourceData.setAttribute('data-title', 'Source');
+  sourceData.setAttribute('data-value', media.source);
+  dataSection.append(sourceData);
+
+  if (media.hashtag !== null) {
+    const hastagData = document.createElement('data-comp');
+    hastagData.setAttribute('data-title', 'Hashtag');
+    hastagData.setAttribute('data-value', media.hashtag);
+    dataSection.append(hastagData);
+  }
+
+  const genreData = document.createElement('data-comp');
+  genreData.setAttribute('data-title', 'Genres');
+  const genres = media.genres.join(', ');
+  genreData.setAttribute('data-value', genres);
+  dataSection.append(genreData);
+
+  const RomajiData = document.createElement('data-comp');
+  RomajiData.setAttribute('data-title', 'Romaji');
+  RomajiData.setAttribute('data-value', media.title.romaji);
+  dataSection.append(RomajiData);
+  const EnglishData = document.createElement('data-comp');
+  EnglishData.setAttribute('data-title', 'English');
+  EnglishData.setAttribute('data-value', media.title.english);
+  dataSection.append(EnglishData);
+  const NativeData = document.createElement('data-comp');
+  NativeData.setAttribute('data-title', 'Native');
+  NativeData.setAttribute('data-value', media.title.native);
+  dataSection.append(NativeData);
+
+  if (media.synonyms) {
+    const synonymData = document.createElement('data-comp');
+    const synonyms = media.synonyms.join(', ');
+    synonymData.setAttribute('data-title', 'Synonyms');
+    synonymData.setAttribute('data-value', synonyms);
+    dataSection.append(synonymData);
+  }
+  // end data
+
   const descriptionSection = pageContainer.appendChild(document.createElement('section'));
-  descriptionSection.classList.add('page-desc-section');
+  descriptionSection.classList.add('page-section', 'page-desc-section');
 
   const descriptionHeading = descriptionSection.appendChild(document.createElement('h2'));
   descriptionHeading.textContent = 'Description';
-  descriptionHeading.classList.add('page-desc-heading');
+  descriptionHeading.classList.add('page-sub-heading');
 
   const descriptionParagraph = descriptionSection.appendChild(
     document.createElement('p')
   );
   descriptionParagraph.innerHTML = media.description;
   descriptionParagraph.classList.add('page-desc-p');
+
+  //relations
+  const relationsSection = pageContainer.appendChild(document.createElement('section'));
+  relationsSection.classList.add('page-section');
+
+  const relationsHeading = relationsSection.appendChild(document.createElement('h2'));
+  relationsHeading.textContent = 'Relations';
+  relationsHeading.classList.add('page-sub-heading');
+
+  const releationsContainer = relationsSection.appendChild(document.createElement('div'));
+  releationsContainer.classList.add('page-relations-container');
+  media.relations.edges.forEach(relation => {
+    const relationElement = document.createElement('relation-card');
+    relationElement.setAttribute('data-id', relation.node.id);
+    relationElement.setAttribute('data-type', relation.node.type);
+    relationElement.setAttribute('data-src', relation.node.coverImage.medium);
+    relationElement.setAttribute('data-relation', relation.relationType);
+    relationElement.setAttribute('data-title', relation.node.title.userPreferred);
+    relationElement.setAttribute(
+      'data-bottom',
+      relation.node.format + ' • ' + relation.node.status
+    );
+    releationsContainer.appendChild(relationElement);
+  });
+
+  if (media.characters.edges !== null) {
+    const charactersSection = pageContainer.appendChild(
+      document.createElement('section')
+    );
+    charactersSection.classList.add('page-section');
+    const charactersHeading = charactersSection.appendChild(document.createElement('h2'));
+    charactersHeading.textContent = 'Characters';
+    charactersHeading.classList.add('page-sub-heading');
+
+    media.characters.edges.forEach(character => {
+      const characterElement = document.createElement('character-card');
+      characterElement.setAttribute('data-char-id', character.node.id);
+      characterElement.setAttribute('data-char-src', character.node.image.medium);
+      characterElement.setAttribute('data-char-name', character.node.name.full);
+      characterElement.setAttribute('data-role', character.role);
+      if (character.voiceActors.length > 0) {
+        characterElement.setAttribute('data-actor-id', character.voiceActors[0].id);
+        characterElement.setAttribute(
+          'data-actor-src',
+          character.voiceActors[0].image.medium
+        );
+        characterElement.setAttribute(
+          'data-actor-name',
+          character.voiceActors[0].name.full
+        );
+        characterElement.setAttribute('data-language', character.voiceActors[0].language);
+      }
+      charactersSection.append(characterElement);
+    });
+  }
+
+  const staffSection = pageContainer.appendChild(document.createElement('section'));
+  staffSection.classList.add('page-section');
+
+  const staffHeading = staffSection.appendChild(document.createElement('h2'));
+  staffHeading.textContent = 'Staff';
+  staffHeading.classList.add('page-sub-heading');
+
+  media.staffPreview.edges.forEach(staff => {
+    const staffElement = document.createElement('staff-card');
+    staffElement.setAttribute('data-id', staff.node.id);
+    staffElement.setAttribute('data-src', staff.node.image.medium);
+    staffElement.setAttribute('data-name', staff.node.name.full);
+    staffElement.setAttribute('data-role', staff.role);
+
+    staffSection.append(staffElement);
+  });
 }
 
 // call homePage when the popup is opened

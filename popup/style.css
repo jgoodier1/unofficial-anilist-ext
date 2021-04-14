@@ -635,6 +635,10 @@ label {
   top: 0;
 }
 
+.page-section {
+  margin: 0 32px;
+}
+
 .page-top-container {
   margin: 0 16px;
   display: grid;
@@ -651,14 +655,15 @@ label {
 
 .page-top-content {
   display: grid;
-  grid-template-rows: 70px;
+  grid-template-rows: 90px;
 }
 
 .page-top-title {
   font-size: 22px;
   margin: 0;
   grid-row: 1;
-  place-self: center;
+  justify-self: start;
+  align-self: center;
   width: -moz-fit-content;
   width: fit-content;
 }
@@ -675,15 +680,40 @@ label {
   cursor: pointer;
 }
 
+.page-data-section {
+  display: flex;
+  overflow-x: auto;
+  width: 400px;
+  margin: 16px 32px;
+  padding: 8px 16px;
+  gap: 5px;
+  background-color: var(--colour-container);
+}
+
+.page-data-div {
+  width: max-content;
+  /* margin-right: 5p */
+}
+
+.page-data-value {
+  width: max-content;
+}
+
 .page-desc-section {
   margin: 0 32px;
 }
 
-.page-desc-heading {
+.page-sub-heading {
   font-size: 16px;
 }
 
 .page-desc-p {
   background-color: var(--colour-container);
   padding: 16px;
+}
+
+.page-relations-container {
+  margin-bottom: 16px;
+  display: flex;
+  overflow-x: scroll;
 }

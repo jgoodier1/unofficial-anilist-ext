@@ -629,14 +629,14 @@ export async function getMediaPage(id, type) {
           relationType(version: 2)
           node {
             id
+            type
             title {
               userPreferred
             }
             format
             status(version: 2)
-            bannerImage
             coverImage {
-              large
+              medium
             }
           }
         }
