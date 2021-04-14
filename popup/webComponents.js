@@ -159,17 +159,17 @@ export class CharacterCard extends HTMLElement {
         cursor:pointer;
       }
       .char-button {
-        grid-template-columns: 80px auto;
+        grid-template-columns: 70px auto;
         justify-items: start;
       }
       .act-button {
-        grid-template-columns: auto 80px;
+        grid-template-columns: auto 70px;
         justify-items: end;
       }
       .img {
         height: 100px;
         grid-row: 1/3;
-        max-width: 70px;
+        max-width: 60px;
         object-fit: cover;
       }
       .act-img {
@@ -178,6 +178,7 @@ export class CharacterCard extends HTMLElement {
       p {
         align-self: center;
         font-size: 14px;
+        text-align: left;
       }
 
     `;

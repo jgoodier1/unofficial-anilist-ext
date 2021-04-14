@@ -162,34 +162,23 @@ function createHomeCard(media, position, moved, entry) {
     showMediaPage(media.id, media.type);
   });
 
-  // the popover element that shows the title and progress
-  // popover is on the right if the entry is on the left, vice versa
-  const popoverElement = document.createElement('div');
-  if (moved) {
-    popoverElement.setAttribute('data-position', '0'); // 0 because it get updated immediately
-  } else {
-    popoverElement.setAttribute('data-position', position);
-  }
-  popoverElement.classList.add('list-item-popover', 'home-popover-' + media.type);
-  if (LEFT_POSITIONS.includes(position))
-    popoverElement.classList.add('list-item-popover-left');
-  else popoverElement.classList.add('list-item-popover-right');
-
-  // the content of the popover
-  const titleElement = document.createElement('p');
-  titleElement.textContent = media.title.userPreferred;
-  titleElement.classList.add('popover-title');
-  popoverElement.appendChild(titleElement);
-  const progressElement = document.createElement('p');
-  progressElement.textContent = `Progress: ${entry.progress} ${
-    totalContent ? '/' + totalContent : ''
-  }`;
-  progressElement.classList.add('popover-progress');
-  popoverElement.appendChild(progressElement);
-  divElement.appendChild(popoverElement);
+  // the popover at the bottom of the image that lets you update the entry
+  const progressUpdateElement = document.createElement('div');
+  let progress = entry.progress;
+  progressUpdateElement.textContent = `${progress} +`;
+  progressUpdateElement.classList.add('popover-progress-updater', 'list-item-on-img');
+  progressUpdateElement.addEventListener('click', () => {
+    updateEntry(entry.id, entry.status, progress + 1);
+    progressUpdateElement.textContent = `${progress + 1} +`;
+    progressElement.textContent = `Progress: ${progress + 1} ${
+      totalContent ? '/' + totalContent : ''
+    }`;
+    progress += 1;
+  });
+  divElement.appendChild(progressUpdateElement);
 
   if (media.nextAiringEpisode !== null) {
-    const nextEpisodeElement = imgLinkElement.appendChild(document.createElement('div'));
+    const nextEpisodeElement = divElement.appendChild(document.createElement('div'));
     nextEpisodeElement.classList.add('list-item-next-episode', 'list-item-on-img');
     const episodeNumber = nextEpisodeElement.appendChild(document.createElement('p'));
     episodeNumber.textContent = `Ep ${media.nextAiringEpisode.episode}`;
@@ -213,28 +202,32 @@ function createHomeCard(media, position, moved, entry) {
     }
   }
 
-  // the popover at the bottom of the image that lets you update the entry
-  const progressUpdateElement = document.createElement('div');
-  let progress = entry.progress;
-  progressUpdateElement.textContent = `${progress} +`;
-  progressUpdateElement.classList.add('popover-progress-updater', 'list-item-on-img');
-  progressUpdateElement.addEventListener('click', () => {
-    updateEntry(entry.id, entry.status, progress + 1);
-    progressUpdateElement.textContent = `${progress + 1} +`;
-    progressElement.textContent = `Progress: ${progress + 1} ${
-      totalContent ? '/' + totalContent : ''
-    }`;
-    progress += 1;
-  });
-  imgLinkElement.appendChild(progressUpdateElement);
+  // the popover element that shows the title and progress
+  // popover is on the right if the entry is on the left, vice versa
+  const popoverElement = document.createElement('div');
+  if (moved) {
+    popoverElement.setAttribute('data-position', '0'); // 0 because it get updated immediately
+  } else {
+    popoverElement.setAttribute('data-position', position);
+  }
+  popoverElement.classList.add('list-item-popover', 'home-popover-' + media.type);
+  if (LEFT_POSITIONS.includes(position))
+    popoverElement.classList.add('list-item-popover-left');
+  else popoverElement.classList.add('list-item-popover-right');
 
-  // remove and add the href so that the user can update the entry without opening the link
-  progressUpdateElement.addEventListener('mouseenter', () => {
-    imgLinkElement.removeAttribute('href');
-  });
-  progressUpdateElement.addEventListener('mouseleave', () => {
-    imgLinkElement.setAttribute('href', media.siteUrl);
-  });
+  // the content of the popover
+  const titleElement = document.createElement('p');
+  titleElement.textContent = media.title.userPreferred;
+  titleElement.classList.add('popover-title');
+  popoverElement.appendChild(titleElement);
+
+  const progressElement = document.createElement('p');
+  progressElement.textContent = `Progress: ${entry.progress} ${
+    totalContent ? '/' + totalContent : ''
+  }`;
+  progressElement.classList.add('popover-progress');
+  popoverElement.appendChild(progressElement);
+  divElement.appendChild(popoverElement);
 }
 
 /**
@@ -661,6 +654,9 @@ function createRow(entry) {
   const title = row.appendChild(document.createElement('h3'));
   title.classList.add('title');
   title.textContent = entry.media.title.userPreferred;
+  title.addEventListener('click', () => {
+    showMediaPage(entry.media.id, entry.media.type);
+  });
 
   const score = row.appendChild(document.createElement('p'));
   score.classList.add('score');
@@ -751,6 +747,9 @@ function showSearchResults(allResults) {
       if (i === 0 || i === 1) {
         title.textContent = result.title.userPreferred;
         title.classList.add('search-title');
+        title.addEventListener('click', () => {
+          showMediaPage(result.id, result.type);
+        });
         const yearAndFormat = row.appendChild(document.createElement('p'));
         yearAndFormat.textContent = result.startDate.year + ' ' + result.format;
         yearAndFormat.classList.add('search-media-year');

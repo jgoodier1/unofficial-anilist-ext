@@ -126,6 +126,7 @@ export async function getFullList(type) {
           score
           progress
           media {
+            id
             title {
               userPreferred
             }
@@ -320,6 +321,7 @@ export async function search(searchValue) {
     Page(perPage: 6) {
         media(search: $search type: $type isAdult: false) {
         id
+        type
         title {
           userPreferred
         }
