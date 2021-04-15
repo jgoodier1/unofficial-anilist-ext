@@ -2,7 +2,6 @@ import {
   getCurrentList,
   getFullList,
   getUser,
-  updateEntry,
   editEntry,
   deleteEntry,
   search,
@@ -12,22 +11,18 @@ import {
 } from './queries.js';
 
 import {
+  HomeCard,
   DataComponent,
   RelationCard,
   CharacterCard,
   StaffCard
 } from './webComponents.js';
 
+customElements.define('home-card', HomeCard);
 customElements.define('data-comp', DataComponent);
 customElements.define('relation-card', RelationCard);
 customElements.define('character-card', CharacterCard);
 customElements.define('staff-card', StaffCard);
-
-// for displaying the popover on the home page
-const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
-
-// used for searches and in the nav buttons, and changed by homePage
-let currentListType = '';
 
 // nav buttons
 document.getElementById('home-button').addEventListener('click', () => {
@@ -117,25 +112,18 @@ async function currentList(listType) {
   currentlyAiring.forEach(entry => {
     if (position > 32) return;
     createHomeCard(entry, position, false);
-
     position++;
   });
   finishedAiring.forEach(entry => {
     if (position > 32) return;
-    createHomeCard(entry, position, false);
-
+    createHomeCard(entry, position);
     position++;
   });
 }
 
-function createHomeCard(entry, position, moved) {
+function createHomeCard(entry, position) {
   const totalContent =
     entry.media.type === 'ANIME' ? entry.media.episodes : entry.media.chapters;
-
-  // the div for the individual entry
-  const divElement = document.createElement('div');
-  divElement.id = 'home-' + entry.id;
-  divElement.classList.add('list-item-container');
 
   let listContainer = document.getElementById('home-' + entry.media.type);
   // might not exist
@@ -145,93 +133,25 @@ function createHomeCard(entry, position, moved) {
     listContainer.classList.add('container-list');
     document.getElementById('home').appendChild(listContainer);
   }
-  if (moved) {
-    listContainer.insertBefore(divElement, listContainer.children[0]);
-  } else {
-    listContainer.appendChild(divElement);
-  }
 
-  // the cover art. Clicking it opens the page for the entry on Anilist
-  // DON'T LEAVE AS DIV
-  const imgLinkElement = document.createElement('div');
-  imgLinkElement.style.setProperty(
-    'background-image',
-    `url(${entry.media.coverImage.medium})`
-  );
-  imgLinkElement.classList.add('list-item-img');
-  imgLinkElement.classList.add('cover');
-  divElement.appendChild(imgLinkElement);
-
-  imgLinkElement.addEventListener('click', () => {
-    showMediaPage(entry.media.id, entry.media.type);
-  });
-
-  // the popover at the bottom of the image that lets you update the entry
-  const progressUpdateElement = document.createElement('div');
-  let progress = entry.progress;
-  progressUpdateElement.textContent = `${progress} +`;
-  progressUpdateElement.classList.add('popover-progress-updater', 'list-item-on-img');
-  progressUpdateElement.addEventListener('click', () => {
-    updateEntry(entry.id, entry.status, progress + 1);
-    progressUpdateElement.textContent = `${progress + 1} +`;
-    progressElement.textContent = `Progress: ${progress + 1} ${
-      totalContent ? '/' + totalContent : ''
-    }`;
-    progress += 1;
-  });
-  divElement.appendChild(progressUpdateElement);
-
+  // const totalContent = this.getAttribute('data-total-content');
+  const homeCard = document.createElement('home-card');
+  homeCard.id = 'home-' + entry.id;
+  homeCard.setAttribute('data-media-id', entry.media.id);
+  homeCard.setAttribute('data-type', entry.media.type);
+  homeCard.setAttribute('data-image', entry.media.coverImage.medium);
+  homeCard.setAttribute('data-progress', entry.progress);
+  homeCard.setAttribute('data-entry-id', entry.id);
+  homeCard.setAttribute('data-status', entry.status);
   if (entry.media.nextAiringEpisode) {
-    const nextEpisodeElement = divElement.appendChild(document.createElement('div'));
-    nextEpisodeElement.classList.add('list-item-next-episode', 'list-item-on-img');
-    const episodeNumber = nextEpisodeElement.appendChild(document.createElement('p'));
-    episodeNumber.textContent = `Ep ${entry.media.nextAiringEpisode.episode}`;
-
-    const DAY = 86400;
-    const HOUR = 3600;
-    const MINUTE = 60;
-    const days = Math.trunc(entry.media.nextAiringEpisode.timeUntilAiring / DAY);
-    const dayRemainder = entry.media.nextAiringEpisode.timeUntilAiring % DAY;
-    const hours = Math.trunc(dayRemainder / HOUR);
-    const hourRemainder = dayRemainder % HOUR;
-    const minutes = Math.trunc(hourRemainder / MINUTE);
-
-    const timeUntilEpisode = nextEpisodeElement.appendChild(document.createElement('p'));
-    if (days === 0) timeUntilEpisode.textContent = `${hours}h ${minutes}m`;
-    if (days === 0 && hours === 0) timeUntilEpisode.textContent = `${minutes}m`;
-    else timeUntilEpisode.textContent = `${days}d ${hours}h ${minutes}m`;
-
-    if (entry.media.nextAiringEpisode.episode - entry.progress > 1) {
-      nextEpisodeElement.style.borderBottom = '4px solid #ff6d6d';
-    }
+    homeCard.setAttribute('data-episode', entry.media.nextAiringEpisode.episode);
+    homeCard.setAttribute('data-time', entry.media.nextAiringEpisode.timeUntilAiring);
   }
-
-  // the popover element that shows the title and progress
-  // popover is on the right if the entry is on the left, vice versa
-  const popoverElement = document.createElement('div');
-  if (moved) {
-    popoverElement.setAttribute('data-position', '0'); // 0 because it get updated immediately
-  } else {
-    popoverElement.setAttribute('data-position', position);
-  }
-  popoverElement.classList.add('list-item-popover', 'home-popover-' + entry.media.type);
-  if (LEFT_POSITIONS.includes(position))
-    popoverElement.classList.add('list-item-popover-left');
-  else popoverElement.classList.add('list-item-popover-right');
-
-  // the content of the popover
-  const titleElement = document.createElement('p');
-  titleElement.textContent = entry.media.title.userPreferred;
-  titleElement.classList.add('popover-title');
-  popoverElement.appendChild(titleElement);
-
-  const progressElement = document.createElement('p');
-  progressElement.textContent = `Progress: ${entry.progress} ${
-    totalContent ? '/' + totalContent : ''
-  }`;
-  progressElement.classList.add('popover-progress');
-  popoverElement.appendChild(progressElement);
-  divElement.appendChild(popoverElement);
+  homeCard.setAttribute('data-title', entry.media.title.userPreferred);
+  homeCard.setAttribute('data-total-content', totalContent);
+  homeCard.setAttribute('data-position', position !== 0 ? position : 1);
+  if (position !== 0) listContainer.append(homeCard);
+  else listContainer.insertBefore(homeCard, listContainer.children[0]);
 }
 
 /**
@@ -281,6 +201,9 @@ function unauthorized() {
     }
   });
 }
+
+// used in the list buttons so that it doesn't rerender unnecessarily
+let currentListType = '';
 
 /**
  * Displays the entire list
@@ -546,25 +469,15 @@ function updatedListAndHome(oldEntry, editedEntry) {
     // remove from home if status changes from current/repeating to something else
     // also fix all other popovers
     if (updatedStatus && updatedStatus !== 'CURRENT' && updatedStatus !== 'REPEATING') {
-      const oldEntryPopover = document.querySelector(
-        '#home-' + oldEntry.id + ' > div[data-position]'
+      const allHomeCards = document.querySelectorAll(
+        `home-card[data-type="${oldEntry.media.type}"]`
       );
-      const oldEntryPosition = oldEntryPopover.getAttribute('data-position');
-      const allPopovers = document.querySelectorAll(
-        '.home-popover-' + oldEntry.media.type
-      );
-      allPopovers.forEach(popover => {
-        const oldPosition = popover.getAttribute('data-position');
-        if (oldPosition > oldEntryPosition) {
-          const newPosition = oldPosition - 1;
-          popover.setAttribute('data-position', newPosition);
-          if (LEFT_POSITIONS.includes(newPosition)) {
-            popover.classList.add('list-item-popover-left');
-            popover.classList.remove('list-item-popover-right');
-          } else {
-            popover.classList.add('list-item-popover-right');
-            popover.classList.remove('list-item-popover-left');
-          }
+      allHomeCards.forEach(card => {
+        const currentPosition = card.getAttribute('data-position');
+        const removedPosition = homeEntry.getAttribute('data-position');
+        if (currentPosition > removedPosition) {
+          const newPosition = +currentPosition - 1;
+          card.setAttribute('data-position', newPosition);
         }
       });
       document.getElementById('home-' + oldEntry.media.type).removeChild(homeEntry);
@@ -572,7 +485,7 @@ function updatedListAndHome(oldEntry, editedEntry) {
   }
   if (updatedStatus && (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')) {
     // add it to the home page in the right spot.
-    createHomeCard(oldEntry, 1, true);
+    createHomeCard(oldEntry, 0);
     addHomeCardToStart(oldEntry.media.type);
   }
 
@@ -597,7 +510,7 @@ function updatedListAndHome(oldEntry, editedEntry) {
 function addToListAndHome(entry, formValues) {
   // home
   if (formValues.status === 'CURRENT' || formValues.status === 'REPEATING') {
-    createHomeCard(entry, 1, true);
+    createHomeCard(entry, 0);
     addHomeCardToStart(entry.media.type);
   }
 
@@ -609,25 +522,18 @@ function addToListAndHome(entry, formValues) {
 }
 
 function addHomeCardToStart(mediaType) {
-  // createHomeCard(oldEntry.media, 1, true, oldEntry);
-
   // need to differentiate between airing and not airing
-  const allPopovers = document.querySelectorAll('.home-popover-' + mediaType);
-  allPopovers.forEach(popover => {
-    const oldPosition = popover.getAttribute('data-position');
-    const newPosition = +oldPosition + 1;
-    popover.setAttribute('data-position', newPosition);
-    if (LEFT_POSITIONS.includes(newPosition)) {
-      popover.classList.add('list-item-popover-left');
-      popover.classList.remove('list-item-popover-right');
-    } else {
-      popover.classList.add('list-item-popover-right');
-      popover.classList.remove('list-item-popover-left');
-    }
+  const allHomeCards = document.querySelectorAll(`home-card[data-type="${mediaType}"]`);
+  allHomeCards.forEach(card => {
+    const currentPosition = card.getAttribute('data-position');
+
+    const newPosition = +currentPosition + 1;
+    card.setAttribute('data-position', newPosition);
   });
 }
 
 function addToListSection(row, status, title) {
+  // might need to create the section
   const section = document.getElementById('list-' + status);
   const titleNodes = document.querySelectorAll('#list-' + status + ' .title');
   const allTitles = [];

@@ -137,11 +137,11 @@ export async function getFullList(type) {
             }
             type
             status
-          }
-          nextAiringEpisode {
-            airingAt
-            timeUntilAiring
-            episode
+            nextAiringEpisode {
+              airingAt
+              timeUntilAiring
+              episode
+            }
           }
         }
       }
