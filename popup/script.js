@@ -177,7 +177,7 @@ function createHomeCard(media, position, moved, entry) {
   });
   divElement.appendChild(progressUpdateElement);
 
-  if (media.nextAiringEpisode !== null) {
+  if (media.nextAiringEpisode) {
     const nextEpisodeElement = divElement.appendChild(document.createElement('div'));
     nextEpisodeElement.classList.add('list-item-next-episode', 'list-item-on-img');
     const episodeNumber = nextEpisodeElement.appendChild(document.createElement('p'));
@@ -194,7 +194,7 @@ function createHomeCard(media, position, moved, entry) {
 
     const timeUntilEpisode = nextEpisodeElement.appendChild(document.createElement('p'));
     if (days === 0) timeUntilEpisode.textContent = `${hours}h ${minutes}m`;
-    if (days === 0 && hours === 0) timeUntilEpisode.textContent = `$ ${minutes}m`;
+    if (days === 0 && hours === 0) timeUntilEpisode.textContent = `${minutes}m`;
     else timeUntilEpisode.textContent = `${days}d ${hours}h ${minutes}m`;
 
     if (media.nextAiringEpisode.episode - entry.progress > 1) {
@@ -481,12 +481,17 @@ function openEditView(media, listType, prevContainer, entry) {
     if (entry) {
       const scoreValue = scoreInput.value || 0;
       const progressValue = progressInput.value || 0;
+      // maybe this should return the new entry and media, so i don't have to do
+      // the wierd object two lines down
       editEntry(entry.id, statusSelect.value, scoreValue, progressValue);
-      updatedListAndHome(entry, {
-        status: statusSelect.value,
-        score: scoreInput.value,
-        progress: progressInput.value
-      });
+      updatedListAndHome(
+        { ...entry, media: media },
+        {
+          status: statusSelect.value,
+          score: scoreValue,
+          progress: progressValue
+        }
+      );
     } else {
       const scoreValue = scoreInput.value || 0;
       const progressValue = progressInput.value || 0;
@@ -507,7 +512,7 @@ function openEditView(media, listType, prevContainer, entry) {
       );
     }
     editContainer.classList.add('hide');
-    document.getElementById('home').classList.remove('hide');
+    document.getElementById(prevContainer).classList.remove('hide');
   });
 
   if (entry) {
@@ -525,6 +530,7 @@ function openEditView(media, listType, prevContainer, entry) {
 }
 
 function updatedListAndHome(oldEntry, editedEntry) {
+  console.log(oldEntry);
   let updatedStatus;
   if (oldEntry.status !== editedEntry.status) updatedStatus = editedEntry.status;
 
@@ -535,20 +541,18 @@ function updatedListAndHome(oldEntry, editedEntry) {
   if (oldEntry.progress !== editedEntry.progress) updatedProgress = editedEntry.progress;
 
   // update home
-  if (
-    (oldEntry.status === 'CURRENT' || oldEntry.status === 'REPEATING') &&
-    (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')
-  ) {
+  if (oldEntry.status === 'CURRENT' || oldEntry.status === 'REPEATING') {
     const homeEntry = document.getElementById('home-' + oldEntry.id);
-    if (updatedProgress)
-      homeEntry.querySelector('.progress').textContent = updatedProgress;
+    if (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING') {
+      if (updatedProgress)
+        homeEntry.querySelector('.progress').textContent = updatedProgress;
+    }
 
     // remove from home if status changes from current/repeating to something else
     if (updatedStatus && updatedStatus !== 'CURRENT' && updatedStatus !== 'REPEATING') {
-      document.getElementById('home-' + oldEntry.media.status).removeChild(homeEntry);
+      document.getElementById('home-' + oldEntry.media.type).removeChild(homeEntry);
     }
   }
-
   if (updatedStatus && (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')) {
     // add it to the home page in the right spot.
     createHomeCard(oldEntry.media, 1, true, oldEntry);
@@ -836,6 +840,9 @@ export async function showMediaPage(id, type) {
   const button = topContent.appendChild(document.createElement('button'));
   button.textContent = media.mediaListEntry ? media.mediaListEntry.status : 'Add to List';
   button.classList.add('page-top-button');
+  button.addEventListener('click', () => {
+    openEditView(media, media.type, 'page', media.mediaListEntry);
+  });
 
   // this is going to be really long, so bear with me
   const dataSection = pageContainer.appendChild(document.createElement('section'));
