@@ -116,31 +116,32 @@ async function currentList(listType) {
   // creates the list items
   currentlyAiring.forEach(entry => {
     if (position > 32) return;
-    createHomeCard(entry.media, position, false, entry);
+    createHomeCard(entry, position, false);
 
     position++;
   });
   finishedAiring.forEach(entry => {
     if (position > 32) return;
-    createHomeCard(entry.media, position, false, entry);
+    createHomeCard(entry, position, false);
 
     position++;
   });
 }
 
-function createHomeCard(media, position, moved, entry) {
-  const totalContent = media.type === 'ANIME' ? media.episodes : media.chapters;
+function createHomeCard(entry, position, moved) {
+  const totalContent =
+    entry.media.type === 'ANIME' ? entry.media.episodes : entry.media.chapters;
 
   // the div for the individual entry
   const divElement = document.createElement('div');
   divElement.id = 'home-' + entry.id;
   divElement.classList.add('list-item-container');
 
-  let listContainer = document.getElementById('home-' + media.type);
+  let listContainer = document.getElementById('home-' + entry.media.type);
   // might not exist
   if (!listContainer) {
     listContainer = document.createElement('div');
-    listContainer.id = 'home-' + media.type;
+    listContainer.id = 'home-' + entry.media.type;
     listContainer.classList.add('container-list');
     document.getElementById('home').appendChild(listContainer);
   }
@@ -153,13 +154,16 @@ function createHomeCard(media, position, moved, entry) {
   // the cover art. Clicking it opens the page for the entry on Anilist
   // DON'T LEAVE AS DIV
   const imgLinkElement = document.createElement('div');
-  imgLinkElement.style.setProperty('background-image', `url(${media.coverImage.medium})`);
+  imgLinkElement.style.setProperty(
+    'background-image',
+    `url(${entry.media.coverImage.medium})`
+  );
   imgLinkElement.classList.add('list-item-img');
   imgLinkElement.classList.add('cover');
   divElement.appendChild(imgLinkElement);
 
   imgLinkElement.addEventListener('click', () => {
-    showMediaPage(media.id, media.type);
+    showMediaPage(entry.media.id, entry.media.type);
   });
 
   // the popover at the bottom of the image that lets you update the entry
@@ -177,17 +181,17 @@ function createHomeCard(media, position, moved, entry) {
   });
   divElement.appendChild(progressUpdateElement);
 
-  if (media.nextAiringEpisode) {
+  if (entry.media.nextAiringEpisode) {
     const nextEpisodeElement = divElement.appendChild(document.createElement('div'));
     nextEpisodeElement.classList.add('list-item-next-episode', 'list-item-on-img');
     const episodeNumber = nextEpisodeElement.appendChild(document.createElement('p'));
-    episodeNumber.textContent = `Ep ${media.nextAiringEpisode.episode}`;
+    episodeNumber.textContent = `Ep ${entry.media.nextAiringEpisode.episode}`;
 
     const DAY = 86400;
     const HOUR = 3600;
     const MINUTE = 60;
-    const days = Math.trunc(media.nextAiringEpisode.timeUntilAiring / DAY);
-    const dayRemainder = media.nextAiringEpisode.timeUntilAiring % DAY;
+    const days = Math.trunc(entry.media.nextAiringEpisode.timeUntilAiring / DAY);
+    const dayRemainder = entry.media.nextAiringEpisode.timeUntilAiring % DAY;
     const hours = Math.trunc(dayRemainder / HOUR);
     const hourRemainder = dayRemainder % HOUR;
     const minutes = Math.trunc(hourRemainder / MINUTE);
@@ -197,7 +201,7 @@ function createHomeCard(media, position, moved, entry) {
     if (days === 0 && hours === 0) timeUntilEpisode.textContent = `${minutes}m`;
     else timeUntilEpisode.textContent = `${days}d ${hours}h ${minutes}m`;
 
-    if (media.nextAiringEpisode.episode - entry.progress > 1) {
+    if (entry.media.nextAiringEpisode.episode - entry.progress > 1) {
       nextEpisodeElement.style.borderBottom = '4px solid #ff6d6d';
     }
   }
@@ -210,14 +214,14 @@ function createHomeCard(media, position, moved, entry) {
   } else {
     popoverElement.setAttribute('data-position', position);
   }
-  popoverElement.classList.add('list-item-popover', 'home-popover-' + media.type);
+  popoverElement.classList.add('list-item-popover', 'home-popover-' + entry.media.type);
   if (LEFT_POSITIONS.includes(position))
     popoverElement.classList.add('list-item-popover-left');
   else popoverElement.classList.add('list-item-popover-right');
 
   // the content of the popover
   const titleElement = document.createElement('p');
-  titleElement.textContent = media.title.userPreferred;
+  titleElement.textContent = entry.media.title.userPreferred;
   titleElement.classList.add('popover-title');
   popoverElement.appendChild(titleElement);
 
@@ -376,6 +380,7 @@ function showListByStatus(statusList, statusType) {
   });
 }
 
+// media and entry are separated because sometimes the user won't have it on their list already
 function openEditView(media, listType, prevContainer, entry) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
@@ -481,17 +486,12 @@ function openEditView(media, listType, prevContainer, entry) {
     if (entry) {
       const scoreValue = scoreInput.value || 0;
       const progressValue = progressInput.value || 0;
-      // maybe this should return the new entry and media, so i don't have to do
-      // the wierd object two lines down
       editEntry(entry.id, statusSelect.value, scoreValue, progressValue);
-      updatedListAndHome(
-        { ...entry, media: media },
-        {
-          status: statusSelect.value,
-          score: scoreValue,
-          progress: progressValue
-        }
-      );
+      updatedListAndHome(entry, {
+        status: statusSelect.value,
+        score: scoreValue,
+        progress: progressValue
+      });
     } else {
       const scoreValue = scoreInput.value || 0;
       const progressValue = progressInput.value || 0;
@@ -501,15 +501,11 @@ function openEditView(media, listType, prevContainer, entry) {
         scoreValue,
         progressValue
       );
-      addToListAndHome(
-        media,
-        {
-          status: statusSelect.value,
-          score: scoreInput.value,
-          progress: progressInput.value
-        },
-        entry
-      );
+      addToListAndHome(entry, {
+        status: statusSelect.value,
+        score: scoreInput.value,
+        progress: progressInput.value
+      });
     }
     editContainer.classList.add('hide');
     document.getElementById(prevContainer).classList.remove('hide');
@@ -530,7 +526,6 @@ function openEditView(media, listType, prevContainer, entry) {
 }
 
 function updatedListAndHome(oldEntry, editedEntry) {
-  console.log(oldEntry);
   let updatedStatus;
   if (oldEntry.status !== editedEntry.status) updatedStatus = editedEntry.status;
 
@@ -549,13 +544,35 @@ function updatedListAndHome(oldEntry, editedEntry) {
     }
 
     // remove from home if status changes from current/repeating to something else
+    // also fix all other popovers
     if (updatedStatus && updatedStatus !== 'CURRENT' && updatedStatus !== 'REPEATING') {
+      const oldEntryPopover = document.querySelector(
+        '#home-' + oldEntry.id + ' > div[data-position]'
+      );
+      const oldEntryPosition = oldEntryPopover.getAttribute('data-position');
+      const allPopovers = document.querySelectorAll(
+        '.home-popover-' + oldEntry.media.type
+      );
+      allPopovers.forEach(popover => {
+        const oldPosition = popover.getAttribute('data-position');
+        if (oldPosition > oldEntryPosition) {
+          const newPosition = oldPosition - 1;
+          popover.setAttribute('data-position', newPosition);
+          if (LEFT_POSITIONS.includes(newPosition)) {
+            popover.classList.add('list-item-popover-left');
+            popover.classList.remove('list-item-popover-right');
+          } else {
+            popover.classList.add('list-item-popover-right');
+            popover.classList.remove('list-item-popover-left');
+          }
+        }
+      });
       document.getElementById('home-' + oldEntry.media.type).removeChild(homeEntry);
     }
   }
   if (updatedStatus && (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')) {
     // add it to the home page in the right spot.
-    createHomeCard(oldEntry.media, 1, true, oldEntry);
+    createHomeCard(oldEntry, 1, true);
     addHomeCardToStart(oldEntry.media.type);
   }
 
@@ -577,22 +594,24 @@ function updatedListAndHome(oldEntry, editedEntry) {
   }
 }
 
-function addToListAndHome(media, formValues, entry) {
+function addToListAndHome(entry, formValues) {
   // home
   if (formValues.status === 'CURRENT' || formValues.status === 'REPEATING') {
-    createHomeCard(media, 1, true, formValues);
-    addHomeCardToStart(media.type);
+    createHomeCard(entry, 1, true);
+    addHomeCardToStart(entry.media.type);
   }
 
   // list
   if (document.getElementById('list').firstChild) {
     const row = createRow(entry);
-    addToListSection(row, formValues.status, media.title.userPreferred);
+    addToListSection(row, formValues.status, entry.media.title.userPreferred);
   }
 }
 
 function addHomeCardToStart(mediaType) {
   // createHomeCard(oldEntry.media, 1, true, oldEntry);
+
+  // need to differentiate between airing and not airing
   const allPopovers = document.querySelectorAll('.home-popover-' + mediaType);
   allPopovers.forEach(popover => {
     const oldPosition = popover.getAttribute('data-position');
@@ -841,7 +860,10 @@ export async function showMediaPage(id, type) {
   button.textContent = media.mediaListEntry ? media.mediaListEntry.status : 'Add to List';
   button.classList.add('page-top-button');
   button.addEventListener('click', () => {
-    openEditView(media, media.type, 'page', media.mediaListEntry);
+    openEditView(media, media.type, 'page', {
+      ...media.mediaListEntry,
+      media: { ...media }
+    });
   });
 
   // this is going to be really long, so bear with me

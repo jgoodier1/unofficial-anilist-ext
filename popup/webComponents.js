@@ -83,6 +83,8 @@ export class RelationCard extends HTMLElement {
       }
       .image {
         height: 108px;
+        max-width: 70px;
+        object-fit: cover;
       }
       .content-wrapper {
         display: flex;

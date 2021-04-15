@@ -138,6 +138,11 @@ export async function getFullList(type) {
             type
             status
           }
+          nextAiringEpisode {
+            airingAt
+            timeUntilAiring
+            episode
+          }
         }
       }
     }
@@ -278,9 +283,11 @@ export async function editEntry(id, status, score, progress) {
       variables: variables
     })
   };
-  fetch('https://graphql.anilist.co', options)
+  return fetch('https://graphql.anilist.co', options)
     .then(res => res.json())
-    .then(json => console.log(json));
+    .then(json => {
+      return json.data.SaveMediaListEntry;
+    });
 }
 
 export async function deleteEntry(id) {
@@ -331,6 +338,11 @@ export async function search(searchValue) {
         format
         coverImage {
           medium
+        }
+        nextAiringEpisode {
+          airingAt
+          timeUntilAiring
+          episode
         }
       }
     }
@@ -535,11 +547,22 @@ export async function addEntry(mediaId, status, score, progress) {
       score
       progress
       media {
+        id
         title {
           userPreferred
         }
+        episodes
+        chapters
+        siteUrl
         coverImage {
           medium
+        }
+        status
+        type
+        nextAiringEpisode {
+          airingAt
+          timeUntilAiring
+          episode
         }
       }
     }
@@ -585,8 +608,8 @@ export async function getMediaPage(id, type) {
         native
       }
       coverImage {
-        extraLarge
         large
+        medium
       }
       bannerImage
       startDate {
@@ -731,6 +754,7 @@ export async function getMediaPage(id, type) {
         id
         status
         score
+        progress
       }
       stats {
         statusDistribution {
