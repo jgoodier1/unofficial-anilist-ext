@@ -106,7 +106,6 @@ export class HomeCard extends HTMLElement {
     this.shadowRoot.append(wrapper, style);
   }
   connectedCallback() {
-    console.log('blah');
     const wrapper = this.shadowRoot.querySelector('.wrapper');
 
     const mediaId = this.getAttribute('data-media-id');
@@ -183,7 +182,6 @@ export class HomeCard extends HTMLElement {
       totalContent !== 'null' ? '/' + totalContent : ''
     }`;
     progressElement.setAttribute('class', 'progress');
-    progressElement.classList.add('popover-progress');
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
