@@ -799,10 +799,12 @@ export async function showMediaPage(id, type) {
       episodesData.setAttribute('data-value', media.episodes);
       dataSection.append(episodesData);
     }
-    const durationData = document.createElement('data-comp');
-    durationData.setAttribute('data-title', 'Episode Duration');
-    durationData.setAttribute('data-value', `${media.duration} min`);
-    dataSection.append(durationData);
+    if (media.duration) {
+      const durationData = document.createElement('data-comp');
+      durationData.setAttribute('data-title', 'Episode Duration');
+      durationData.setAttribute('data-value', `${media.duration} min`);
+      dataSection.append(durationData);
+    }
   } else if (media.type === 'MANGA') {
     if (media.chapters !== null) {
       const chapterssData = document.createElement('data-comp');
@@ -834,13 +836,15 @@ export async function showMediaPage(id, type) {
     'Dec'
   ];
 
-  const startDateData = document.createElement('data-comp');
-  startDateData.setAttribute('data-title', 'Start Date');
-  startDateData.setAttribute(
-    'data-value',
-    `${MONTHS[media.startDate.month]} ${media.startDate.day}, ${media.startDate.year}`
-  );
-  dataSection.append(startDateData);
+  if (media.startDate.day !== null) {
+    const startDateData = document.createElement('data-comp');
+    startDateData.setAttribute('data-title', 'Start Date');
+    startDateData.setAttribute(
+      'data-value',
+      `${MONTHS[media.startDate.month]} ${media.startDate.day}, ${media.startDate.year}`
+    );
+    dataSection.append(startDateData);
+  }
 
   if (media.endDate.day !== null) {
     const endDateData = document.createElement('data-comp');
@@ -859,14 +863,18 @@ export async function showMediaPage(id, type) {
     dataSection.append(seasonData);
   }
 
-  const avgScoreData = document.createElement('data-comp');
-  avgScoreData.setAttribute('data-title', 'Average Score');
-  avgScoreData.setAttribute('data-value', media.averageScore + '%');
-  dataSection.append(avgScoreData);
-  const meanScoreData = document.createElement('data-comp');
-  meanScoreData.setAttribute('data-title', 'Mean Score');
-  meanScoreData.setAttribute('data-value', media.meanScore + '%');
-  dataSection.append(meanScoreData);
+  if (media.averageScore) {
+    const avgScoreData = document.createElement('data-comp');
+    avgScoreData.setAttribute('data-title', 'Average Score');
+    avgScoreData.setAttribute('data-value', media.averageScore + '%');
+    dataSection.append(avgScoreData);
+  }
+  if (media.meanScore) {
+    const meanScoreData = document.createElement('data-comp');
+    meanScoreData.setAttribute('data-title', 'Mean Score');
+    meanScoreData.setAttribute('data-value', media.meanScore + '%');
+    dataSection.append(meanScoreData);
+  }
   const popularityData = document.createElement('data-comp');
   popularityData.setAttribute('data-title', 'Popularity');
   popularityData.setAttribute('data-value', media.popularity);
@@ -883,13 +891,15 @@ export async function showMediaPage(id, type) {
       studioData.setAttribute('data-title', 'Studios');
       studioData.setAttribute('data-value', mainStudio[0].node.name);
       dataSection.append(studioData);
-      const producers = media.studios.edges.filter(studio => !studio.isMain);
-      const producerName = producers.map(prod => prod.node.name);
-      const producersString = producerName.join(', ');
-      const producerData = document.createElement('data-comp');
-      producerData.setAttribute('data-title', 'Producers');
-      producerData.setAttribute('data-value', producersString);
-      dataSection.append(producerData);
+      if (media.studios.edges.length > 1) {
+        const producers = media.studios.edges.filter(studio => !studio.isMain);
+        const producerName = producers.map(prod => prod.node.name);
+        const producersString = producerName.join(', ');
+        const producerData = document.createElement('data-comp');
+        producerData.setAttribute('data-title', 'Producers');
+        producerData.setAttribute('data-value', producersString);
+        dataSection.append(producerData);
+      }
     }
   }
   const sourceData = document.createElement('data-comp');
@@ -904,26 +914,34 @@ export async function showMediaPage(id, type) {
     dataSection.append(hastagData);
   }
 
-  const genreData = document.createElement('data-comp');
-  genreData.setAttribute('data-title', 'Genres');
-  const genres = media.genres.join(', ');
-  genreData.setAttribute('data-value', genres);
-  dataSection.append(genreData);
+  if (media.genres.length > 0) {
+    const genreData = document.createElement('data-comp');
+    genreData.setAttribute('data-title', 'Genres');
+    const genres = media.genres.join(', ');
+    genreData.setAttribute('data-value', genres);
+    dataSection.append(genreData);
+  }
 
-  const RomajiData = document.createElement('data-comp');
-  RomajiData.setAttribute('data-title', 'Romaji');
-  RomajiData.setAttribute('data-value', media.title.romaji);
-  dataSection.append(RomajiData);
-  const EnglishData = document.createElement('data-comp');
-  EnglishData.setAttribute('data-title', 'English');
-  EnglishData.setAttribute('data-value', media.title.english);
-  dataSection.append(EnglishData);
-  const NativeData = document.createElement('data-comp');
-  NativeData.setAttribute('data-title', 'Native');
-  NativeData.setAttribute('data-value', media.title.native);
-  dataSection.append(NativeData);
+  if (media.title.romaji) {
+    const RomajiData = document.createElement('data-comp');
+    RomajiData.setAttribute('data-title', 'Romaji');
+    RomajiData.setAttribute('data-value', media.title.romaji);
+    dataSection.append(RomajiData);
+  }
+  if (media.title.english) {
+    const EnglishData = document.createElement('data-comp');
+    EnglishData.setAttribute('data-title', 'English');
+    EnglishData.setAttribute('data-value', media.title.english);
+    dataSection.append(EnglishData);
+  }
+  if (media.title.native) {
+    const NativeData = document.createElement('data-comp');
+    NativeData.setAttribute('data-title', 'Native');
+    NativeData.setAttribute('data-value', media.title.native);
+    dataSection.append(NativeData);
+  }
 
-  if (media.synonyms) {
+  if (media.synonyms.length > 0) {
     const synonymData = document.createElement('data-comp');
     const synonyms = media.synonyms.join(', ');
     synonymData.setAttribute('data-title', 'Synonyms');
@@ -1065,28 +1083,30 @@ export async function showMediaPage(id, type) {
     }
   });
 
-  const scoreSection = pageContainer.appendChild(document.createElement('section'));
-  scoreSection.classList.add('page-section');
+  if (media.stats.scoreDistribution.length > 0) {
+    const scoreSection = pageContainer.appendChild(document.createElement('section'));
+    scoreSection.classList.add('page-section');
 
-  const scoreHeading = scoreSection.appendChild(document.createElement('h2'));
-  scoreHeading.textContent = 'Score Distribution';
-  scoreHeading.classList.add('page-sub-heading');
+    const scoreHeading = scoreSection.appendChild(document.createElement('h2'));
+    scoreHeading.textContent = 'Score Distribution';
+    scoreHeading.classList.add('page-sub-heading');
 
-  const scoreInnerWrapper = scoreSection.appendChild(document.createElement('div'));
-  scoreInnerWrapper.classList.add('page-score-wrapper');
+    const scoreInnerWrapper = scoreSection.appendChild(document.createElement('div'));
+    scoreInnerWrapper.classList.add('page-score-wrapper');
 
-  const largestAmount = media.stats.scoreDistribution.reduce((max, score) => {
-    return max.amount > score.amount ? max : score;
-  });
+    const largestAmount = media.stats.scoreDistribution.reduce((max, score) => {
+      return max.amount > score.amount ? max : score;
+    });
 
-  media.stats.scoreDistribution.forEach(score => {
-    const graphBar = document.createElement('graph-bar');
-    graphBar.setAttribute('data-score', score.score);
-    graphBar.setAttribute('data-amount', score.amount);
-    graphBar.setAttribute('data-max', largestAmount.amount);
+    media.stats.scoreDistribution.forEach(score => {
+      const graphBar = document.createElement('graph-bar');
+      graphBar.setAttribute('data-score', score.score);
+      graphBar.setAttribute('data-amount', score.amount);
+      graphBar.setAttribute('data-max', largestAmount.amount);
 
-    scoreInnerWrapper.appendChild(graphBar);
-  });
+      scoreInnerWrapper.appendChild(graphBar);
+    });
+  }
 
   const recommendSection = pageContainer.appendChild(document.createElement('section'));
   recommendSection.classList.add('page-section');

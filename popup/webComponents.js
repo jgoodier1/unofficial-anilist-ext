@@ -402,7 +402,7 @@ export class StaffCard extends HTMLElement {
         background-color: #fafafa;
         cursor: pointer;
         display: grid;
-        grid-template-columns: 50px auto;
+        grid-template-columns: 55px auto;
         margin-bottom: 16px;
         width: 100%;
         text-align: left;
@@ -410,9 +410,9 @@ export class StaffCard extends HTMLElement {
         font-size: 12px;
       }
       .image {
-        height: 70px;
+        height: 78px;
         grid-row: 1/3;
-        max-width: 50px;
+        max-width: 55px;
         object-fit: cover;
       }
     `;
