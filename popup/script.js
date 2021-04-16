@@ -15,7 +15,10 @@ import {
   DataComponent,
   RelationCard,
   CharacterCard,
-  StaffCard
+  StaffCard,
+  RecommendationCard,
+  StatusCard,
+  GraphBar
 } from './webComponents.js';
 
 customElements.define('home-card', HomeCard);
@@ -23,6 +26,9 @@ customElements.define('data-comp', DataComponent);
 customElements.define('relation-card', RelationCard);
 customElements.define('character-card', CharacterCard);
 customElements.define('staff-card', StaffCard);
+customElements.define('recommend-card', RecommendationCard);
+customElements.define('status-card', StatusCard);
+customElements.define('graph-bar', GraphBar);
 
 // nav buttons
 document.getElementById('home-button').addEventListener('click', () => {
@@ -742,7 +748,6 @@ export async function showMediaPage(id, type) {
   while (pageContainer.firstChild) pageContainer.removeChild(pageContainer.firstChild);
 
   const media = await getMediaPage(id, type);
-  console.log(media);
 
   if (media.bannerImage !== null) {
     const bannerImage = pageContainer.appendChild(document.createElement('img'));
@@ -948,8 +953,8 @@ export async function showMediaPage(id, type) {
   relationsHeading.textContent = 'Relations';
   relationsHeading.classList.add('page-sub-heading');
 
-  const releationsContainer = relationsSection.appendChild(document.createElement('div'));
-  releationsContainer.classList.add('page-relations-container');
+  const releationsCarousel = relationsSection.appendChild(document.createElement('div'));
+  releationsCarousel.classList.add('carousel-wrapper');
   media.relations.edges.forEach(relation => {
     const relationElement = document.createElement('relation-card');
     relationElement.setAttribute('data-id', relation.node.id);
@@ -961,7 +966,7 @@ export async function showMediaPage(id, type) {
       'data-bottom',
       relation.node.format + ' • ' + relation.node.status
     );
-    releationsContainer.appendChild(relationElement);
+    releationsCarousel.appendChild(relationElement);
   });
 
   if (media.characters.edges !== null) {
@@ -1010,6 +1015,97 @@ export async function showMediaPage(id, type) {
     staffElement.setAttribute('data-role', staff.role);
 
     staffSection.append(staffElement);
+  });
+
+  const statusStatsSection = pageContainer.appendChild(document.createElement('section'));
+  statusStatsSection.classList.add('page-section');
+
+  const statusStatsHeading = statusStatsSection.appendChild(document.createElement('h2'));
+  statusStatsHeading.textContent = 'Status Distribution';
+  statusStatsHeading.classList.add('page-sub-heading');
+
+  const sortedStats = media.stats.statusDistribution.sort((a, b) => a.amount < b.amount);
+
+  const statsInnerWrapper = statusStatsSection.appendChild(document.createElement('div'));
+  statsInnerWrapper.classList.add('page-stats-wrapper');
+
+  sortedStats.forEach((stat, i) => {
+    const statusCard = document.createElement('status-card');
+    statusCard.setAttribute('data-index', i);
+    statusCard.setAttribute('data-status', stat.status);
+    statusCard.setAttribute('data-count', stat.amount);
+
+    statsInnerWrapper.appendChild(statusCard);
+  });
+
+  const percentageBar = statsInnerWrapper.appendChild(document.createElement('div'));
+  percentageBar.classList.add('page-percentage-bar');
+  sortedStats.forEach((stat, i) => {
+    const bar = percentageBar.appendChild(document.createElement('span'));
+    bar.style.width = `${(stat.amount / media.popularity) * 400}px`;
+    switch (i) {
+      case 0:
+        bar.style.backgroundColor = '#36CC02';
+        break;
+      case 1:
+        bar.style.backgroundColor = '#0283CC';
+        break;
+      case 2:
+        bar.style.backgroundColor = '#5B02CC';
+        break;
+      case 3:
+        bar.style.backgroundColor = '#FA06F0';
+        break;
+      case 4:
+        bar.style.backgroundColor = '#FA0606';
+        break;
+
+      default:
+        break;
+    }
+  });
+
+  const scoreSection = pageContainer.appendChild(document.createElement('section'));
+  scoreSection.classList.add('page-section');
+
+  const scoreHeading = scoreSection.appendChild(document.createElement('h2'));
+  scoreHeading.textContent = 'Score Distribution';
+  scoreHeading.classList.add('page-sub-heading');
+
+  const scoreInnerWrapper = scoreSection.appendChild(document.createElement('div'));
+  scoreInnerWrapper.classList.add('page-score-wrapper');
+
+  const largestAmount = media.stats.scoreDistribution.reduce((max, score) => {
+    return max.amount > score.amount ? max : score;
+  });
+
+  media.stats.scoreDistribution.forEach(score => {
+    const graphBar = document.createElement('graph-bar');
+    graphBar.setAttribute('data-score', score.score);
+    graphBar.setAttribute('data-amount', score.amount);
+    graphBar.setAttribute('data-max', largestAmount.amount);
+
+    scoreInnerWrapper.appendChild(graphBar);
+  });
+
+  const recommendSection = pageContainer.appendChild(document.createElement('section'));
+  recommendSection.classList.add('page-section');
+
+  const recommendHeading = recommendSection.appendChild(document.createElement('h2'));
+  recommendHeading.textContent = 'Recommendations';
+  recommendHeading.classList.add('page-sub-heading');
+
+  const recommendCarousel = recommendSection.appendChild(document.createElement('div'));
+  recommendCarousel.classList.add('carousel-wrapper');
+
+  media.recommendations.nodes.forEach(rec => {
+    const recElement = document.createElement('recommend-card');
+    recElement.setAttribute('data-id', rec.mediaRecommendation.id);
+    recElement.setAttribute('data-type', rec.mediaRecommendation.type);
+    recElement.setAttribute('data-src', rec.mediaRecommendation.coverImage.medium);
+    recElement.setAttribute('data-title', rec.mediaRecommendation.title.userPreferred);
+
+    recommendCarousel.append(recElement);
   });
 }
 

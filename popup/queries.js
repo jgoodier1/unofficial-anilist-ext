@@ -641,7 +641,6 @@ export async function getMediaPage(id, type) {
       popularity
       favourites
       hashtag
-      countryOfOrigin
       isFavourite
       nextAiringEpisode {
         airingAt
@@ -729,18 +728,15 @@ export async function getMediaPage(id, type) {
               userPreferred
             }
             coverImage {
-              large
+              medium
             }
+            type
           }
         }
       }
       externalLinks {
         site
         url
-      }
-      trailer {
-        id
-        site
       }
       tags {
         id

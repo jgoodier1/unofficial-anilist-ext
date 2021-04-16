@@ -434,3 +434,264 @@ export class StaffCard extends HTMLElement {
     role.textContent = this.getAttribute('data-role');
   }
 }
+
+export class RecommendationCard extends HTMLElement {
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: 'open' });
+
+    const wrapper = document.createElement('button');
+    wrapper.setAttribute('class', 'wrapper');
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .wrapper{
+        border: 0;
+        cursor: pointer;
+        margin-right: 16px;
+        display: flex;
+        flex-flow: column;
+        justify-content: start;
+        max-width: 70px;
+        padding: 0;
+      }
+      .image {
+        height: 100px;
+        max-width: 70px;
+        object-fit: cover;
+      }
+      .title {
+        font-size: 12px;
+      }
+    `;
+
+    this.shadowRoot.append(wrapper, style);
+  }
+
+  connectedCallback() {
+    const wrapper = this.shadowRoot.querySelector('.wrapper');
+
+    const id = this.getAttribute('data-id');
+    const type = this.getAttribute('data-type');
+    const imageSrc = this.getAttribute('data-src');
+    const dataTitle = this.getAttribute('data-title');
+
+    wrapper.addEventListener('click', () => {
+      showMediaPage(id, type);
+    });
+
+    const image = wrapper.appendChild(document.createElement('img'));
+    image.src = imageSrc;
+    image.setAttribute('class', 'image');
+
+    const title = wrapper.appendChild(document.createElement('p'));
+    title.textContent = dataTitle;
+    title.setAttribute('class', 'title');
+  }
+}
+
+export class StatusCard extends HTMLElement {
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: 'open' });
+
+    const wrapper = document.createElement('div');
+    wrapper.setAttribute('class', 'wrapper');
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .wrapper {
+        display: flex;
+        flex-flow: column;
+      }
+      .status {
+        padding: 4px 8px;
+        color: white;
+        width: max-content;
+        border-radius: 8px;
+      }
+      .count-wrapper {
+        margin-bottom: 0;
+        text-align: center;
+      }
+      .green .status {
+        background-color: #36CC02;
+      }
+      .green span {
+        color: #36CC02;
+      }
+      .blue .status {
+        background-color: #0283CC;
+      }
+      .blue span {
+        color: #0283CC;
+      }
+      .purple .status {
+        background-color: #5B02CC;
+      }
+      .purple span {
+        color: #5B02CC;
+      }
+      .pink .status {
+        background-color: #FA06F0;
+      }
+      .pink span {
+        color: #FA06F0;
+      }
+      .red .status {
+        background-color: #FA0606;
+      }
+      .red span {
+        color: #FA0606;
+      }
+
+    `;
+
+    this.shadowRoot.append(wrapper, style);
+  }
+
+  connectedCallback() {
+    const wrapper = this.shadowRoot.querySelector('.wrapper');
+
+    const dataStatus = this.getAttribute('data-status');
+    const dataCount = this.getAttribute('data-count');
+    const index = +this.getAttribute('data-index');
+
+    const status = wrapper.appendChild(document.createElement('div'));
+    status.setAttribute('class', 'status');
+    status.textContent = dataStatus;
+    switch (index) {
+      case 0:
+        wrapper.classList.add('green');
+        break;
+      case 1:
+        wrapper.classList.add('blue');
+        break;
+      case 2:
+        wrapper.classList.add('purple');
+        break;
+      case 3:
+        wrapper.classList.add('pink');
+        break;
+      case 4:
+        wrapper.classList.add('red');
+        break;
+      default:
+        break;
+    }
+    const countWrapper = wrapper.appendChild(document.createElement('p'));
+    countWrapper.classList.add('count-wrapper');
+    const count = document.createElement('span');
+    count.textContent = dataCount;
+    countWrapper.append(count, ' Users');
+  }
+}
+
+export class GraphBar extends HTMLElement {
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: 'open' });
+
+    const wrapper = document.createElement('div');
+    wrapper.setAttribute('class', 'wrapper');
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .wrapper {
+        display: flex;
+        flex-flow: column;
+        align-items: center;
+      }
+      .wrapper p {
+        font-size: 12px;
+      }
+      .bar {
+        max-height: 75px;
+        min-height: 17px;
+        width: 16px;
+        background-color: black;
+        border-radius: 20px;
+      }
+    `;
+
+    this.shadowRoot.append(wrapper, style);
+  }
+
+  connectedCallback() {
+    const wrapper = this.shadowRoot.querySelector('.wrapper');
+
+    const dataAmount = this.getAttribute('data-amount');
+    const dataScore = +this.getAttribute('data-score');
+    const dataMax = this.getAttribute('data-max');
+
+    const amount = wrapper.appendChild(document.createElement('p'));
+    amount.textContent = dataAmount;
+
+    const bar = wrapper.appendChild(document.createElement('div'));
+    bar.style.height = `${(dataAmount / dataMax) * 75}px`;
+    bar.setAttribute('class', 'bar');
+
+    switch (dataScore) {
+      case 10:
+        bar.style.backgroundColor = '#FF0909';
+        break;
+      case 20:
+        bar.style.backgroundColor = '#FD3E02';
+        break;
+      case 30:
+        bar.style.backgroundColor = '#FF9900';
+        break;
+      case 40:
+        bar.style.backgroundColor = '#F5BF00';
+        break;
+      case 50:
+        bar.style.backgroundColor = '#FFE600';
+        break;
+      case 60:
+        bar.style.backgroundColor = '#FAFF00';
+        break;
+      case 70:
+        bar.style.backgroundColor = '#D2F400';
+        break;
+      case 80:
+        bar.style.backgroundColor = '#ADFF00';
+        break;
+      case 90:
+        bar.style.backgroundColor = '#8FFF00';
+        break;
+      case 100:
+        bar.style.backgroundColor = '#62FF02';
+        break;
+
+      default:
+        break;
+    }
+
+    const score = wrapper.appendChild(document.createElement('p'));
+    score.textContent = dataScore;
+  }
+}
+
+// Template
+// export class NAME extends HTMLElement {
+//   constructor() {
+//     super()
+
+//     this.attachShadow({mode:'open'})
+
+//     const wrapper = document.createElement('div')
+//     wrapper.setAttribute('class', 'wrapper')
+
+//     const style = document.createElement('style')
+//     style.textContent = ``
+
+//     this.shadowRoot.append(wrapper,style)
+//   }
+
+//   connectedCallback() {
+//     const wrapper = this.shadowRoot.querySelector('.wrapper')
+//   }
+// }

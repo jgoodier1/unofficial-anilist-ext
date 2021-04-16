@@ -625,8 +625,33 @@ label {
   padding: 16px;
 }
 
-.page-relations-container {
+.carousel-wrapper {
   margin-bottom: 16px;
   display: flex;
   overflow-x: scroll;
+}
+
+.page-stats-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  background-color: var(--colour-container);
+  gap: 16px;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: 0;
+}
+
+.page-percentage-bar {
+  display: flex;
+}
+
+.page-percentage-bar span {
+  height: 10px;
+}
+
+.page-score-wrapper {
+  background-color: var(--colour-container);
+  display: flex;
+  justify-content: space-around;
+  align-items: end;
 }
