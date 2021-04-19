@@ -7,7 +7,8 @@ import {
   search,
   checkIfOnList,
   addEntry,
-  getMediaPage
+  getMediaPage,
+  getCharacterPage
 } from './queries.js';
 
 import {
@@ -18,7 +19,9 @@ import {
   StaffCard,
   RecommendationCard,
   StatusCard,
-  GraphBar
+  GraphBar,
+  ParsedMarkdown,
+  CharacterMedia
 } from './webComponents.js';
 
 customElements.define('home-card', HomeCard);
@@ -29,6 +32,24 @@ customElements.define('staff-card', StaffCard);
 customElements.define('recommend-card', RecommendationCard);
 customElements.define('status-card', StatusCard);
 customElements.define('graph-bar', GraphBar);
+customElements.define('parsed-markdown', ParsedMarkdown);
+customElements.define('char-media', CharacterMedia);
+
+const MONTHS = [
+  '',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'June',
+  'July',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
+];
 
 // nav buttons
 document.getElementById('home-button').addEventListener('click', () => {
@@ -820,22 +841,6 @@ export async function showMediaPage(id, type) {
     }
   }
 
-  const MONTHS = [
-    '',
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'June',
-    'July',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec'
-  ];
-
   if (media.startDate.day !== null) {
     const startDateData = document.createElement('data-comp');
     startDateData.setAttribute('data-title', 'Start Date');
@@ -964,28 +969,32 @@ export async function showMediaPage(id, type) {
   descriptionParagraph.classList.add('page-desc-p');
 
   //relations
-  const relationsSection = pageContainer.appendChild(document.createElement('section'));
-  relationsSection.classList.add('page-section');
+  if (media.relations.edges.length > 0) {
+    const relationsSection = pageContainer.appendChild(document.createElement('section'));
+    relationsSection.classList.add('page-section');
 
-  const relationsHeading = relationsSection.appendChild(document.createElement('h2'));
-  relationsHeading.textContent = 'Relations';
-  relationsHeading.classList.add('page-sub-heading');
+    const relationsHeading = relationsSection.appendChild(document.createElement('h2'));
+    relationsHeading.textContent = 'Relations';
+    relationsHeading.classList.add('page-sub-heading');
 
-  const releationsCarousel = relationsSection.appendChild(document.createElement('div'));
-  releationsCarousel.classList.add('carousel-wrapper');
-  media.relations.edges.forEach(relation => {
-    const relationElement = document.createElement('relation-card');
-    relationElement.setAttribute('data-id', relation.node.id);
-    relationElement.setAttribute('data-type', relation.node.type);
-    relationElement.setAttribute('data-src', relation.node.coverImage.medium);
-    relationElement.setAttribute('data-relation', relation.relationType);
-    relationElement.setAttribute('data-title', relation.node.title.userPreferred);
-    relationElement.setAttribute(
-      'data-bottom',
-      relation.node.format + ' • ' + relation.node.status
+    const releationsCarousel = relationsSection.appendChild(
+      document.createElement('div')
     );
-    releationsCarousel.appendChild(relationElement);
-  });
+    releationsCarousel.classList.add('carousel-wrapper');
+    media.relations.edges.forEach(relation => {
+      const relationElement = document.createElement('relation-card');
+      relationElement.setAttribute('data-id', relation.node.id);
+      relationElement.setAttribute('data-type', relation.node.type);
+      relationElement.setAttribute('data-src', relation.node.coverImage.medium);
+      relationElement.setAttribute('data-relation', relation.relationType);
+      relationElement.setAttribute('data-title', relation.node.title.userPreferred);
+      relationElement.setAttribute(
+        'data-bottom',
+        relation.node.format + ' • ' + relation.node.status
+      );
+      releationsCarousel.appendChild(relationElement);
+    });
+  }
 
   if (media.characters.edges !== null) {
     const charactersSection = pageContainer.appendChild(
@@ -1129,5 +1138,89 @@ export async function showMediaPage(id, type) {
   });
 }
 
+export async function showCharacterPage(id) {
+  const allContainers = document.querySelectorAll('.container');
+  allContainers.forEach(container => container.classList.add('hide'));
+
+  const pageContainer = document.getElementById('page');
+  pageContainer.classList.remove('hide');
+  while (pageContainer.firstChild) pageContainer.removeChild(pageContainer.firstChild);
+
+  const character = await getCharacterPage(id);
+  console.log(character);
+
+  const topWrapper = pageContainer.appendChild(document.createElement('header'));
+  topWrapper.classList.add('char-top-wrapper');
+
+  const nameElement = topWrapper.appendChild(document.createElement('h1'));
+  nameElement.textContent = character.name.full;
+
+  if (character.name.native && character.name.alternative[0] !== '') {
+    const nativeAndAltNames = topWrapper.appendChild(document.createElement('p'));
+    const altNames = character.name.alternative.join(', ');
+    nativeAndAltNames.textContent =
+      (character.name.native ? character.name.native : '') + ', ' + altNames;
+  }
+
+  const charImage = topWrapper.appendChild(document.createElement('img'));
+  charImage.src = character.image.large;
+  charImage.alt = character.name.full;
+  charImage.classList.add('char-image');
+
+  const descriptionWrapper = pageContainer.appendChild(document.createElement('section'));
+  descriptionWrapper.classList.add('char-desc');
+
+  if (character.dateOfBirth.month !== null) {
+    const birthday = descriptionWrapper.appendChild(document.createElement('p'));
+    birthday.classList.add('char-desc-row');
+    const birthMonth = MONTHS[character.dateOfBirth.month];
+    birthday.textContent = character.dateOfBirth.year
+      ? `${birthMonth} ${character.dateOfBirth.day}, ${character.dateOfBirth.year} `
+      : birthMonth + ' ' + character.dateOfBirth.day;
+    const key = document.createElement('strong');
+    key.textContent = 'Birth: ';
+    birthday.prepend(key);
+  }
+  if (character.age !== null) {
+    const age = descriptionWrapper.appendChild(document.createElement('p'));
+    age.classList.add('char-desc-row');
+    age.textContent = character.age;
+    const key = document.createElement('strong');
+    key.textContent = 'Age: ';
+    age.prepend(key);
+  }
+  if (character.gender !== null) {
+    const gender = descriptionWrapper.appendChild(document.createElement('p'));
+    gender.classList.add('char-desc-row');
+    gender.textContent = character.gender;
+    const key = document.createElement('strong');
+    key.textContent = 'Gender: ';
+    gender.prepend(key);
+  }
+
+  const parsedDescription = document.createElement('parsed-markdown');
+  parsedDescription.setAttribute('data', character.description);
+  descriptionWrapper.append(parsedDescription);
+
+  const cardWrapper = pageContainer.appendChild(document.createElement('section'));
+  cardWrapper.classList.add('char-card-wrapper');
+  character.media.edges.forEach(media => {
+    const card = document.createElement('char-media');
+    card.setAttribute('data-media-id', media.node.id);
+    card.setAttribute('data-media-type', media.node.type);
+    card.setAttribute('data-cover-img', media.node.coverImage.large);
+    card.setAttribute('data-title', media.node.title.userPreferred);
+    if (media.voiceActorRoles.length > 0) {
+      const voiceActor = media.voiceActorRoles.filter(
+        actor => actor.voiceActor.language === 'Japanese'
+      );
+      card.setAttribute('data-actor-id', voiceActor[0].voiceActor.id);
+      card.setAttribute('data-actor-name', voiceActor[0].voiceActor.name.full);
+      card.setAttribute('data-actor-img', voiceActor[0].voiceActor.image.medium);
+    }
+
+    cardWrapper.append(card);
+  });
+}
 // call homePage when the popup is opened
 homePage();

@@ -1,4 +1,4 @@
-import { showMediaPage } from './script.js';
+import { showCharacterPage, showMediaPage } from './script.js';
 import { updateEntry } from './queries.js';
 
 const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
@@ -358,7 +358,7 @@ export class CharacterCard extends HTMLElement {
   connectedCallback() {
     const wrapper = this.shadowRoot.querySelector('.wrapper');
 
-    // const charId = this.getAttribute('data-char-id')
+    const charId = this.getAttribute('data-char-id');
     // const actorId = this.getAttribute('data-act-id')
 
     const characterButton = wrapper.appendChild(document.createElement('button'));
@@ -366,6 +366,10 @@ export class CharacterCard extends HTMLElement {
     const characterImage = characterButton.appendChild(document.createElement('img'));
     characterImage.src = this.getAttribute('data-char-src');
     characterImage.setAttribute('class', 'img');
+
+    characterButton.addEventListener('click', () => {
+      showCharacterPage(charId);
+    });
 
     const characterName = characterButton.appendChild(document.createElement('p'));
     characterName.textContent = this.getAttribute('data-char-name');
@@ -672,6 +676,138 @@ export class GraphBar extends HTMLElement {
 
     const score = wrapper.appendChild(document.createElement('p'));
     score.textContent = dataScore;
+  }
+}
+
+export class ParsedMarkdown extends HTMLElement {
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: 'open' });
+
+    const paragraph = document.createElement('p');
+    paragraph.setAttribute('class', 'paragraph');
+
+    const style = document.createElement('style');
+    style.textContent = `.paragraph{margin-top: 0;}`;
+
+    this.shadowRoot.append(paragraph, style);
+  }
+
+  connectedCallback() {
+    const paragraph = this.shadowRoot.querySelector('.paragraph');
+
+    const data = this.getAttribute('data');
+
+    const newData = data.replaceAll(/\n/g, '<br>');
+    console.log(data);
+    paragraph.innerHTML = newData;
+  }
+}
+
+export class CharacterMedia extends HTMLElement {
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: 'open' });
+
+    const wrapper = document.createElement('div');
+    wrapper.setAttribute('class', 'wrapper');
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .wrapper{
+        position: relative;
+        width: 121px;
+      }
+      .button {
+        padding: 0;
+        border: 0;
+        cursor: pointer;
+      }
+      .media-button {
+        width: 121px;
+        height: 170px;
+      }
+      .actor-button {
+        top: 0;
+        position: absolute;
+        right: 0;
+        width: 40px;
+        height: 55px;
+        border: 1px solid white;
+      }
+      .image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 8px;
+        margin-bottom: 0;
+        cursor: pointer;
+      }
+      .actor-name {
+        font-size: 12px;
+        margin-top: 0;
+        cursor: pointer;
+      }
+    `;
+
+    this.shadowRoot.append(wrapper, style);
+  }
+
+  connectedCallback() {
+    const wrapper = this.shadowRoot.querySelector('.wrapper');
+
+    const mediaId = this.getAttribute('data-media-id');
+    const mediaType = this.getAttribute('data-media-type');
+    const coverImage = this.getAttribute('data-cover-img');
+    const title = this.getAttribute('data-title');
+    let actorId, actorName, actorImage;
+    if (this.hasAttribute('data-actor-id')) {
+      actorId = this.getAttribute('data-actor-id');
+      actorName = this.getAttribute('data-actor-name');
+      actorImage = this.getAttribute('data-actor-img');
+    }
+
+    const mediaButton = wrapper.appendChild(document.createElement('button'));
+    mediaButton.setAttribute('class', 'button media-button');
+    mediaButton.addEventListener('click', () => {
+      showMediaPage(mediaId, mediaType);
+    });
+
+    const coverImageElement = mediaButton.appendChild(document.createElement('img'));
+    coverImageElement.setAttribute('class', 'image');
+    coverImageElement.src = coverImage;
+    coverImageElement.alt = title;
+
+    const titleElement = wrapper.appendChild(document.createElement('h2'));
+    titleElement.setAttribute('class', 'title');
+    titleElement.textContent = title;
+    titleElement.addEventListener('click', () => {
+      showMediaPage(mediaId, mediaType);
+    });
+
+    if (actorId !== undefined) {
+      const actorElement = wrapper.appendChild(document.createElement('p'));
+      actorElement.setAttribute('class', 'actor-name');
+      actorElement.textContent = actorName;
+      actorElement.addEventListener('click', () => {
+        // showStaffPage(actorId)
+      });
+      const actorButton = wrapper.appendChild(document.createElement('button'));
+      actorButton.setAttribute('class', 'button actor-button');
+      actorButton.addEventListener('click', () => {
+        //showStaffPage(actorId)
+      });
+      const actorImageElement = actorButton.appendChild(document.createElement('img'));
+      actorImageElement.setAttribute('class', 'image');
+      actorImageElement.src = actorImage;
+      actorImageElement.alt = actorName;
+    }
   }
 }
 

@@ -783,3 +783,96 @@ export async function getMediaPage(id, type) {
       return json.data.Media;
     });
 }
+
+export async function getCharacterPage(id, page) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  query($id: Int, $page: Int){
+    Character(id: $id) {
+      id
+      name {
+        full
+        native
+        alternative
+      }
+      image {
+        large
+      }
+      favourites
+      isFavourite
+      description
+      age
+      gender
+      dateOfBirth {
+        year
+        month
+        day
+      }
+      media(page: $page, sort: POPULARITY_DESC) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          id
+          characterRole
+          voiceActorRoles(sort: [RELEVANCE, ID]) {
+            roleNotes
+            voiceActor {
+              id
+              name {
+                full
+              }
+              image {
+                medium
+              }
+              language: languageV2
+            }
+          }
+          node {
+            id
+            type
+            title {
+              userPreferred
+            }
+            coverImage {
+              large
+            }
+            startDate {
+              year
+            }
+            type
+            mediaListEntry {
+              id
+              status
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id, page }
+    })
+  };
+
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.Character;
+    });
+}
