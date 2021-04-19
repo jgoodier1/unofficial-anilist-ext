@@ -8,7 +8,8 @@ import {
   checkIfOnList,
   addEntry,
   getMediaPage,
-  getCharacterPage
+  getCharacterPage,
+  getStaffPage
 } from './queries.js';
 
 import {
@@ -21,7 +22,9 @@ import {
   StatusCard,
   GraphBar,
   ParsedMarkdown,
-  CharacterMedia
+  CharacterMedia,
+  StaffChar,
+  StaffRole
 } from './webComponents.js';
 
 customElements.define('home-card', HomeCard);
@@ -34,6 +37,8 @@ customElements.define('status-card', StatusCard);
 customElements.define('graph-bar', GraphBar);
 customElements.define('parsed-markdown', ParsedMarkdown);
 customElements.define('char-media', CharacterMedia);
+customElements.define('staff-char', StaffChar);
+customElements.define('staff-role', StaffRole);
 
 const MONTHS = [
   '',
@@ -756,6 +761,11 @@ function showSearchResults(allResults) {
         title.textContent = result.name.full;
         title.classList.add('search-title', 'search-char-staff-title');
       }
+      if (i === 2) {
+        title.addEventListener('click', () => showCharacterPage(result.id));
+      } else if (i === 3) {
+        title.addEventListener('click', () => showStaffPage(result.id));
+      }
     });
   });
 }
@@ -1222,5 +1232,120 @@ export async function showCharacterPage(id) {
     cardWrapper.append(card);
   });
 }
+
+export async function showStaffPage(id) {
+  const allContainers = document.querySelectorAll('.container');
+  allContainers.forEach(container => container.classList.add('hide'));
+
+  const pageContainer = document.getElementById('page');
+  pageContainer.classList.remove('hide');
+  while (pageContainer.firstChild) pageContainer.removeChild(pageContainer.firstChild);
+
+  const staff = await getStaffPage(id);
+  console.log(staff);
+
+  const topWrapper = pageContainer.appendChild(document.createElement('header'));
+  topWrapper.classList.add('char-top-wrapper');
+
+  const nameElement = topWrapper.appendChild(document.createElement('h1'));
+  nameElement.textContent = staff.name.full;
+
+  if (staff.name.native && staff.name.alternative[0] !== '') {
+    const nativeAndAltNames = topWrapper.appendChild(document.createElement('p'));
+    const altNames = staff.name.alternative.join(', ');
+    nativeAndAltNames.textContent =
+      (staff.name.native ? staff.name.native : '') + ', ' + altNames;
+  }
+
+  const charImage = topWrapper.appendChild(document.createElement('img'));
+  charImage.src = staff.image.large;
+  charImage.alt = staff.name.full;
+  charImage.classList.add('char-image');
+
+  const descriptionWrapper = pageContainer.appendChild(document.createElement('section'));
+  descriptionWrapper.classList.add('char-desc');
+
+  if (staff.dateOfBirth.month !== null) {
+    const birthday = descriptionWrapper.appendChild(document.createElement('p'));
+    birthday.classList.add('char-desc-row');
+    const birthMonth = MONTHS[staff.dateOfBirth.month];
+    birthday.textContent = staff.dateOfBirth.year
+      ? `${birthMonth} ${staff.dateOfBirth.day}, ${staff.dateOfBirth.year} `
+      : birthMonth + ' ' + staff.dateOfBirth.day;
+    const key = document.createElement('strong');
+    key.textContent = 'Birth: ';
+    birthday.prepend(key);
+  }
+  if (staff.age !== null) {
+    const age = descriptionWrapper.appendChild(document.createElement('p'));
+    age.classList.add('char-desc-row');
+    age.textContent = staff.age;
+    const key = document.createElement('strong');
+    key.textContent = 'Age: ';
+    age.prepend(key);
+  }
+  if (staff.gender !== null) {
+    const gender = descriptionWrapper.appendChild(document.createElement('p'));
+    gender.classList.add('char-desc-row');
+    gender.textContent = staff.gender;
+    const key = document.createElement('strong');
+    key.textContent = 'Gender: ';
+    gender.prepend(key);
+  }
+  if (staff.yearsActive.length > 0) {
+    const yearsActive = descriptionWrapper.appendChild(document.createElement('p'));
+    yearsActive.classList.add('char-desc-row');
+    if (staff.yearsActive.length > 1) {
+      yearsActive.textContent = staff.yearsActive.join('-');
+    } else yearsActive.textContent = staff.yearsActive[0] + '-';
+    const key = document.createElement('strong');
+    key.textContent = 'Years Active: ';
+    yearsActive.prepend(key);
+  }
+  if (staff.homeTown !== null) {
+    const homeTown = descriptionWrapper.appendChild(document.createElement('p'));
+    homeTown.classList.add('char-desc-row');
+    homeTown.textContent = staff.homeTown;
+    const key = document.createElement('strong');
+    key.textContent = 'Home Town: ';
+    homeTown.prepend(key);
+  }
+
+  const parsedDescription = document.createElement('parsed-markdown');
+  parsedDescription.setAttribute('data', staff.description);
+  descriptionWrapper.append(parsedDescription);
+
+  const cardWrapper = pageContainer.appendChild(document.createElement('section'));
+  cardWrapper.classList.add('char-card-wrapper');
+
+  staff.characterMedia.edges.forEach(character => {
+    const card = document.createElement('staff-char');
+    card.setAttribute('data-media-id', character.node.id);
+    card.setAttribute('data-media-type', character.node.type);
+    card.setAttribute('data-char-id', character.characters[0].id);
+    card.setAttribute('data-char-img', character.characters[0].image.large);
+    card.setAttribute('data-media-img', character.node.coverImage.medium);
+    card.setAttribute('data-char-name', character.characters[0].name.full);
+    card.setAttribute('data-media-title', character.node.title.userPreferred);
+    card.setAttribute('data-media-role', character.characterRole);
+
+    cardWrapper.append(card);
+  });
+
+  const roleCardWrapper = pageContainer.appendChild(document.createElement('section'));
+  roleCardWrapper.classList.add('char-card-wrapper');
+
+  staff.staffMedia.edges.forEach(role => {
+    const card = document.createElement('staff-role');
+    card.setAttribute('data-id', role.node.id);
+    card.setAttribute('data-type', role.node.type);
+    card.setAttribute('data-image', role.node.coverImage.large);
+    card.setAttribute('data-title', role.node.title.userPreferred);
+    card.setAttribute('data-role', role.staffRole);
+
+    roleCardWrapper.append(card);
+  });
+}
+
 // call homePage when the popup is opened
 homePage();

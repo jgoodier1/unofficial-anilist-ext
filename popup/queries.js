@@ -876,3 +876,125 @@ export async function getCharacterPage(id, page) {
       return json.data.Character;
     });
 }
+
+export async function getStaffPage(id, charPage, staffPage) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  query($id: Int, $charPage: Int, $staffPage: Int){
+    Staff(id: $id) {
+      id
+      name {
+        full
+        native
+        alternative
+      }
+      image {
+        large
+      }
+      description
+      favourites
+      isFavourite
+      age
+      gender
+      yearsActive
+      homeTown
+      primaryOccupations
+      dateOfBirth {
+        year
+        month
+        day
+      }
+      dateOfDeath {
+        year
+        month
+        day
+      }
+      characterMedia(page: $charPage, sort: START_DATE_DESC) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          characterRole
+          characterName
+          node {
+            id
+            type
+            title {
+              userPreferred
+            }
+            coverImage {
+              medium
+            }
+            startDate {
+              year
+            }
+            mediaListEntry {
+              id
+              status
+            }
+          }
+          characters {
+            id
+            name {
+              full
+            }
+            image {
+              large
+            }
+          }
+        }
+      }
+      staffMedia(page: $staffPage, type: null, sort: START_DATE_DESC) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          staffRole
+          node {
+            id
+            type
+            title {
+              userPreferred
+            }
+            coverImage {
+              large
+            }
+            mediaListEntry {
+              id
+              status
+            }
+          }
+        }
+      }
+    }
+  }
+  `;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id, charPage, staffPage }
+    })
+  };
+
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.Staff;
+    });
+}

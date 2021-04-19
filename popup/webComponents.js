@@ -1,4 +1,4 @@
-import { showCharacterPage, showMediaPage } from './script.js';
+import { showCharacterPage, showMediaPage, showStaffPage } from './script.js';
 import { updateEntry } from './queries.js';
 
 const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
@@ -65,7 +65,7 @@ export class HomeCard extends HTMLElement {
         background: #edf1f5;
         padding: 0 0.5rem;
         position: absolute;
-        width: 226px;
+        width: 214px;
         height: 118px;
         top: -1px;
 
@@ -74,7 +74,7 @@ export class HomeCard extends HTMLElement {
         left:85px;
       }
       .right {
-        right: 89px;
+        right: 85px;
         justify-items: end;
         text-align: right;
       }
@@ -359,7 +359,7 @@ export class CharacterCard extends HTMLElement {
     const wrapper = this.shadowRoot.querySelector('.wrapper');
 
     const charId = this.getAttribute('data-char-id');
-    // const actorId = this.getAttribute('data-act-id')
+    const actorId = this.getAttribute('data-actor-id');
 
     const characterButton = wrapper.appendChild(document.createElement('button'));
     characterButton.setAttribute('class', 'button char-button');
@@ -376,9 +376,11 @@ export class CharacterCard extends HTMLElement {
     const role = characterButton.appendChild(document.createElement('p'));
     role.textContent = this.getAttribute('data-role');
 
-    if (this.getAttribute('data-actor-name')) {
+    if (this.hasAttribute('data-actor-name')) {
       const actorButton = wrapper.appendChild(document.createElement('button'));
       actorButton.setAttribute('class', 'button act-button');
+      actorButton.addEventListener('click', () => showStaffPage(actorId));
+
       const actorName = actorButton.appendChild(document.createElement('p'));
       actorName.textContent = this.getAttribute('data-actor-name');
       const language = actorButton.appendChild(document.createElement('p'));
@@ -427,7 +429,8 @@ export class StaffCard extends HTMLElement {
   connectedCallback() {
     const wrapper = this.shadowRoot.querySelector('.wrapper');
 
-    // const id = this.getAttribute('data-id')
+    const id = this.getAttribute('data-id');
+    wrapper.addEventListener('click', () => showStaffPage(id));
 
     const image = wrapper.appendChild(document.createElement('img'));
     image.src = this.getAttribute('data-src');
@@ -796,18 +799,187 @@ export class CharacterMedia extends HTMLElement {
       actorElement.setAttribute('class', 'actor-name');
       actorElement.textContent = actorName;
       actorElement.addEventListener('click', () => {
-        // showStaffPage(actorId)
+        showStaffPage(actorId);
       });
       const actorButton = wrapper.appendChild(document.createElement('button'));
       actorButton.setAttribute('class', 'button actor-button');
       actorButton.addEventListener('click', () => {
-        //showStaffPage(actorId)
+        showStaffPage(actorId);
       });
       const actorImageElement = actorButton.appendChild(document.createElement('img'));
       actorImageElement.setAttribute('class', 'image');
       actorImageElement.src = actorImage;
       actorImageElement.alt = actorName;
     }
+  }
+}
+
+export class StaffChar extends HTMLElement {
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: 'open' });
+
+    const wrapper = document.createElement('div');
+    wrapper.setAttribute('class', 'wrapper');
+
+    const style = document.createElement('style');
+    style.textContent = `
+    .wrapper{
+      position: relative;
+      width: 121px;
+    }
+    .button {
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+    }
+    .char-button {
+      width: 121px;
+      height: 170px;
+    }
+    .media-button {
+      top: 0;
+      position: absolute;
+      right: 0;
+      width: 40px;
+      height: 55px;
+      border: 1px solid white;
+    }
+    .image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 8px;
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+    .title {
+      font-size: 12px;
+      margin-top: 0;
+      cursor: pointer;
+    }
+    `;
+
+    this.shadowRoot.append(wrapper, style);
+  }
+
+  connectedCallback() {
+    const wrapper = this.shadowRoot.querySelector('.wrapper');
+
+    const mediaId = this.getAttribute('data-media-id');
+    const mediaType = this.getAttribute('data-media-type');
+    const charId = this.getAttribute('data-char-id');
+    const charImage = this.getAttribute('data-char-img');
+    const mediaImage = this.getAttribute('data-media-img');
+    const charName = this.getAttribute('data-char-name');
+    const mediaTitle = this.getAttribute('data-media-title');
+    const mediaRole = this.getAttribute('data-media-role');
+
+    const characterButton = wrapper.appendChild(document.createElement('button'));
+    characterButton.setAttribute('class', 'button char-button');
+    characterButton.addEventListener('click', () => showCharacterPage(charId));
+
+    const charImageElement = characterButton.appendChild(document.createElement('img'));
+    charImageElement.setAttribute('class', 'image');
+    charImageElement.src = charImage;
+    charImageElement.alt = charName;
+
+    const mediaButton = wrapper.appendChild(document.createElement('button'));
+    mediaButton.setAttribute('class', 'button media-button');
+    mediaButton.addEventListener('click', () => showMediaPage(mediaId));
+
+    const mediaImageElement = mediaButton.appendChild(document.createElement('img'));
+    mediaImageElement.setAttribute('class', 'image');
+    mediaImageElement.src = mediaImage;
+    mediaImageElement.alt = mediaTitle;
+
+    const nameElement = wrapper.appendChild(document.createElement('h2'));
+    nameElement.setAttribute('class', 'name');
+    const strongName = nameElement.appendChild(document.createElement('strong'));
+    strongName.textContent = charName;
+    mediaRole === 'MAIN' && nameElement.append(' Main');
+    nameElement.addEventListener('click', () => showCharacterPage(charId));
+
+    const titleElement = wrapper.appendChild(document.createElement('p'));
+    titleElement.setAttribute('class', 'title');
+    titleElement.textContent = mediaTitle;
+    titleElement.addEventListener('click', () => showMediaPage(mediaId, mediaType));
+  }
+}
+
+export class StaffRole extends HTMLElement {
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: 'open' });
+
+    const wrapper = document.createElement('div');
+    wrapper.setAttribute('class', 'wrapper');
+
+    const style = document.createElement('style');
+    style.textContent = `
+    .wrapper{
+      width: 121px;
+    }
+    .button {
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+      width: 121px;
+      height: 170px;
+    }
+    .image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 8px;
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+    .role {
+      font-size: 12px;
+      margin-top: 0;
+      cursor: pointer;
+    }
+    `;
+
+    this.shadowRoot.append(wrapper, style);
+  }
+
+  connectedCallback() {
+    const wrapper = this.shadowRoot.querySelector('.wrapper');
+    const id = this.getAttribute('data-id');
+    const type = this.getAttribute('data-type');
+    const imageSrc = this.getAttribute('data-image');
+    const title = this.getAttribute('data-title');
+    const role = this.getAttribute('data-role');
+
+    const button = wrapper.appendChild(document.createElement('button'));
+    button.setAttribute('class', 'button');
+    button.addEventListener('click', () => showMediaPage(id, type));
+
+    const imageElement = button.appendChild(document.createElement('img'));
+    imageElement.setAttribute('class', 'image');
+    imageElement.src = imageSrc;
+    imageElement.alt = title;
+
+    const titleElement = wrapper.appendChild(document.createElement('h2'));
+    titleElement.setAttribute('class', 'title');
+    titleElement.textContent = title;
+    titleElement.addEventListener('click', () => showMediaPage(id, type));
+
+    const roleElement = wrapper.appendChild(document.createElement('p'));
+    roleElement.setAttribute('class', 'role');
+    roleElement.textContent = role;
   }
 }
 
