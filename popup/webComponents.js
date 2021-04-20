@@ -703,7 +703,6 @@ export class ParsedMarkdown extends HTMLElement {
     const data = this.getAttribute('data');
 
     const newData = data.replaceAll(/\n/g, '<br>');
-    // console.log(data);
     paragraph.innerHTML = newData;
   }
 }

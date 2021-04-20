@@ -1156,7 +1156,6 @@ export async function showCharacterPage(id) {
   while (pageContainer.firstChild) pageContainer.removeChild(pageContainer.firstChild);
 
   const character = await getCharacterPage(id);
-  console.log(character);
 
   createTopSection(character);
 
@@ -1216,6 +1215,7 @@ export async function showCharacterPage(id) {
         const voiceActor = media.voiceActorRoles.filter(
           actor => actor.voiceActor.language === 'Japanese'
         );
+        if (voiceActor[0] === undefined) return;
         card.setAttribute('data-actor-id', voiceActor[0].voiceActor.id);
         card.setAttribute('data-actor-name', voiceActor[0].voiceActor.name.full);
         card.setAttribute('data-actor-img', voiceActor[0].voiceActor.image.medium);
@@ -1252,7 +1252,6 @@ export async function showStaffPage(id) {
   while (pageContainer.firstChild) pageContainer.removeChild(pageContainer.firstChild);
 
   const staff = await getStaffPage(id);
-  console.log(staff);
 
   createTopSection(staff);
 
