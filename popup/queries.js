@@ -998,3 +998,201 @@ export async function getStaffPage(id, charPage, staffPage) {
       return json.data.Staff;
     });
 }
+
+export async function getCharacterAppearances(id, page) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  query($id: Int, $page: Int) {
+    Character(id: $id) {
+      id
+      media(page: $page, sort: POPULARITY_DESC) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          id
+          characterRole
+          voiceActorRoles(sort: [RELEVANCE, ID]) {
+            roleNotes
+            voiceActor {
+              id
+              name {
+                full
+              }
+              image {
+                medium
+              }
+              language: languageV2
+            }
+          }
+          node {
+            id
+            type
+            title {
+              userPreferred
+            }
+            coverImage {
+              large
+            }
+            startDate {
+              year
+            }
+            type
+            mediaListEntry {
+              id
+              status
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id, page }
+    })
+  };
+
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.Character;
+    });
+}
+export async function getCharacterMedia(id, page) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  query($id: Int, $page: Int, ){
+    Staff(id: $id) {
+      id
+      characterMedia(page: $page, sort: START_DATE_DESC) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          characterRole
+          characterName
+          node {
+            id
+            type
+            title {
+              userPreferred
+            }
+            coverImage {
+              medium
+            }
+            startDate {
+              year
+            }
+            mediaListEntry {
+              id
+              status
+            }
+          }
+          characters {
+            id
+            name {
+              full
+            }
+            image {
+              large
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id, page }
+    })
+  };
+
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.Staff;
+    });
+}
+
+export async function getRoleMedia(id, page) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  query($id: Int, $page: Int, ){
+    Staff(id: $id) {
+      id
+      staffMedia(page: $page, type: null, sort: START_DATE_DESC) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          staffRole
+          node {
+            id
+            type
+            title {
+              userPreferred
+            }
+            coverImage {
+              large
+            }
+            mediaListEntry {
+              id
+              status
+            }
+          }
+        }
+      }
+    }
+  }`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id, page }
+    })
+  };
+
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.Staff;
+    });
+}

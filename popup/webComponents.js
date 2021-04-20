@@ -81,10 +81,10 @@ export class HomeCard extends HTMLElement {
       .title {
         color:black;
         font-size: 14px;
-        font-weight: lighter;
+        /* font-weight: lighter; */
       }
       .progress {
-        color: #93989c;
+        color: #4f4f4f;
         font-size: 12px;
       }
       .image:hover ~ .popover,
@@ -703,7 +703,7 @@ export class ParsedMarkdown extends HTMLElement {
     const data = this.getAttribute('data');
 
     const newData = data.replaceAll(/\n/g, '<br>');
-    console.log(data);
+    // console.log(data);
     paragraph.innerHTML = newData;
   }
 }
@@ -787,7 +787,7 @@ export class CharacterMedia extends HTMLElement {
     coverImageElement.src = coverImage;
     coverImageElement.alt = title;
 
-    const titleElement = wrapper.appendChild(document.createElement('h2'));
+    const titleElement = wrapper.appendChild(document.createElement('h3'));
     titleElement.setAttribute('class', 'title');
     titleElement.textContent = title;
     titleElement.addEventListener('click', () => {
@@ -898,7 +898,7 @@ export class StaffChar extends HTMLElement {
     mediaImageElement.src = mediaImage;
     mediaImageElement.alt = mediaTitle;
 
-    const nameElement = wrapper.appendChild(document.createElement('h2'));
+    const nameElement = wrapper.appendChild(document.createElement('h3'));
     nameElement.setAttribute('class', 'name');
     const strongName = nameElement.appendChild(document.createElement('strong'));
     strongName.textContent = charName;
@@ -972,7 +972,7 @@ export class StaffRole extends HTMLElement {
     imageElement.src = imageSrc;
     imageElement.alt = title;
 
-    const titleElement = wrapper.appendChild(document.createElement('h2'));
+    const titleElement = wrapper.appendChild(document.createElement('h3'));
     titleElement.setAttribute('class', 'title');
     titleElement.textContent = title;
     titleElement.addEventListener('click', () => showMediaPage(id, type));

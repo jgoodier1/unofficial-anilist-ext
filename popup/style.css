@@ -16,7 +16,7 @@
 body {
   margin: 0;
   color: black;
-  font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen, Ubuntu,
+  font-family: arial, Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen, Ubuntu,
     Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   background-color: var(--colour-background);
   box-sizing: border-box;
@@ -263,8 +263,8 @@ label {
   margin-left: 2rem;
   margin-bottom: 0;
   color: var(--colour-text);
-  font-size: 14px;
-  font-weight: 300;
+  font-size: 16px;
+  /* font-weight: 400; */
 }
 
 .container-list {
@@ -546,6 +546,8 @@ label {
   width: 100%;
   position: relative;
   top: 0;
+  height: 150px;
+  object-fit: cover;
 }
 
 .page-section {
@@ -682,9 +684,31 @@ label {
   margin: 0;
 }
 
+.char-card-outer-wrapper {
+  display: grid;
+  margin-bottom: 16px;
+}
+
+.char-card-heading {
+  margin: 0;
+  margin-left: 32px;
+  margin-top: 16px;
+}
+
 .char-card-wrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
   margin: 32px;
+}
+
+.char-button {
+  cursor: pointer;
+  background-color: #236eff;
+  font-size: 18px;
+  border: none;
+  padding: 16px;
+  color: white;
+  margin-left: auto;
+  margin-right: auto;
 }

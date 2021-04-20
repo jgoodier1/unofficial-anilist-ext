@@ -9,7 +9,10 @@ import {
   addEntry,
   getMediaPage,
   getCharacterPage,
-  getStaffPage
+  getStaffPage,
+  getCharacterMedia,
+  getRoleMedia,
+  getCharacterAppearances
 } from './queries.js';
 
 import {
@@ -127,7 +130,7 @@ async function currentList(listType) {
   finishedAiring.sort((a, b) => a.updatedAt < b.updatedAt);
 
   // the heading above the list
-  const headingElement = document.createElement('h1');
+  const headingElement = document.createElement('h2');
   headingElement.classList.add('heading-list');
   headingElement.textContent =
     listType === 'ANIME' ? 'Anime In Progress' : 'Manga In Progress';
@@ -1159,23 +1162,7 @@ export async function showCharacterPage(id) {
   const character = await getCharacterPage(id);
   console.log(character);
 
-  const topWrapper = pageContainer.appendChild(document.createElement('header'));
-  topWrapper.classList.add('char-top-wrapper');
-
-  const nameElement = topWrapper.appendChild(document.createElement('h1'));
-  nameElement.textContent = character.name.full;
-
-  if (character.name.native && character.name.alternative[0] !== '') {
-    const nativeAndAltNames = topWrapper.appendChild(document.createElement('p'));
-    const altNames = character.name.alternative.join(', ');
-    nativeAndAltNames.textContent =
-      (character.name.native ? character.name.native : '') + ', ' + altNames;
-  }
-
-  const charImage = topWrapper.appendChild(document.createElement('img'));
-  charImage.src = character.image.large;
-  charImage.alt = character.name.full;
-  charImage.classList.add('char-image');
+  createTopSection(character);
 
   const descriptionWrapper = pageContainer.appendChild(document.createElement('section'));
   descriptionWrapper.classList.add('char-desc');
@@ -1212,25 +1199,52 @@ export async function showCharacterPage(id) {
   parsedDescription.setAttribute('data', character.description);
   descriptionWrapper.append(parsedDescription);
 
-  const cardWrapper = pageContainer.appendChild(document.createElement('section'));
-  cardWrapper.classList.add('char-card-wrapper');
-  character.media.edges.forEach(media => {
-    const card = document.createElement('char-media');
-    card.setAttribute('data-media-id', media.node.id);
-    card.setAttribute('data-media-type', media.node.type);
-    card.setAttribute('data-cover-img', media.node.coverImage.large);
-    card.setAttribute('data-title', media.node.title.userPreferred);
-    if (media.voiceActorRoles.length > 0) {
-      const voiceActor = media.voiceActorRoles.filter(
-        actor => actor.voiceActor.language === 'Japanese'
-      );
-      card.setAttribute('data-actor-id', voiceActor[0].voiceActor.id);
-      card.setAttribute('data-actor-name', voiceActor[0].voiceActor.name.full);
-      card.setAttribute('data-actor-img', voiceActor[0].voiceActor.image.medium);
-    }
+  const outerWrapper = pageContainer.appendChild(document.createElement('section'));
+  outerWrapper.classList.add('char-card-outer-wrapper');
 
-    cardWrapper.append(card);
-  });
+  const heading = outerWrapper.appendChild(document.createElement('h2'));
+  heading.textContent = 'Appearances';
+  heading.classList.add('char-card-heading');
+
+  const cardWrapper = outerWrapper.appendChild(document.createElement('div'));
+  cardWrapper.classList.add('char-card-wrapper');
+
+  function createCharacterCards(dataArray) {
+    dataArray.forEach(media => {
+      const card = document.createElement('char-media');
+      card.setAttribute('data-media-id', media.node.id);
+      card.setAttribute('data-media-type', media.node.type);
+      card.setAttribute('data-cover-img', media.node.coverImage.large);
+      card.setAttribute('data-title', media.node.title.userPreferred);
+      if (media.voiceActorRoles.length > 0) {
+        const voiceActor = media.voiceActorRoles.filter(
+          actor => actor.voiceActor.language === 'Japanese'
+        );
+        card.setAttribute('data-actor-id', voiceActor[0].voiceActor.id);
+        card.setAttribute('data-actor-name', voiceActor[0].voiceActor.name.full);
+        card.setAttribute('data-actor-img', voiceActor[0].voiceActor.image.medium);
+      }
+
+      cardWrapper.append(card);
+    });
+  }
+
+  createCharacterCards(character.media.edges);
+
+  if (character.media.pageInfo.hasNextPage) {
+    let page = 2;
+    const nextAppearButton = outerWrapper.appendChild(document.createElement('button'));
+    nextAppearButton.classList.add('char-button');
+    nextAppearButton.textContent = 'Show More Appearances';
+    nextAppearButton.addEventListener('click', async () => {
+      const newAppearances = await getCharacterAppearances(id, page);
+      createCharacterCards(newAppearances.media.edges);
+      if (newAppearances.media.pageInfo.hasNextPage) page++;
+      else {
+        nextAppearButton.remove();
+      }
+    });
+  }
 }
 
 export async function showStaffPage(id) {
@@ -1244,23 +1258,7 @@ export async function showStaffPage(id) {
   const staff = await getStaffPage(id);
   console.log(staff);
 
-  const topWrapper = pageContainer.appendChild(document.createElement('header'));
-  topWrapper.classList.add('char-top-wrapper');
-
-  const nameElement = topWrapper.appendChild(document.createElement('h1'));
-  nameElement.textContent = staff.name.full;
-
-  if (staff.name.native && staff.name.alternative[0] !== '') {
-    const nativeAndAltNames = topWrapper.appendChild(document.createElement('p'));
-    const altNames = staff.name.alternative.join(', ');
-    nativeAndAltNames.textContent =
-      (staff.name.native ? staff.name.native : '') + ', ' + altNames;
-  }
-
-  const charImage = topWrapper.appendChild(document.createElement('img'));
-  charImage.src = staff.image.large;
-  charImage.alt = staff.name.full;
-  charImage.classList.add('char-image');
+  createTopSection(staff);
 
   const descriptionWrapper = pageContainer.appendChild(document.createElement('section'));
   descriptionWrapper.classList.add('char-desc');
@@ -1315,36 +1313,110 @@ export async function showStaffPage(id) {
   parsedDescription.setAttribute('data', staff.description);
   descriptionWrapper.append(parsedDescription);
 
-  const cardWrapper = pageContainer.appendChild(document.createElement('section'));
+  const charWrapper = pageContainer.appendChild(document.createElement('section'));
+  charWrapper.classList.add('char-card-outer-wrapper');
+
+  const charHeading = charWrapper.appendChild(document.createElement('h2'));
+  charHeading.textContent = 'Character Roles';
+  charHeading.classList.add('char-card-heading');
+
+  const cardWrapper = charWrapper.appendChild(document.createElement('div'));
   cardWrapper.classList.add('char-card-wrapper');
 
-  staff.characterMedia.edges.forEach(character => {
-    const card = document.createElement('staff-char');
-    card.setAttribute('data-media-id', character.node.id);
-    card.setAttribute('data-media-type', character.node.type);
-    card.setAttribute('data-char-id', character.characters[0].id);
-    card.setAttribute('data-char-img', character.characters[0].image.large);
-    card.setAttribute('data-media-img', character.node.coverImage.medium);
-    card.setAttribute('data-char-name', character.characters[0].name.full);
-    card.setAttribute('data-media-title', character.node.title.userPreferred);
-    card.setAttribute('data-media-role', character.characterRole);
+  function createCharacterCards(dataArray) {
+    dataArray.forEach(character => {
+      const card = document.createElement('staff-char');
+      card.setAttribute('data-media-id', character.node.id);
+      card.setAttribute('data-media-type', character.node.type);
+      card.setAttribute('data-char-id', character.characters[0].id);
+      card.setAttribute('data-char-img', character.characters[0].image.large);
+      card.setAttribute('data-media-img', character.node.coverImage.medium);
+      card.setAttribute('data-char-name', character.characters[0].name.full);
+      card.setAttribute('data-media-title', character.node.title.userPreferred);
+      card.setAttribute('data-media-role', character.characterRole);
 
-    cardWrapper.append(card);
-  });
+      cardWrapper.append(card);
+    });
+  }
 
-  const roleCardWrapper = pageContainer.appendChild(document.createElement('section'));
+  createCharacterCards(staff.characterMedia.edges);
+
+  if (staff.characterMedia.pageInfo.hasNextPage) {
+    let charPage = 2;
+    const nextCharButton = charWrapper.appendChild(document.createElement('button'));
+    nextCharButton.classList.add('char-button');
+    nextCharButton.textContent = 'Show More Characters';
+    nextCharButton.addEventListener('click', async () => {
+      const newCharacters = await getCharacterMedia(id, charPage);
+      createCharacterCards(newCharacters.characterMedia.edges);
+      if (newCharacters.characterMedia.pageInfo.hasNextPage) charPage++;
+      else {
+        nextCharButton.remove();
+      }
+    });
+  }
+
+  const roleWrapper = pageContainer.appendChild(document.createElement('section'));
+  roleWrapper.classList.add('char-card-outer-wrapper');
+
+  const roleHeading = roleWrapper.appendChild(document.createElement('h2'));
+  roleHeading.textContent = 'Staff Roles';
+  roleHeading.classList.add('char-card-heading');
+
+  const roleCardWrapper = roleWrapper.appendChild(document.createElement('div'));
   roleCardWrapper.classList.add('char-card-wrapper');
 
-  staff.staffMedia.edges.forEach(role => {
-    const card = document.createElement('staff-role');
-    card.setAttribute('data-id', role.node.id);
-    card.setAttribute('data-type', role.node.type);
-    card.setAttribute('data-image', role.node.coverImage.large);
-    card.setAttribute('data-title', role.node.title.userPreferred);
-    card.setAttribute('data-role', role.staffRole);
+  function createRoleCards(dataArray) {
+    dataArray.forEach(role => {
+      const card = document.createElement('staff-role');
+      card.setAttribute('data-id', role.node.id);
+      card.setAttribute('data-type', role.node.type);
+      card.setAttribute('data-image', role.node.coverImage.large);
+      card.setAttribute('data-title', role.node.title.userPreferred);
+      card.setAttribute('data-role', role.staffRole);
 
-    roleCardWrapper.append(card);
-  });
+      roleCardWrapper.append(card);
+    });
+  }
+
+  createRoleCards(staff.staffMedia.edges);
+
+  if (staff.staffMedia.pageInfo.hasNextPage) {
+    let staffPage = 2;
+    const nextRoleButton = roleWrapper.appendChild(document.createElement('button'));
+    nextRoleButton.classList.add('char-button');
+    nextRoleButton.textContent = 'Show More Roles';
+    nextRoleButton.addEventListener('click', async () => {
+      const newCharacters = await getRoleMedia(id, staffPage);
+      createRoleCards(newCharacters.staffMedia.edges);
+      if (newCharacters.staffMedia.pageInfo.hasNextPage) staffPage++;
+      else {
+        nextRoleButton.remove();
+      }
+    });
+  }
+}
+
+function createTopSection(data) {
+  const pageContainer = document.getElementById('page');
+
+  const topWrapper = pageContainer.appendChild(document.createElement('header'));
+  topWrapper.classList.add('char-top-wrapper');
+
+  const nameElement = topWrapper.appendChild(document.createElement('h1'));
+  nameElement.textContent = data.name.full;
+
+  if (data.name.native && data.name.alternative[0] !== '') {
+    const nativeAndAltNames = topWrapper.appendChild(document.createElement('p'));
+    const altNames = data.name.alternative.join(', ');
+    nativeAndAltNames.textContent =
+      (data.name.native ? data.name.native : '') + ', ' + altNames;
+  }
+
+  const charImage = topWrapper.appendChild(document.createElement('img'));
+  charImage.src = data.image.large;
+  charImage.alt = data.name.full;
+  charImage.classList.add('char-image');
 }
 
 // call homePage when the popup is opened
