@@ -58,24 +58,17 @@ nav button svg {
   width: 30px;
   height: 30px;
 }
-/*
-#settings-button {
-  position: relative;
-} */
 
 #settings-container {
   display: none;
   flex-flow: column;
   align-items: center;
   position: absolute;
-  /* top: -150px; */
   transition: all 0.3s ease-out;
   z-index: 2;
   background: var(--colour-container);
-  /* padding: 1rem; */
   right: 1rem;
   width: 10rem;
-  /* height: 160px; */
   justify-content: center;
   box-shadow: 0 2px 5px black;
 }
@@ -83,69 +76,6 @@ nav button svg {
 .settings-wrapper:hover > #settings-container,
 .settings-wrapper:focus-within > #settings-container {
   display: flex;
-}
-
-.options-outer-div {
-  padding: 16px 0;
-  text-align: center;
-}
-
-.settings-heading {
-  font-size: 18px;
-  padding: 0;
-  color: var(--colour-text);
-}
-
-#list-options-div {
-  width: max-content;
-  border: 1px solid var(--colour-select);
-  border-radius: 0.25em;
-  padding: 0.25em 0.5em;
-  font-size: 1rem;
-  cursor: pointer;
-  line-height: 1.1;
-  background: var(--colour-container);
-  display: grid;
-  grid-template-areas: 'select';
-  align-items: center;
-  margin-top: 10px;
-}
-
-#list-options-div:after {
-  content: '';
-  /* top: 14px;
-  right: 10px; */
-  width: 0.8em;
-  height: 0.5em;
-  clip-path: polygon(100% 0%, 0 0%, 50% 100%);
-  background-color: var(--colour-select);
-  justify-self: end;
-}
-
-#list-options-div,
-#list-options-div:after {
-  grid-area: select;
-}
-
-label {
-  color: var(--colour-text);
-}
-
-/* select */
-#list-options {
-  appearance: none;
-  font-size: inherit;
-  font-family: inherit;
-  cursor: inherit;
-  width: 100%;
-  border: none;
-  margin: 0;
-  outline: none;
-  background-color: transparent;
-  /* background: url('../icons/drop-down-arrow.png') right center no-repeat; */
-  padding: 0 2rem 0 0;
-  grid-area: select;
-  color: var(--colour-text);
 }
 
 #sign-out-button {
@@ -189,13 +119,14 @@ label {
   color: var(--colour-text);
 }
 
+label {
+  color: var(--colour-text);
+}
+
 .link {
   text-decoration: none;
   color: inherit;
   font-weight: bold;
-}
-
-.link:hover {
   text-decoration: underline #4ccefa;
 }
 
@@ -226,12 +157,6 @@ label {
   color: var(--colour-text);
   font-size: 20px;
   padding: 1rem;
-}
-
-.heading-empty {
-  color: var(--colour-text);
-  font-size: 18px;
-  text-align: center;
 }
 
 .heading-list {
