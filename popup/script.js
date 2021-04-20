@@ -74,17 +74,12 @@ document.getElementById('search-nav-button').addEventListener('click', () => {
 });
 
 // // the sign out button within the settings menu
-// const signOutButton = document.getElementById('sign-out-button');
-// signOutButton.addEventListener('click', () => {
-//   browser.storage.local.remove('token');
-//   const homeWrapper = document.getElementById('home');
-//   while (homeWrapper.firstChild) homeWrapper.removeChild(homeWrapper.firstChild);
-//   settingsContainer.style.transform = 'translateY(-150px)';
-//   settingsContainer.style.opacity = 0;
-//   backdrop.classList.add('hide');
-//   settingsState = 'closed';
-//   homePage();
-// });
+document.getElementById('sign-out-button').addEventListener('click', () => {
+  browser.storage.local.remove('token');
+  const homeWrapper = document.getElementById('home');
+  while (homeWrapper.firstChild) homeWrapper.removeChild(homeWrapper.firstChild);
+  homePage();
+});
 
 /**
  * Function that displays the selected list
@@ -195,6 +190,7 @@ function createHomeCard(entry, position) {
 function unauthorized() {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
+  document.getElementById('nav').classList.add('hide');
   const unauthorizedContainer = document.getElementById('unauthorized');
   unauthorizedContainer.classList.remove('hide');
 
