@@ -17,6 +17,9 @@ export class HomeCard extends HTMLElement {
 
     const style = document.createElement('style');
     style.textContent = `
+      *:focus {
+        outline: 4px solid #00c0ff;
+      }
       .wrapper {
         display: flex;
         position: relative;
@@ -71,7 +74,7 @@ export class HomeCard extends HTMLElement {
 
       }
       .left {
-        left:85px;
+        left: 85px;
       }
       .right {
         right: 85px;
@@ -88,15 +91,21 @@ export class HomeCard extends HTMLElement {
         font-size: 12px;
       }
       .image:hover ~ .popover,
+      .image:focus ~ .popover,
+      .update:focus ~ .popover,
       .update:hover ~ .popover {
         display: grid;
       }
       .image:hover + .update,
-      .update:hover {
+      .image:focus + .update,
+      .update:hover,
+      .update:focus {
         opacity: 1;
       }
       .image:hover ~ .episode,
+      .image:focus ~ .episode,
       .update:hover ~ .episode,
+      .update:focus ~ .episode,
       .episode:hover {
         opacity: 0;
         height: 0px;
@@ -120,11 +129,10 @@ export class HomeCard extends HTMLElement {
     const totalContent = this.getAttribute('data-total-content');
     const position = this.getAttribute('data-position');
 
-    // don't leave as div
     const image = wrapper.appendChild(document.createElement('div'));
     image.style.setProperty('background-image', `url(${imageSrc})`);
-
     image.setAttribute('class', 'image');
+    image.setAttribute('tabIndex', '0');
     image.addEventListener('click', () => {
       showMediaPage(mediaId, type);
     });
@@ -132,6 +140,7 @@ export class HomeCard extends HTMLElement {
     const updateElement = wrapper.appendChild(document.createElement('div'));
     updateElement.textContent = `${progress} +`;
     updateElement.setAttribute('class', 'update on-img');
+    updateElement.setAttribute('tabIndex', '0');
     updateElement.addEventListener('click', () => {
       updateEntry(entryId, status, +progress + 1);
       updateElement.textContent = `${+progress + 1} +`;
@@ -280,23 +289,29 @@ export class RelationCard extends HTMLElement {
 
     const id = this.getAttribute('data-id');
     const type = this.getAttribute('data-type');
+    const imageSrc = this.getAttribute('data-src');
+    const relation = this.getAttribute('data-relation');
+    const title = this.getAttribute('data-title');
+    const bottom = this.getAttribute('data-bottom');
+
     wrapper.addEventListener('click', () => showMediaPage(id, type));
 
     const image = wrapper.appendChild(document.createElement('img'));
     image.setAttribute('class', 'image');
-    image.src = this.getAttribute('data-src');
+    image.src = imageSrc;
+    image.alt = title;
 
     const contentWrapper = wrapper.appendChild(document.createElement('div'));
     contentWrapper.setAttribute('class', 'content-wrapper');
 
     const relationType = contentWrapper.appendChild(document.createElement('p'));
-    relationType.textContent = this.getAttribute('data-relation');
+    relationType.textContent = relation;
 
-    const title = contentWrapper.appendChild(document.createElement('p'));
-    title.textContent = this.getAttribute('data-title');
+    const titleElement = contentWrapper.appendChild(document.createElement('p'));
+    titleElement.textContent = title;
 
     const bottomLine = contentWrapper.appendChild(document.createElement('p'));
-    bottomLine.textContent = this.getAttribute('data-bottom');
+    bottomLine.textContent = bottom;
   }
 }
 
@@ -360,11 +375,22 @@ export class CharacterCard extends HTMLElement {
 
     const charId = this.getAttribute('data-char-id');
     const actorId = this.getAttribute('data-actor-id');
+    const charImageSrc = this.getAttribute('data-char-src');
+    const charName = this.getAttribute('data-char-name');
+    const role = this.getAttribute('data-role');
+
+    let actorName, language, actorImageSrc;
+    if (this.hasAttribute('data-actor-name')) {
+      actorName = this.getAttribute('data-actor-name');
+      actorImageSrc = this.getAttribute('data-actor-src');
+      language = this.getAttribute('data-language');
+    }
 
     const characterButton = wrapper.appendChild(document.createElement('button'));
     characterButton.setAttribute('class', 'button char-button');
     const characterImage = characterButton.appendChild(document.createElement('img'));
-    characterImage.src = this.getAttribute('data-char-src');
+    characterImage.src = charImageSrc;
+    characterImage.alt = charName;
     characterImage.setAttribute('class', 'img');
 
     characterButton.addEventListener('click', () => {
@@ -372,21 +398,21 @@ export class CharacterCard extends HTMLElement {
     });
 
     const characterName = characterButton.appendChild(document.createElement('p'));
-    characterName.textContent = this.getAttribute('data-char-name');
-    const role = characterButton.appendChild(document.createElement('p'));
-    role.textContent = this.getAttribute('data-role');
+    characterName.textContent = charName;
+    const roleElement = characterButton.appendChild(document.createElement('p'));
+    roleElement.textContent = role;
 
-    if (this.hasAttribute('data-actor-name')) {
+    if (actorName !== undefined) {
       const actorButton = wrapper.appendChild(document.createElement('button'));
       actorButton.setAttribute('class', 'button act-button');
       actorButton.addEventListener('click', () => showStaffPage(actorId));
 
-      const actorName = actorButton.appendChild(document.createElement('p'));
-      actorName.textContent = this.getAttribute('data-actor-name');
-      const language = actorButton.appendChild(document.createElement('p'));
-      language.textContent = this.getAttribute('data-language');
+      const actorNameElement = actorButton.appendChild(document.createElement('p'));
+      actorNameElement.textContent = actorName;
+      const languageElement = actorButton.appendChild(document.createElement('p'));
+      languageElement.textContent = language;
       const actorImage = actorButton.appendChild(document.createElement('img'));
-      actorImage.src = this.getAttribute('data-actor-src');
+      actorImage.src = actorImageSrc;
       actorImage.setAttribute('class', 'img act-img');
     }
   }
@@ -430,15 +456,20 @@ export class StaffCard extends HTMLElement {
     const wrapper = this.shadowRoot.querySelector('.wrapper');
 
     const id = this.getAttribute('data-id');
+    const imageSrc = this.getAttribute('data-src');
+    const name = this.getAttribute('data-name');
+    const role = this.getAttribute('data-role');
+
     wrapper.addEventListener('click', () => showStaffPage(id));
 
     const image = wrapper.appendChild(document.createElement('img'));
-    image.src = this.getAttribute('data-src');
+    image.src = imageSrc;
+    image.alt = name;
     image.setAttribute('class', 'image');
-    const name = wrapper.appendChild(document.createElement('p'));
-    name.textContent = this.getAttribute('data-name');
-    const role = wrapper.appendChild(document.createElement('p'));
-    role.textContent = this.getAttribute('data-role');
+    const nameElement = wrapper.appendChild(document.createElement('p'));
+    nameElement.textContent = name;
+    const roleElement = wrapper.appendChild(document.createElement('p'));
+    roleElement.textContent = role;
   }
 }
 
@@ -490,6 +521,7 @@ export class RecommendationCard extends HTMLElement {
 
     const image = wrapper.appendChild(document.createElement('img'));
     image.src = imageSrc;
+    image.alt = dataTitle;
     image.setAttribute('class', 'image');
 
     const title = wrapper.appendChild(document.createElement('p'));
@@ -852,7 +884,7 @@ export class StaffChar extends HTMLElement {
     }
     .name {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 400;
       margin-top: 8px;
       margin-bottom: 0;
       cursor: pointer;

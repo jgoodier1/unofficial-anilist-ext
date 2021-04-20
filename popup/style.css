@@ -13,6 +13,10 @@
   box-sizing: border-box;
 }
 
+*:focus {
+  outline: 4px solid #00c0ff;
+}
+
 body {
   margin: 0;
   color: black;
@@ -236,7 +240,8 @@ label {
   transition: 0.2s;
 }
 
-.list-row-button:hover {
+.list-row-button:hover,
+.list-row-button:focus {
   opacity: 1;
 }
 
@@ -245,22 +250,22 @@ label {
   height: 30px;
 }
 
-.list-row .title {
+.list-row-title {
   font-weight: normal;
   text-align: left;
   margin: 0;
   cursor: pointer;
 }
 
-.list-row .title,
-.list-row .score,
-.list-row .progress {
+.list-row-title,
+.list-row-score,
+.list-row-progress {
   font-size: 16px;
 }
 
 .progress-heading,
-.list-row .progress,
-.list-row .score,
+.list-row-progress,
+.list-row-score,
 .score-heading {
   place-self: center;
 }

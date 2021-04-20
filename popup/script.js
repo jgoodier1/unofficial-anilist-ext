@@ -612,19 +612,20 @@ function createRow(entry) {
   });
 
   const title = row.appendChild(document.createElement('h3'));
-  title.classList.add('title');
+  title.setAttribute('tabIndex', '0');
+  title.classList.add('list-row-title');
   title.textContent = entry.media.title.userPreferred;
   title.addEventListener('click', () => {
     showMediaPage(entry.media.id, entry.media.type);
   });
 
   const score = row.appendChild(document.createElement('p'));
-  score.classList.add('score');
+  score.classList.add('list-row-score');
   if (entry.score === 0) score.textContent = '';
   else score.textContent = entry.score;
 
   const progress = row.appendChild(document.createElement('p'));
-  progress.classList.add('progress');
+  progress.classList.add('list-row-progress');
   progress.textContent = entry.progress;
 
   return row;
