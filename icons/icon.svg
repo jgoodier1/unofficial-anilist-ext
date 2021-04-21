@@ -18,14 +18,14 @@
      id="defs2" />
   <sodipodi:namedview
      id="base"
-     pagecolor="#19212d"
+     pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.1853979"
-     inkscape:cx="63.310095"
-     inkscape:cy="568.23846"
+     inkscape:cx="103.76362"
+     inkscape:cy="622.17651"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -51,19 +51,25 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-   <rect width='210' height='210' style='fill:#19212D;'/>
+    <rect
+       width="210"
+       height="210"
+       style="fill:#19212d"
+       id="rect933"
+       x="-1.4115351e-05"
+       y="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:163.749px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#02aafe;fill-opacity:1;stroke:none;stroke-width:4.01995"
-       x="106.12645"
-       y="155.69272"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:149.023px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#02aafe;fill-opacity:1;stroke:none;stroke-width:3.65842"
+       x="93.811417"
+       y="157.80843"
        id="text835"
-       transform="scale(0.91597077,1.0917379)"><tspan
+       transform="scale(0.98922292,1.0108945)"><tspan
          sodipodi:role="line"
          id="tspan833"
-         x="106.12645"
-         y="155.69272"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:163.749px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#02aafe;fill-opacity:1;stroke-width:4.01995"
+         x="93.811417"
+         y="157.80843"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:149.023px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#02aafe;fill-opacity:1;stroke-width:3.65842"
          dy="0"
          rotate="0 0">E</tspan></text>
     <text
@@ -79,15 +85,15 @@
          style="stroke-width:0.264583">=</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:170.863px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#fefefe;fill-opacity:1;stroke:none;stroke-width:4.55113"
-       x="18.828102"
-       y="163.22255"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:147.824px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#fefefe;fill-opacity:1;stroke:none;stroke-width:3.93745"
+       x="24.764223"
+       y="157.00171"
        id="text843"
-       transform="scale(0.96013456,1.0415207)"><tspan
+       transform="scale(0.98126038,1.0190975)"><tspan
          sodipodi:role="line"
          id="tspan841"
-         x="18.828102"
-         y="163.22255"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:170.864px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#fefefe;fill-opacity:1;stroke-width:4.55113">A</tspan></text>
+         x="24.764223"
+         y="157.00171"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:147.824px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#fefefe;fill-opacity:1;stroke-width:3.93745">A</tspan></text>
   </g>
 </svg>
