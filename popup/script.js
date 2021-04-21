@@ -82,7 +82,7 @@ document.getElementById('sign-out-button').addEventListener('click', () => {
 });
 
 /**
- * Function that displays the selected list
+ * Function that displays the home list
  */
 async function homePage() {
   const token = (await browser.storage.local.get('token')).token;
@@ -94,14 +94,19 @@ async function homePage() {
     document.getElementById('nav').classList.remove('hide');
 
     if (homeWrapper.firstChild) return;
-    await currentList('ANIME');
-    await currentList('MANGA');
+    await homeList('ANIME');
+    await homeList('MANGA');
   } else {
     unauthorized();
   }
 }
 
-async function currentList(listType) {
+/**
+ * renders the list for the home page
+ * @param {string} listType either ANIME or MANGA
+ * @returns void
+ */
+async function homeList(listType) {
   const homeWrapper = document.getElementById('home');
   const lists = await getCurrentList(listType);
 
@@ -151,6 +156,11 @@ async function currentList(listType) {
   });
 }
 
+/**
+ * creates the media card for the home page
+ * @param {Object} entry list entry from the API
+ * @param {number} position the position that the card is to be place in
+ */
 function createHomeCard(entry, position) {
   const totalContent =
     entry.media.type === 'ANIME' ? entry.media.episodes : entry.media.chapters;
@@ -185,7 +195,7 @@ function createHomeCard(entry, position) {
 }
 
 /**
- * Function that shows the log in page
+ * Function that shows the log-in page
  */
 function unauthorized() {
   const allContainers = document.querySelectorAll('.container');
@@ -233,7 +243,7 @@ function unauthorized() {
   });
 }
 
-// used in the list buttons so that it doesn't rerender unnecessarily
+// used by the list so that it doesn't requery and rerender unnecessarily
 let currentListType = '';
 
 /**
@@ -308,6 +318,11 @@ async function showList(listType) {
   }
 }
 
+/**
+ * Renders the one status' section of the total list
+ * @param {Object} statusList the list from the API
+ * @param {string} statusType one of CURRENT, COMPLETED, PAUSED, DROPPED, PLANNING, or REPREATING
+ */
 function showListByStatus(statusList, statusType) {
   const list = document.getElementById('list');
   const section = list.appendChild(document.createElement('section'));
@@ -334,7 +349,16 @@ function showListByStatus(statusList, statusType) {
   });
 }
 
-// media and entry are separated because sometimes the user won't have it on their list already
+/**
+ * Renders the editing page
+ * Media and entry are separated because sometimes the user won't have it on their list already,
+ * but the entry will have the entire media object on it too
+ * @param {Object} media just the media section of the list entry
+ * @param {string} listType either ANIME or MANGA
+ * @param {string} prevContainer the container from which this function is called.
+ * One of `list`, `search`, or `page`
+ * @param {Object} entry optional, the entire list entry
+ */
 function openEditView(media, listType, prevContainer, entry) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
@@ -388,7 +412,7 @@ function openEditView(media, listType, prevContainer, entry) {
   optionDropped.textContent = 'Dropped';
   const optionPlanning = statusSelect.appendChild(document.createElement('option'));
   optionPlanning.value = 'PLANNING';
-  // this alway say 'Read' if it's not in its own variable
+  // this would always say 'Read' if it's not in its own variable
   const planningContent = listType === 'ANIME' ? 'Watch' : 'Read';
   optionPlanning.textContent = 'Planning to ' + planningContent;
   const optionRepeating = statusSelect.appendChild(document.createElement('option'));
@@ -415,6 +439,7 @@ function openEditView(media, listType, prevContainer, entry) {
   progressLabel.setAttribute('for', 'progress-input');
   progressLabel.textContent = 'Progress';
 
+  // have a max progress so that the mutation doesn't return an error
   let maxProgress;
   if (listType === 'ANIME' && media.episodes !== null) {
     maxProgress = media.episodes;
@@ -455,16 +480,13 @@ function openEditView(media, listType, prevContainer, entry) {
         scoreValue,
         progressValue
       );
-      addToListAndHome(entry, {
-        status: statusSelect.value,
-        score: scoreInput.value,
-        progress: progressInput.value
-      });
+      addToListAndHome(entry, statusSelect.value);
     }
     editContainer.classList.add('hide');
     document.getElementById(prevContainer).classList.remove('hide');
   });
 
+  // only want the delete button if the entry already exists
   if (entry) {
     const deleteButton = form.appendChild(document.createElement('button'));
     deleteButton.classList.add('edit-delete', 'edit-button');
@@ -479,6 +501,11 @@ function openEditView(media, listType, prevContainer, entry) {
   }
 }
 
+/**
+ * After editing and entry, this gets called and updates the home and list pages with the new data
+ * @param {Object} oldEntry the entry that's already on the list
+ * @param {Object} editedEntry the updated entry
+ */
 function updatedListAndHome(oldEntry, editedEntry) {
   let updatedStatus;
   if (oldEntry.status !== editedEntry.status) updatedStatus = editedEntry.status;
@@ -517,7 +544,7 @@ function updatedListAndHome(oldEntry, editedEntry) {
   if (updatedStatus && (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')) {
     // add it to the home page in the right spot.
     createHomeCard(oldEntry, 0);
-    addHomeCardToStart(oldEntry.media.type);
+    adjustHomeCards(oldEntry.media.type);
   }
 
   // update the list
@@ -538,33 +565,50 @@ function updatedListAndHome(oldEntry, editedEntry) {
   }
 }
 
-function addToListAndHome(entry, formValues) {
+/**
+ * Adds the new list item to the home page and the list
+ * @param {Object} entry the list entry
+ * @param {string} status one of CURRENT, COMPLETED, PAUSED, DROPPED, PLANNING, or REPEATING
+ */
+function addToListAndHome(entry, status) {
   // home
-  if (formValues.status === 'CURRENT' || formValues.status === 'REPEATING') {
+  if (status === 'CURRENT' || status === 'REPEATING') {
     createHomeCard(entry, 0);
-    addHomeCardToStart(entry.media.type);
+    adjustHomeCards(entry.media.type);
   }
 
-  // list
+  // list (only if already rendered)
   if (document.getElementById('list').firstChild) {
     const row = createRow(entry);
-    addToListSection(row, formValues.status, entry.media.title.userPreferred);
+    addToListSection(row, status, entry.media.title.userPreferred);
   }
 }
 
-function addHomeCardToStart(mediaType) {
-  // need to differentiate between airing and not airing
+/**
+ * updates the `data-position` attribute on all home cards, triggering `attributeChangedCallback`
+ * on the `HomeCard` component
+ * @param {string} mediaType either ANIME or MANGA
+ */
+function adjustHomeCards(mediaType) {
+  // TODO: differentiate between airing and not airing (so not necessarily the start)
   const allHomeCards = document.querySelectorAll(`home-card[data-type="${mediaType}"]`);
   allHomeCards.forEach(card => {
     const currentPosition = card.getAttribute('data-position');
 
     const newPosition = +currentPosition + 1;
+    // triggers the `attributeChangedCallback` on the `HomeCard` component
     card.setAttribute('data-position', newPosition);
   });
 }
 
+/**
+ * function that moves a list row to the right spot in it's new section
+ * @param {HTMLDivElement} row the HTML element
+ * @param {string} status one of CURRENT, COMPLETED, PAUSED, DROPPED, PLANNING, or REPEATING
+ * @param {string} title the media title
+ */
 function addToListSection(row, status, title) {
-  // might need to create the section
+  // TODO: check if list section exists, and create it if not
   const section = document.getElementById('list-' + status);
   const titleNodes = document.querySelectorAll('#list-' + status + ' .title');
   const allTitles = [];
@@ -575,6 +619,11 @@ function addToListSection(row, status, title) {
   section.insertBefore(row, section.children[newIndex + 1]);
 }
 
+/**
+ * creates the list row
+ * @param {Object} entry the list entry
+ * @returns the HTMLElement
+ */
 function createRow(entry) {
   const row = document.createElement('div');
   row.id = 'list-' + entry.id;
@@ -582,6 +631,7 @@ function createRow(entry) {
   const image = row.appendChild(document.createElement('img'));
   image.src = entry.media.coverImage.medium;
 
+  // edit button on the image
   const editButton = row.appendChild(document.createElement('button'));
   editButton.classList.add('list-row-button');
   const svg = editButton.appendChild(
@@ -631,6 +681,10 @@ function createRow(entry) {
   return row;
 }
 
+/**
+ * Removes the entry from the list and home pages, so that they can be removed without requerying
+ * @param {Object} entry the list entry
+ */
 function deleteFromListAndHome(entry) {
   if (entry.status === 'CURRENT' || entry.status === 'REPEATING') {
     const homeEntry = document.getElementById('home-' + entry.id);
@@ -638,11 +692,21 @@ function deleteFromListAndHome(entry) {
     homeWrapper.removeChild(homeEntry);
   }
 
-  const listEntry = document.getElementById('list-' + entry.id);
-  const sectionWrapper = document.getElementById('section-' + entry.status);
-  sectionWrapper.removeChild(listEntry);
+  // check if it's been rendered
+  if (document.getElementById('list').firstChild) {
+    const listEntry = document.getElementById('list-' + entry.id);
+    const sectionWrapper = document.getElementById('section-' + entry.status);
+    sectionWrapper.removeChild(listEntry);
+  }
+
+  document.getElementById('edit').classList.add('hide');
+  document.getElementById('home').classList.remove('hide');
+  // go back to home
 }
 
+/**
+ * renders the search page
+ */
 async function searchPage() {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
@@ -669,6 +733,10 @@ async function searchPage() {
   });
 }
 
+/**
+ * renders the search results
+ * @param {Object[]} allResults all the results from the query
+ */
 function showSearchResults(allResults) {
   const searchContainer = document.getElementById('search');
   const searchBar = document.getElementById('search-bar');
@@ -696,6 +764,7 @@ function showSearchResults(allResults) {
       row.classList.add('search-row');
 
       const image = row.appendChild(document.createElement('img'));
+      // if media, show the cover image, else if they're a person, show their image
       if (i === 0 || i === 1) {
         image.src = result.coverImage.medium;
       } else if (i === 2 || i === 3) {
@@ -705,6 +774,7 @@ function showSearchResults(allResults) {
 
       const title = row.appendChild(document.createElement('h3'));
 
+      // media
       if (i === 0 || i === 1) {
         title.textContent = result.title.userPreferred;
         title.classList.add('search-title');
@@ -715,6 +785,7 @@ function showSearchResults(allResults) {
         yearAndFormat.textContent = result.startDate.year + ' ' + result.format;
         yearAndFormat.classList.add('search-media-year');
 
+        // put an edit button on the end
         const editButton = row.appendChild(document.createElement('button'));
         editButton.classList.add('search-edit-button');
         const svg = editButton.appendChild(
@@ -746,30 +817,36 @@ function showSearchResults(allResults) {
             if (entry.exists) {
               openEditView(entry.data.media, 'ANIME', 'search', entry.data);
             } else {
-              openEditView(entry.data, 'ANIME');
+              openEditView(entry.data, 'ANIME', 'search');
             }
           } else {
             const entry = await checkIfOnList(result.id);
             if (entry.exists) {
               openEditView(entry.data.media, 'MANGA', 'search', entry.data);
             } else {
-              openEditView(entry.data, 'MANGA');
+              openEditView(entry.data, 'MANGA', 'search');
             }
           }
         });
+        // people
       } else if (i === 2 || i === 3) {
         title.textContent = result.name.full;
         title.classList.add('search-title', 'search-char-staff-title');
-      }
-      if (i === 2) {
-        title.addEventListener('click', () => showCharacterPage(result.id));
-      } else if (i === 3) {
-        title.addEventListener('click', () => showStaffPage(result.id));
+        if (i === 2) {
+          title.addEventListener('click', () => showCharacterPage(result.id));
+        } else if (i === 3) {
+          title.addEventListener('click', () => showStaffPage(result.id));
+        }
       }
     });
   });
 }
 
+/**
+ * displays the page for media
+ * @param {number} id
+ * @param {string} type either 'ANIME' or 'MANGA'
+ */
 export async function showMediaPage(id, type) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
@@ -786,6 +863,7 @@ export async function showMediaPage(id, type) {
     bannerImage.classList.add('page-banner-img');
   }
 
+  // topContainer contains the cover image, title, and media entry editing button
   const topContainer = pageContainer.appendChild(document.createElement('section'));
   topContainer.classList.add('page-top-container');
   const coverImage = topContainer.appendChild(document.createElement('img'));
@@ -991,6 +1069,8 @@ export async function showMediaPage(id, type) {
       document.createElement('div')
     );
     releationsCarousel.classList.add('carousel-wrapper');
+
+    // create the relations cards (media that is related to this one)
     media.relations.edges.forEach(relation => {
       const relationElement = document.createElement('relation-card');
       relationElement.setAttribute('data-id', relation.node.id);
@@ -1015,6 +1095,7 @@ export async function showMediaPage(id, type) {
     charactersHeading.textContent = 'Characters';
     charactersHeading.classList.add('page-sub-heading');
 
+    // creates the character cards
     media.characters.edges.forEach(character => {
       const characterElement = document.createElement('character-card');
       characterElement.setAttribute('data-char-id', character.node.id);
@@ -1044,6 +1125,7 @@ export async function showMediaPage(id, type) {
   staffHeading.textContent = 'Staff';
   staffHeading.classList.add('page-sub-heading');
 
+  // creates the staff cards
   media.staffPreview.edges.forEach(staff => {
     const staffElement = document.createElement('staff-card');
     staffElement.setAttribute('data-id', staff.node.id);
@@ -1066,6 +1148,7 @@ export async function showMediaPage(id, type) {
   const statsInnerWrapper = statusStatsSection.appendChild(document.createElement('div'));
   statsInnerWrapper.classList.add('page-stats-wrapper');
 
+  // creates the status cards
   sortedStats.forEach((stat, i) => {
     const statusCard = document.createElement('status-card');
     statusCard.setAttribute('data-index', i);
@@ -1075,6 +1158,7 @@ export async function showMediaPage(id, type) {
     statsInnerWrapper.appendChild(statusCard);
   });
 
+  // bar at the bottom bellow the statuses that illustrates the % of each status
   const percentageBar = statsInnerWrapper.appendChild(document.createElement('div'));
   percentageBar.classList.add('page-percentage-bar');
   sortedStats.forEach((stat, i) => {
@@ -1102,6 +1186,7 @@ export async function showMediaPage(id, type) {
     }
   });
 
+  // a graph showing the distribution of scores
   if (media.stats.scoreDistribution.length > 0) {
     const scoreSection = pageContainer.appendChild(document.createElement('section'));
     scoreSection.classList.add('page-section');
@@ -1137,6 +1222,7 @@ export async function showMediaPage(id, type) {
   const recommendCarousel = recommendSection.appendChild(document.createElement('div'));
   recommendCarousel.classList.add('carousel-wrapper');
 
+  // creates the recommendation cards
   media.recommendations.nodes.forEach(rec => {
     const recElement = document.createElement('recommend-card');
     recElement.setAttribute('data-id', rec.mediaRecommendation.id);
@@ -1148,6 +1234,10 @@ export async function showMediaPage(id, type) {
   });
 }
 
+/**
+ * Renders the character's page
+ * @param {number} id
+ */
 export async function showCharacterPage(id) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
@@ -1158,6 +1248,7 @@ export async function showCharacterPage(id) {
 
   const character = await getCharacterPage(id);
 
+  // name and image
   createTopSection(character);
 
   const descriptionWrapper = pageContainer.appendChild(document.createElement('section'));
@@ -1205,6 +1296,10 @@ export async function showCharacterPage(id) {
   const cardWrapper = outerWrapper.appendChild(document.createElement('div'));
   cardWrapper.classList.add('char-card-wrapper');
 
+  /**
+   * creates the appearance cards
+   * @param {Object[]} dataArray array of data to create the appearance cards
+   */
   function createCharacterCards(dataArray) {
     dataArray.forEach(media => {
       const card = document.createElement('char-media');
@@ -1228,6 +1323,7 @@ export async function showCharacterPage(id) {
 
   createCharacterCards(character.media.edges);
 
+  // pagination
   if (character.media.pageInfo.hasNextPage) {
     let page = 2;
     const nextAppearButton = outerWrapper.appendChild(document.createElement('button'));
@@ -1244,6 +1340,10 @@ export async function showCharacterPage(id) {
   }
 }
 
+/**
+ * Renders the page for the staff member
+ * @param {number} id
+ */
 export async function showStaffPage(id) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
@@ -1254,6 +1354,7 @@ export async function showStaffPage(id) {
 
   const staff = await getStaffPage(id);
 
+  // names and images
   createTopSection(staff);
 
   const descriptionWrapper = pageContainer.appendChild(document.createElement('section'));
@@ -1305,20 +1406,15 @@ export async function showStaffPage(id) {
     homeTown.prepend(key);
   }
 
+  // parses the markdown and sets inner html
   const parsedDescription = document.createElement('parsed-markdown');
   parsedDescription.setAttribute('data', staff.description);
   descriptionWrapper.append(parsedDescription);
 
-  const charWrapper = pageContainer.appendChild(document.createElement('section'));
-  charWrapper.classList.add('char-card-outer-wrapper');
-
-  const charHeading = charWrapper.appendChild(document.createElement('h2'));
-  charHeading.textContent = 'Character Roles';
-  charHeading.classList.add('char-card-heading');
-
-  const cardWrapper = charWrapper.appendChild(document.createElement('div'));
-  cardWrapper.classList.add('char-card-wrapper');
-
+  /**
+   * Creates the character role cards
+   * @param {Object[]} dataArray Array of data to create character cards
+   */
   function createCharacterCards(dataArray) {
     dataArray.forEach(character => {
       const card = document.createElement('staff-char');
@@ -1331,37 +1427,45 @@ export async function showStaffPage(id) {
       card.setAttribute('data-media-title', character.node.title.userPreferred);
       card.setAttribute('data-media-role', character.characterRole);
 
-      cardWrapper.append(card);
+      document.getElementById('card-wrapper').append(card);
     });
   }
 
-  createCharacterCards(staff.characterMedia.edges);
+  if (staff.characterMedia.pageInfo.total !== 0) {
+    const charWrapper = pageContainer.appendChild(document.createElement('section'));
+    charWrapper.classList.add('char-card-outer-wrapper');
 
-  if (staff.characterMedia.pageInfo.hasNextPage) {
-    let charPage = 2;
-    const nextCharButton = charWrapper.appendChild(document.createElement('button'));
-    nextCharButton.classList.add('char-button');
-    nextCharButton.textContent = 'Show More Characters';
-    nextCharButton.addEventListener('click', async () => {
-      const newCharacters = await getCharacterMedia(id, charPage);
-      createCharacterCards(newCharacters.characterMedia.edges);
-      if (newCharacters.characterMedia.pageInfo.hasNextPage) charPage++;
-      else {
-        nextCharButton.remove();
-      }
-    });
+    const charHeading = charWrapper.appendChild(document.createElement('h2'));
+    charHeading.textContent = 'Character Roles';
+    charHeading.classList.add('char-card-heading');
+
+    const cardWrapper = charWrapper.appendChild(document.createElement('div'));
+    cardWrapper.id = 'card-wrapper';
+    cardWrapper.classList.add('char-card-wrapper');
+
+    createCharacterCards(staff.characterMedia.edges);
+
+    if (staff.characterMedia.pageInfo.hasNextPage) {
+      let charPage = 2;
+      const nextCharButton = charWrapper.appendChild(document.createElement('button'));
+      nextCharButton.classList.add('char-button');
+      nextCharButton.textContent = 'Show More Characters';
+      nextCharButton.addEventListener('click', async () => {
+        const newCharacters = await getCharacterMedia(id, charPage);
+        createCharacterCards(newCharacters.characterMedia.edges);
+        if (newCharacters.characterMedia.pageInfo.hasNextPage) charPage++;
+        else {
+          nextCharButton.remove();
+        }
+      });
+    }
   }
 
-  const roleWrapper = pageContainer.appendChild(document.createElement('section'));
-  roleWrapper.classList.add('char-card-outer-wrapper');
-
-  const roleHeading = roleWrapper.appendChild(document.createElement('h2'));
-  roleHeading.textContent = 'Staff Roles';
-  roleHeading.classList.add('char-card-heading');
-
-  const roleCardWrapper = roleWrapper.appendChild(document.createElement('div'));
-  roleCardWrapper.classList.add('char-card-wrapper');
-
+  /**
+   * Creates the staff role cards
+   * In it's own function so that is can be used in pagination
+   * @param {Object[]} dataArray Array of data needed to create the card
+   */
   function createRoleCards(dataArray) {
     dataArray.forEach(role => {
       const card = document.createElement('staff-role');
@@ -1371,28 +1475,46 @@ export async function showStaffPage(id) {
       card.setAttribute('data-title', role.node.title.userPreferred);
       card.setAttribute('data-role', role.staffRole);
 
-      roleCardWrapper.append(card);
+      document.getElementById('role-card-wrapper').append(card);
     });
   }
+  if (staff.staffMedia.pageInfo.total !== 0) {
+    const roleWrapper = pageContainer.appendChild(document.createElement('section'));
+    roleWrapper.classList.add('char-card-outer-wrapper');
 
-  createRoleCards(staff.staffMedia.edges);
+    const roleHeading = roleWrapper.appendChild(document.createElement('h2'));
+    roleHeading.textContent = 'Staff Roles';
+    roleHeading.classList.add('char-card-heading');
 
-  if (staff.staffMedia.pageInfo.hasNextPage) {
-    let staffPage = 2;
-    const nextRoleButton = roleWrapper.appendChild(document.createElement('button'));
-    nextRoleButton.classList.add('char-button');
-    nextRoleButton.textContent = 'Show More Roles';
-    nextRoleButton.addEventListener('click', async () => {
-      const newCharacters = await getRoleMedia(id, staffPage);
-      createRoleCards(newCharacters.staffMedia.edges);
-      if (newCharacters.staffMedia.pageInfo.hasNextPage) staffPage++;
-      else {
-        nextRoleButton.remove();
-      }
-    });
+    const roleCardWrapper = roleWrapper.appendChild(document.createElement('div'));
+    roleCardWrapper.id = 'role-card-wrapper';
+    roleCardWrapper.classList.add('char-card-wrapper');
+
+    createRoleCards(staff.staffMedia.edges);
+
+    // pagination
+    if (staff.staffMedia.pageInfo.hasNextPage) {
+      let staffPage = 2;
+      const nextRoleButton = roleWrapper.appendChild(document.createElement('button'));
+      nextRoleButton.classList.add('char-button');
+      nextRoleButton.textContent = 'Show More Roles';
+      nextRoleButton.addEventListener('click', async () => {
+        const newCharacters = await getRoleMedia(id, staffPage);
+        createRoleCards(newCharacters.staffMedia.edges);
+        if (newCharacters.staffMedia.pageInfo.hasNextPage) staffPage++;
+        else {
+          nextRoleButton.remove();
+        }
+      });
+    }
   }
 }
 
+/**
+ * Used to create the top section of the character and staff pages.
+ * It renders their name, alternative names, and their image
+ * @param {Object} data The data that is returned from queries
+ */
 function createTopSection(data) {
   const pageContainer = document.getElementById('page');
 

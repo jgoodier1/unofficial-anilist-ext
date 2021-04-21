@@ -102,6 +102,12 @@ export async function getCurrentList(type) {
   return lists;
 }
 
+/**
+ * fetches the entire list from the API
+ * @param {string} type either 'ANIME' or 'MANGA'
+ * @returns the lists as an array of objects, each object being 1 section of the list,
+ * separated by status
+ */
 export async function getFullList(type) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -250,6 +256,14 @@ export async function updateEntry(id, status, progress) {
     .then(json => console.log(json));
 }
 
+/**
+ * Edit the list entry
+ * @param {number} id the id of the media
+ * @param {string} status the list status the user sets
+ * @param {number} score the score the user sets
+ * @param {number} progress the progress the user sets
+ * @returns the new updated entry from the API
+ */
 export async function editEntry(id, status, score, progress) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -290,6 +304,10 @@ export async function editEntry(id, status, score, progress) {
     });
 }
 
+/**
+ * Delete the list entry
+ * @param {number} id the id of the list entry
+ */
 export async function deleteEntry(id) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -318,6 +336,11 @@ export async function deleteEntry(id) {
     .then(json => console.log(json));
 }
 
+/**
+ * searches both media types, characters, and staff on the API
+ * @param {string} searchValue the input value that the user submits
+ * @returns an array with the results of each search query
+ */
 export async function search(searchValue) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -446,6 +469,12 @@ export async function search(searchValue) {
   return results;
 }
 
+/**
+ * Checks if the media is already on the users list. Used for editing/adding
+ * @param {number} mediaId the id of the media
+ * @returns if on list, object with list entry and exists: true.
+ * If not on list, object with media entry and exists: false
+ */
 export async function checkIfOnList(mediaId) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -535,6 +564,14 @@ export async function checkIfOnList(mediaId) {
     });
 }
 
+/**
+ * Adds an entry to the list
+ * @param {number} mediaId the id of the media
+ * @param {string} status the list status the user sets
+ * @param {number} score the score the user sets
+ * @param {number} progress the progress the user sets
+ * @returns the new list entry
+ */
 export async function addEntry(mediaId, status, score, progress) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -590,10 +627,16 @@ export async function addEntry(mediaId, status, score, progress) {
   return fetch('https://graphql.anilist.co', options)
     .then(res => res.json())
     .then(json => {
-      return json.data.MediaList;
+      return json.data.SaveMediaListEntry;
     });
 }
 
+/**
+ * fetches all of the media information needed to render the media's page
+ * @param {number} id the media id
+ * @param {string} type either 'ANIME' or 'MANGA'
+ * @returns an object with all of the media info
+ */
 export async function getMediaPage(id, type) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -784,11 +827,16 @@ export async function getMediaPage(id, type) {
     });
 }
 
-export async function getCharacterPage(id, page) {
+/**
+ * Fetches the data needed to render the Character page
+ * @param {number} id the character's id
+ * @returns an object with the character's data
+ */
+export async function getCharacterPage(id) {
   const token = (await browser.storage.local.get('token')).token;
 
   const query = `
-  query($id: Int, $page: Int){
+  query($id: Int){
     Character(id: $id) {
       id
       name {
@@ -809,7 +857,7 @@ export async function getCharacterPage(id, page) {
         month
         day
       }
-      media(page: $page, sort: POPULARITY_DESC) {
+      media(page: 1, sort: POPULARITY_DESC) {
         pageInfo {
           total
           perPage
@@ -866,7 +914,7 @@ export async function getCharacterPage(id, page) {
     },
     body: JSON.stringify({
       query: query,
-      variables: { id, page }
+      variables: { id }
     })
   };
 
@@ -877,11 +925,16 @@ export async function getCharacterPage(id, page) {
     });
 }
 
-export async function getStaffPage(id, charPage, staffPage) {
+/**
+ * Fetches the data needed to render the Staff's page
+ * @param {number} id the staff's id number
+ * @returns an object with the staff data
+ */
+export async function getStaffPage(id) {
   const token = (await browser.storage.local.get('token')).token;
 
   const query = `
-  query($id: Int, $charPage: Int, $staffPage: Int){
+  query($id: Int){
     Staff(id: $id) {
       id
       name {
@@ -910,7 +963,7 @@ export async function getStaffPage(id, charPage, staffPage) {
         month
         day
       }
-      characterMedia(page: $charPage, sort: START_DATE_DESC) {
+      characterMedia(page: 1, sort: START_DATE_DESC) {
         pageInfo {
           total
           perPage
@@ -949,7 +1002,7 @@ export async function getStaffPage(id, charPage, staffPage) {
           }
         }
       }
-      staffMedia(page: $staffPage, type: null, sort: START_DATE_DESC) {
+      staffMedia(page: 1, type: null, sort: START_DATE_DESC) {
         pageInfo {
           total
           perPage
@@ -988,7 +1041,7 @@ export async function getStaffPage(id, charPage, staffPage) {
     },
     body: JSON.stringify({
       query: query,
-      variables: { id, charPage, staffPage }
+      variables: { id }
     })
   };
 
@@ -999,6 +1052,12 @@ export async function getStaffPage(id, charPage, staffPage) {
     });
 }
 
+/**
+ * For pagination. Fetches the new page of appearances for the character
+ * @param {number} id the character's id
+ * @param {number} page the next page number
+ * @returns an object with the info for the new page of appearances
+ */
 export async function getCharacterAppearances(id, page) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -1072,6 +1131,13 @@ export async function getCharacterAppearances(id, page) {
       return json.data.Character;
     });
 }
+
+/**
+ * For pagination. Fetches the new page of character roles for the Staff
+ * @param {number} id the staff's id
+ * @param {number} page the next page number
+ * @returns an object with the data for the new page of character roles
+ */
 export async function getCharacterMedia(id, page) {
   const token = (await browser.storage.local.get('token')).token;
 
@@ -1141,6 +1207,12 @@ export async function getCharacterMedia(id, page) {
     });
 }
 
+/**
+ * For pagination. Fetches the new page of staff roles for the Staff
+ * @param {number} id the staff's id
+ * @param {number} page the new page
+ * @returns an object with the  data for the new page of staff roles.
+ */
 export async function getRoleMedia(id, page) {
   const token = (await browser.storage.local.get('token')).token;
 

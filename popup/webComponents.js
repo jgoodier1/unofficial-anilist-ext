@@ -3,7 +3,11 @@ import { updateEntry } from './queries.js';
 
 const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
 
+/**
+ * the card on the home page
+ */
 export class HomeCard extends HTMLElement {
+  // listen for changes so that the popover positions can be updated
   static get observedAttributes() {
     return ['data-position'];
   }
@@ -193,6 +197,7 @@ export class HomeCard extends HTMLElement {
     progressElement.setAttribute('class', 'progress');
   }
 
+  // update the position of the the popover when a new card is added to the home page
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== null) {
       const popover = this.shadowRoot.querySelector('.popover');
@@ -203,6 +208,9 @@ export class HomeCard extends HTMLElement {
   }
 }
 
+/**
+ * a component on the media page for all of the small bits of data
+ */
 export class DataComponent extends HTMLElement {
   constructor() {
     super();
@@ -240,6 +248,9 @@ export class DataComponent extends HTMLElement {
   }
 }
 
+/**
+ * the relation card on the media page. ie. source material, adapations, etc.
+ */
 export class RelationCard extends HTMLElement {
   constructor() {
     super();
@@ -315,6 +326,10 @@ export class RelationCard extends HTMLElement {
   }
 }
 
+/**
+ * character card for the media page. Show the character name, their role and,
+ * if applicable, the voice actor
+ */
 export class CharacterCard extends HTMLElement {
   constructor() {
     super();
@@ -418,6 +433,9 @@ export class CharacterCard extends HTMLElement {
   }
 }
 
+/**
+ * the staff card for the media page. Show their name, image and what their role was
+ */
 export class StaffCard extends HTMLElement {
   constructor() {
     super();
@@ -473,6 +491,9 @@ export class StaffCard extends HTMLElement {
   }
 }
 
+/**
+ * the recommendation card for the media page. Shows the image and title
+ */
 export class RecommendationCard extends HTMLElement {
   constructor() {
     super();
@@ -530,6 +551,9 @@ export class RecommendationCard extends HTMLElement {
   }
 }
 
+/**
+ * the status card for the media page. Shows how many people have the media set as that status
+ */
 export class StatusCard extends HTMLElement {
   constructor() {
     super();
@@ -628,6 +652,9 @@ export class StatusCard extends HTMLElement {
   }
 }
 
+/**
+ * the individual bar component for the bar chart on the media page.
+ */
 export class GraphBar extends HTMLElement {
   constructor() {
     super();
@@ -714,6 +741,9 @@ export class GraphBar extends HTMLElement {
   }
 }
 
+/**
+ * a component that translates markdown into html. Only does a few elements
+ */
 export class ParsedMarkdown extends HTMLElement {
   constructor() {
     super();
@@ -752,8 +782,8 @@ export class ParsedMarkdown extends HTMLElement {
     const data = this.getAttribute('data');
 
     const newData = data
-      .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-      .replace(/__(.*)__/gim, '<strong>$1</strong>')
+      .replace(/\*\*(.*)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.*)__/g, '<strong>$1</strong>')
       .replace(/\*(.*)\*/gim, '<em>$1</em>')
       .replace(/_(.*)_/gim, '<em>$1</em>')
       .replace(
@@ -766,6 +796,10 @@ export class ParsedMarkdown extends HTMLElement {
   }
 }
 
+/**
+ * The media card for the character page. Show the media image and title,
+ * and, if applicable, voice actor image and name
+ */
 export class CharacterMedia extends HTMLElement {
   constructor() {
     super();
@@ -872,6 +906,10 @@ export class CharacterMedia extends HTMLElement {
   }
 }
 
+/**
+ * Character role card for the Staff page. Shows the character image and name,
+ * and what media they belong to
+ */
 export class StaffChar extends HTMLElement {
   constructor() {
     super();
@@ -970,6 +1008,10 @@ export class StaffChar extends HTMLElement {
   }
 }
 
+/**
+ * Staff role card for the staff page. Roles are for example, original creator, song performance, etc.
+ * The car show the media image and title, along with the role
+ */
 export class StaffRole extends HTMLElement {
   constructor() {
     super();
@@ -1040,24 +1082,3 @@ export class StaffRole extends HTMLElement {
     roleElement.textContent = role;
   }
 }
-
-// Template
-// export class NAME extends HTMLElement {
-//   constructor() {
-//     super()
-
-//     this.attachShadow({mode:'open'})
-
-//     const wrapper = document.createElement('div')
-//     wrapper.setAttribute('class', 'wrapper')
-
-//     const style = document.createElement('style')
-//     style.textContent = ``
-
-//     this.shadowRoot.append(wrapper,style)
-//   }
-
-//   connectedCallback() {
-//     const wrapper = this.shadowRoot.querySelector('.wrapper')
-//   }
-// }
