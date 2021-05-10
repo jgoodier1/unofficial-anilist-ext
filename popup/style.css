@@ -312,8 +312,8 @@ label {
 
 #status-select {
   width: 100%;
-  height: 25px;
-  font-size: 14px;
+  font-size: 16px;
+  padding: 4px 0;
 }
 
 .edit-score {
@@ -329,8 +329,9 @@ label {
 .edit-score > input,
 .edit-progress > input {
   width: 100%;
-  font-size: 14px;
+  font-size: 16px;
   padding-left: 6px;
+  line-height: 1.6;
 }
 
 .edit-button {
