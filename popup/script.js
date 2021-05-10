@@ -30,6 +30,8 @@ import {
   StaffRole
 } from './webComponents.js';
 
+import { COLOURS, MONTHS } from './constants.js';
+
 customElements.define('home-card', HomeCard);
 customElements.define('data-comp', DataComponent);
 customElements.define('relation-card', RelationCard);
@@ -42,22 +44,6 @@ customElements.define('parsed-markdown', ParsedMarkdown);
 customElements.define('char-media', CharacterMedia);
 customElements.define('staff-char', StaffChar);
 customElements.define('staff-role', StaffRole);
-
-const MONTHS = [
-  '',
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'June',
-  'July',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec'
-];
 
 // nav buttons
 document.getElementById('home-button').addEventListener('click', () => {
@@ -1123,6 +1109,7 @@ export async function showMediaPage(id, type) {
     const statusCard = document.createElement('status-card');
     statusCard.index = i;
     statusCard.stat = stat;
+    console.log(stat);
 
     statsInnerWrapper.appendChild(statusCard);
   });
@@ -1135,19 +1122,19 @@ export async function showMediaPage(id, type) {
     bar.style.width = `${(stat.amount / media.popularity) * 400}px`;
     switch (i) {
       case 0:
-        bar.style.backgroundColor = '#36CC02';
+        bar.style.backgroundColor = COLOURS.green;
         break;
       case 1:
-        bar.style.backgroundColor = '#0283CC';
+        bar.style.backgroundColor = COLOURS.blue;
         break;
       case 2:
-        bar.style.backgroundColor = '#5B02CC';
+        bar.style.backgroundColor = COLOURS.purple;
         break;
       case 3:
-        bar.style.backgroundColor = '#FA06F0';
+        bar.style.backgroundColor = COLOURS.pink;
         break;
       case 4:
-        bar.style.backgroundColor = '#FA0606';
+        bar.style.backgroundColor = COLOURS.red;
         break;
 
       default:

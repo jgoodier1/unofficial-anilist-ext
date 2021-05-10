@@ -1,7 +1,6 @@
 import { showCharacterPage, showMediaPage, showStaffPage } from './script.js';
 import { updateEntry } from './queries.js';
-
-const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
+import { COLOURS, LEFT_POSITIONS } from './constants.js';
 
 /**
  * the card on the home page
@@ -138,12 +137,12 @@ export class HomeCard extends HTMLElement {
     updateElement.setAttribute('class', 'update on-img');
     updateElement.setAttribute('tabIndex', '0');
     updateElement.addEventListener('click', () => {
-      updateEntry(entry.id, entry.status, entry.progress + 1);
-      updateElement.textContent = `${entry.progress + 1} +`;
-      progressElement.textContent = `Progress: ${entry.progress + 1} ${
-        totalContent !== 'null' ? '/' + totalContent : ''
-      }`;
       entry.progress += 1;
+      updateEntry(entry.id, entry.status, entry.progress);
+      updateElement.textContent = `${entry.progress} +`;
+      progressElement.textContent = `Progress: ${entry.progress} ${
+        totalContent !== null ? '/' + totalContent : ''
+      }`;
     });
 
     if (entry.media.nextAiringEpisode && entry.media.nextAiringEpisode.episode) {
@@ -184,7 +183,7 @@ export class HomeCard extends HTMLElement {
 
     const progressElement = popover.appendChild(document.createElement('p'));
     progressElement.textContent = `Progress: ${entry.progress} ${
-      totalContent !== 'null' ? '/' + totalContent : ''
+      totalContent !== null ? '/' + totalContent : ''
     }`;
     progressElement.setAttribute('class', 'progress');
   }
@@ -549,34 +548,34 @@ export class StatusCard extends HTMLElement {
         text-align: center;
       }
       .green .status {
-        background-color: #36CC02;
+        background-color: ${COLOURS.green};
       }
       .green span {
-        color: #36CC02;
+        color: ${COLOURS.green};
       }
       .blue .status {
-        background-color: #0283CC;
+        background-color: ${COLOURS.blue};
       }
       .blue span {
-        color: #0283CC;
+        color: ${COLOURS.blue};
       }
       .purple .status {
-        background-color: #5B02CC;
+        background-color: ${COLOURS.purple};
       }
       .purple span {
-        color: #5B02CC;
+        color: ${COLOURS.purple};
       }
       .pink .status {
-        background-color: #FA06F0;
+        background-color: ${COLOURS.pink};
       }
       .pink span {
-        color: #FA06F0;
+        color: ${COLOURS.pink};
       }
       .red .status {
-        background-color: #FA0606;
+        background-color: ${COLOURS.red};
       }
       .red span {
-        color: #FA0606;
+        color: ${COLOURS.red};
       }
 
     `;
@@ -614,7 +613,7 @@ export class StatusCard extends HTMLElement {
     const countWrapper = wrapper.appendChild(document.createElement('p'));
     countWrapper.classList.add('count-wrapper');
     const count = document.createElement('span');
-    count.textContent = stat.count;
+    count.textContent = stat.amount;
     countWrapper.append(count, ' Users');
   }
 }
