@@ -177,19 +177,10 @@ function createHomeCard(entry, position) {
   // const totalContent = this.getAttribute('data-total-content');
   const homeCard = document.createElement('home-card');
   homeCard.id = 'home-' + entry.id;
-  homeCard.setAttribute('data-media-id', entry.media.id);
-  homeCard.setAttribute('data-type', entry.media.type);
-  homeCard.setAttribute('data-image', entry.media.coverImage.medium);
-  homeCard.setAttribute('data-progress', entry.progress);
-  homeCard.setAttribute('data-entry-id', entry.id);
-  homeCard.setAttribute('data-status', entry.status);
-  if (entry.media.nextAiringEpisode) {
-    homeCard.setAttribute('data-episode', entry.media.nextAiringEpisode.episode);
-    homeCard.setAttribute('data-time', entry.media.nextAiringEpisode.timeUntilAiring);
-  }
-  homeCard.setAttribute('data-title', entry.media.title.userPreferred);
-  homeCard.setAttribute('data-total-content', totalContent);
+  homeCard.entry = entry;
+  homeCard.totalContent = totalContent;
   homeCard.setAttribute('data-position', position !== 0 ? position : 1);
+
   if (position !== 0) listContainer.append(homeCard);
   else listContainer.insertBefore(homeCard, listContainer.children[0]);
 }
@@ -1073,15 +1064,8 @@ export async function showMediaPage(id, type) {
     // create the relations cards (media that is related to this one)
     media.relations.edges.forEach(relation => {
       const relationElement = document.createElement('relation-card');
-      relationElement.setAttribute('data-id', relation.node.id);
-      relationElement.setAttribute('data-type', relation.node.type);
-      relationElement.setAttribute('data-src', relation.node.coverImage.medium);
-      relationElement.setAttribute('data-relation', relation.relationType);
-      relationElement.setAttribute('data-title', relation.node.title.userPreferred);
-      relationElement.setAttribute(
-        'data-bottom',
-        relation.node.format + ' • ' + relation.node.status
-      );
+      relationElement.dataNode = relation.node;
+      relationElement.dataRelation = relation.relationType;
       releationsCarousel.appendChild(relationElement);
     });
   }
@@ -1098,22 +1082,10 @@ export async function showMediaPage(id, type) {
     // creates the character cards
     media.characters.edges.forEach(character => {
       const characterElement = document.createElement('character-card');
-      characterElement.setAttribute('data-char-id', character.node.id);
-      characterElement.setAttribute('data-char-src', character.node.image.medium);
-      characterElement.setAttribute('data-char-name', character.node.name.full);
-      characterElement.setAttribute('data-role', character.role);
-      if (character.voiceActors.length > 0) {
-        characterElement.setAttribute('data-actor-id', character.voiceActors[0].id);
-        characterElement.setAttribute(
-          'data-actor-src',
-          character.voiceActors[0].image.medium
-        );
-        characterElement.setAttribute(
-          'data-actor-name',
-          character.voiceActors[0].name.full
-        );
-        characterElement.setAttribute('data-language', character.voiceActors[0].language);
-      }
+      characterElement.dataCharacter = character.node;
+      characterElement.dataCharacter.role = character.role;
+      characterElement.dataCharacter.voiceActors = character.voiceActors;
+
       charactersSection.append(characterElement);
     });
   }
@@ -1128,10 +1100,8 @@ export async function showMediaPage(id, type) {
   // creates the staff cards
   media.staffPreview.edges.forEach(staff => {
     const staffElement = document.createElement('staff-card');
-    staffElement.setAttribute('data-id', staff.node.id);
-    staffElement.setAttribute('data-src', staff.node.image.medium);
-    staffElement.setAttribute('data-name', staff.node.name.full);
-    staffElement.setAttribute('data-role', staff.role);
+    staffElement.dataStaff = staff.node;
+    staffElement.dataStaff.role = staff.role;
 
     staffSection.append(staffElement);
   });
@@ -1151,9 +1121,8 @@ export async function showMediaPage(id, type) {
   // creates the status cards
   sortedStats.forEach((stat, i) => {
     const statusCard = document.createElement('status-card');
-    statusCard.setAttribute('data-index', i);
-    statusCard.setAttribute('data-status', stat.status);
-    statusCard.setAttribute('data-count', stat.amount);
+    statusCard.index = i;
+    statusCard.stat = stat;
 
     statsInnerWrapper.appendChild(statusCard);
   });
@@ -1204,10 +1173,8 @@ export async function showMediaPage(id, type) {
 
     media.stats.scoreDistribution.forEach(score => {
       const graphBar = document.createElement('graph-bar');
-      graphBar.setAttribute('data-score', score.score);
-      graphBar.setAttribute('data-amount', score.amount);
-      graphBar.setAttribute('data-max', largestAmount.amount);
-
+      graphBar.data = score;
+      graphBar.data.max = largestAmount.amount;
       scoreInnerWrapper.appendChild(graphBar);
     });
   }
@@ -1225,10 +1192,7 @@ export async function showMediaPage(id, type) {
   // creates the recommendation cards
   media.recommendations.nodes.forEach(rec => {
     const recElement = document.createElement('recommend-card');
-    recElement.setAttribute('data-id', rec.mediaRecommendation.id);
-    recElement.setAttribute('data-type', rec.mediaRecommendation.type);
-    recElement.setAttribute('data-src', rec.mediaRecommendation.coverImage.medium);
-    recElement.setAttribute('data-title', rec.mediaRecommendation.title.userPreferred);
+    recElement.dataRec = rec.mediaRecommendation;
 
     recommendCarousel.append(recElement);
   });
@@ -1303,20 +1267,8 @@ export async function showCharacterPage(id) {
   function createCharacterCards(dataArray) {
     dataArray.forEach(media => {
       const card = document.createElement('char-media');
-      card.setAttribute('data-media-id', media.node.id);
-      card.setAttribute('data-media-type', media.node.type);
-      card.setAttribute('data-cover-img', media.node.coverImage.large);
-      card.setAttribute('data-title', media.node.title.userPreferred);
-      if (media.voiceActorRoles.length > 0) {
-        const voiceActor = media.voiceActorRoles.filter(
-          actor => actor.voiceActor.language === 'Japanese'
-        );
-        if (voiceActor[0] === undefined) return;
-        card.setAttribute('data-actor-id', voiceActor[0].voiceActor.id);
-        card.setAttribute('data-actor-name', voiceActor[0].voiceActor.name.full);
-        card.setAttribute('data-actor-img', voiceActor[0].voiceActor.image.medium);
-      }
-
+      card.data = media.node;
+      card.data.voiceActors = media.voiceActorRoles;
       cardWrapper.append(card);
     });
   }
@@ -1418,14 +1370,9 @@ export async function showStaffPage(id) {
   function createCharacterCards(dataArray) {
     dataArray.forEach(character => {
       const card = document.createElement('staff-char');
-      card.setAttribute('data-media-id', character.node.id);
-      card.setAttribute('data-media-type', character.node.type);
-      card.setAttribute('data-char-id', character.characters[0].id);
-      card.setAttribute('data-char-img', character.characters[0].image.large);
-      card.setAttribute('data-media-img', character.node.coverImage.medium);
-      card.setAttribute('data-char-name', character.characters[0].name.full);
-      card.setAttribute('data-media-title', character.node.title.userPreferred);
-      card.setAttribute('data-media-role', character.characterRole);
+      card.dataNode = character.node;
+      card.dataChar = character.characters[0];
+      card.dataChar.role = character.characterRole;
 
       document.getElementById('card-wrapper').append(card);
     });
@@ -1469,11 +1416,8 @@ export async function showStaffPage(id) {
   function createRoleCards(dataArray) {
     dataArray.forEach(role => {
       const card = document.createElement('staff-role');
-      card.setAttribute('data-id', role.node.id);
-      card.setAttribute('data-type', role.node.type);
-      card.setAttribute('data-image', role.node.coverImage.large);
-      card.setAttribute('data-title', role.node.title.userPreferred);
-      card.setAttribute('data-role', role.staffRole);
+      card.data = role.node;
+      card.data.role = role.staffRole;
 
       document.getElementById('role-card-wrapper').append(card);
     });

@@ -119,52 +119,44 @@ export class HomeCard extends HTMLElement {
     this.shadowRoot.append(wrapper, style);
   }
   connectedCallback() {
-    const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const mediaId = this.getAttribute('data-media-id');
-    const type = this.getAttribute('data-type');
-    const imageSrc = this.getAttribute('data-image');
-    let progress = this.getAttribute('data-progress');
-    const entryId = this.getAttribute('data-entry-id');
-    const status = this.getAttribute('data-status');
-    const nextEpisode = this.getAttribute('data-episode');
-    const timeUntilEpisode = this.getAttribute('data-time');
-    const title = this.getAttribute('data-title');
-    const totalContent = this.getAttribute('data-total-content');
+    const entry = this.entry;
+    const totalContent = this.totalContent;
     const position = this.getAttribute('data-position');
 
+    const wrapper = this.shadowRoot.querySelector('.wrapper');
+
     const image = wrapper.appendChild(document.createElement('div'));
-    image.style.setProperty('background-image', `url(${imageSrc})`);
+    image.style.setProperty('background-image', `url(${entry.media.coverImage.medium})`);
     image.setAttribute('class', 'image');
     image.setAttribute('tabIndex', '0');
     image.addEventListener('click', () => {
-      showMediaPage(mediaId, type);
+      showMediaPage(entry.media.id, entry.media.type);
     });
 
     const updateElement = wrapper.appendChild(document.createElement('div'));
-    updateElement.textContent = `${progress} +`;
+    updateElement.textContent = `${entry.progress} +`;
     updateElement.setAttribute('class', 'update on-img');
     updateElement.setAttribute('tabIndex', '0');
     updateElement.addEventListener('click', () => {
-      updateEntry(entryId, status, +progress + 1);
-      updateElement.textContent = `${+progress + 1} +`;
-      progressElement.textContent = `Progress: ${+progress + 1} ${
+      updateEntry(entry.id, status, entry.progress + 1);
+      updateElement.textContent = `${entry.progress + 1} +`;
+      progressElement.textContent = `Progress: ${entry.progress + 1} ${
         totalContent !== 'null' ? '/' + totalContent : ''
       }`;
-      progress += 1;
+      entry.progress += 1;
     });
 
-    if (nextEpisode) {
+    if (entry.media.nextAiringEpisode && entry.media.nextAiringEpisode.episode) {
       const episodeElement = wrapper.appendChild(document.createElement('div'));
       episodeElement.setAttribute('class', 'on-img episode');
       const episodeNumber = episodeElement.appendChild(document.createElement('p'));
-      episodeNumber.textContent = `Ep ${nextEpisode}`;
+      episodeNumber.textContent = `Ep ${entry.media.nextAiringEpisode.episode}`;
 
       const DAY = 86400;
       const HOUR = 3600;
       const MINUTE = 60;
-      const days = Math.trunc(timeUntilEpisode / DAY);
-      const dayRemainder = timeUntilEpisode % DAY;
+      const days = Math.trunc(entry.media.nextAiringEpisode.timeUntilAiring / DAY);
+      const dayRemainder = entry.media.nextAiringEpisode.timeUntilAiring % DAY;
       const hours = Math.trunc(dayRemainder / HOUR);
       const hourRemainder = dayRemainder % HOUR;
       const minutes = Math.trunc(hourRemainder / MINUTE);
@@ -174,7 +166,7 @@ export class HomeCard extends HTMLElement {
       if (days === 0 && hours === 0) timeElement.textContent = `${minutes}m`;
       else timeElement.textContent = `${days}d ${hours}h ${minutes}m`;
 
-      if (nextEpisode - progress > 1) {
+      if (entry.media.nextAiringEpisode.episode - entry.progress > 1) {
         episodeElement.style.borderBottom = '4px solid #ff6d6d';
       }
     }
@@ -187,11 +179,11 @@ export class HomeCard extends HTMLElement {
     } else popover.setAttribute('class', 'right popover');
 
     const titleElement = popover.appendChild(document.createElement('p'));
-    titleElement.textContent = title;
+    titleElement.textContent = entry.media.title.userPreferred;
     titleElement.setAttribute('class', 'title');
 
     const progressElement = popover.appendChild(document.createElement('p'));
-    progressElement.textContent = `Progress: ${progress} ${
+    progressElement.textContent = `Progress: ${entry.progress} ${
       totalContent !== 'null' ? '/' + totalContent : ''
     }`;
     progressElement.setAttribute('class', 'progress');
@@ -296,33 +288,28 @@ export class RelationCard extends HTMLElement {
   }
 
   connectedCallback() {
+    const relation = this.dataNode;
+    const type = this.dataRelation;
+
     const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const id = this.getAttribute('data-id');
-    const type = this.getAttribute('data-type');
-    const imageSrc = this.getAttribute('data-src');
-    const relation = this.getAttribute('data-relation');
-    const title = this.getAttribute('data-title');
-    const bottom = this.getAttribute('data-bottom');
-
-    wrapper.addEventListener('click', () => showMediaPage(id, type));
+    wrapper.addEventListener('click', () => showMediaPage(relation.id, relation.type));
 
     const image = wrapper.appendChild(document.createElement('img'));
     image.setAttribute('class', 'image');
-    image.src = imageSrc;
-    image.alt = title;
+    image.src = relation.coverImage.medium;
+    image.alt = relation.title.userPreferred;
 
     const contentWrapper = wrapper.appendChild(document.createElement('div'));
     contentWrapper.setAttribute('class', 'content-wrapper');
 
     const relationType = contentWrapper.appendChild(document.createElement('p'));
-    relationType.textContent = relation;
+    relationType.textContent = type;
 
     const titleElement = contentWrapper.appendChild(document.createElement('p'));
-    titleElement.textContent = title;
+    titleElement.textContent = relation.title.userPreferred;
 
     const bottomLine = contentWrapper.appendChild(document.createElement('p'));
-    bottomLine.textContent = bottom;
+    bottomLine.textContent = relation.format + ' • ' + relation.status;
   }
 }
 
@@ -387,47 +374,37 @@ export class CharacterCard extends HTMLElement {
 
   connectedCallback() {
     const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const charId = this.getAttribute('data-char-id');
-    const actorId = this.getAttribute('data-actor-id');
-    const charImageSrc = this.getAttribute('data-char-src');
-    const charName = this.getAttribute('data-char-name');
-    const role = this.getAttribute('data-role');
-
-    let actorName, language, actorImageSrc;
-    if (this.hasAttribute('data-actor-name')) {
-      actorName = this.getAttribute('data-actor-name');
-      actorImageSrc = this.getAttribute('data-actor-src');
-      language = this.getAttribute('data-language');
-    }
+    const character = this.dataCharacter;
 
     const characterButton = wrapper.appendChild(document.createElement('button'));
     characterButton.setAttribute('class', 'button char-button');
     const characterImage = characterButton.appendChild(document.createElement('img'));
-    characterImage.src = charImageSrc;
-    characterImage.alt = charName;
+    characterImage.src = character.image.medium;
+    characterImage.alt = character.name.full;
     characterImage.setAttribute('class', 'img');
 
     characterButton.addEventListener('click', () => {
-      showCharacterPage(charId);
+      showCharacterPage(character.id);
     });
 
     const characterName = characterButton.appendChild(document.createElement('p'));
-    characterName.textContent = charName;
+    characterName.textContent = character.name.full;
     const roleElement = characterButton.appendChild(document.createElement('p'));
-    roleElement.textContent = role;
+    roleElement.textContent = character.role;
 
-    if (actorName !== undefined) {
+    if (character.voiceActors.length > 0) {
       const actorButton = wrapper.appendChild(document.createElement('button'));
       actorButton.setAttribute('class', 'button act-button');
-      actorButton.addEventListener('click', () => showStaffPage(actorId));
+      actorButton.addEventListener('click', () =>
+        showStaffPage(character.voiceActors[0].id)
+      );
 
       const actorNameElement = actorButton.appendChild(document.createElement('p'));
-      actorNameElement.textContent = actorName;
+      actorNameElement.textContent = character.voiceActors[0].name.full;
       const languageElement = actorButton.appendChild(document.createElement('p'));
-      languageElement.textContent = language;
+      languageElement.textContent = character.voiceActors[0].language;
       const actorImage = actorButton.appendChild(document.createElement('img'));
-      actorImage.src = actorImageSrc;
+      actorImage.src = character.voiceActors[0].image.medium;
       actorImage.setAttribute('class', 'img act-img');
     }
   }
@@ -471,23 +448,19 @@ export class StaffCard extends HTMLElement {
   }
 
   connectedCallback() {
+    const staff = this.dataStaff;
+
     const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const id = this.getAttribute('data-id');
-    const imageSrc = this.getAttribute('data-src');
-    const name = this.getAttribute('data-name');
-    const role = this.getAttribute('data-role');
-
-    wrapper.addEventListener('click', () => showStaffPage(id));
+    wrapper.addEventListener('click', () => showStaffPage(staff.id));
 
     const image = wrapper.appendChild(document.createElement('img'));
-    image.src = imageSrc;
-    image.alt = name;
+    image.src = staff.image.medium;
+    image.alt = staff.name.full;
     image.setAttribute('class', 'image');
     const nameElement = wrapper.appendChild(document.createElement('p'));
-    nameElement.textContent = name;
+    nameElement.textContent = staff.name.full;
     const roleElement = wrapper.appendChild(document.createElement('p'));
-    roleElement.textContent = role;
+    roleElement.textContent = staff.role;
   }
 }
 
@@ -529,24 +502,20 @@ export class RecommendationCard extends HTMLElement {
   }
 
   connectedCallback() {
+    const recommendation = this.dataRec;
+
     const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const id = this.getAttribute('data-id');
-    const type = this.getAttribute('data-type');
-    const imageSrc = this.getAttribute('data-src');
-    const dataTitle = this.getAttribute('data-title');
-
     wrapper.addEventListener('click', () => {
-      showMediaPage(id, type);
+      showMediaPage(recommendation.id, recommendation.type);
     });
 
     const image = wrapper.appendChild(document.createElement('img'));
-    image.src = imageSrc;
-    image.alt = dataTitle;
+    image.src = recommendation.coverImage.medium;
+    image.alt = recommendation.title.userPreferred;
     image.setAttribute('class', 'image');
 
     const title = wrapper.appendChild(document.createElement('p'));
-    title.textContent = dataTitle;
+    title.textContent = recommendation.title.userPreferred;
     title.setAttribute('class', 'title');
   }
 }
@@ -616,15 +585,13 @@ export class StatusCard extends HTMLElement {
   }
 
   connectedCallback() {
+    const stat = this.stat;
+    const index = this.index;
+
     const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const dataStatus = this.getAttribute('data-status');
-    const dataCount = this.getAttribute('data-count');
-    const index = +this.getAttribute('data-index');
-
     const status = wrapper.appendChild(document.createElement('div'));
     status.setAttribute('class', 'status');
-    status.textContent = dataStatus;
+    status.textContent = stat.status;
     switch (index) {
       case 0:
         wrapper.classList.add('green');
@@ -647,7 +614,7 @@ export class StatusCard extends HTMLElement {
     const countWrapper = wrapper.appendChild(document.createElement('p'));
     countWrapper.classList.add('count-wrapper');
     const count = document.createElement('span');
-    count.textContent = dataCount;
+    count.textContent = stat.count;
     countWrapper.append(count, ' Users');
   }
 }
@@ -687,20 +654,17 @@ export class GraphBar extends HTMLElement {
   }
 
   connectedCallback() {
+    const graphData = this.data;
+
     const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const dataAmount = this.getAttribute('data-amount');
-    const dataScore = +this.getAttribute('data-score');
-    const dataMax = this.getAttribute('data-max');
-
     const amount = wrapper.appendChild(document.createElement('p'));
-    amount.textContent = dataAmount;
+    amount.textContent = graphData.amount;
 
     const bar = wrapper.appendChild(document.createElement('div'));
-    bar.style.height = `${(dataAmount / dataMax) * 75}px`;
+    bar.style.height = `${(graphData.amount / graphData.max) * 75}px`;
     bar.setAttribute('class', 'bar');
 
-    switch (dataScore) {
+    switch (graphData.score) {
       case 10:
         bar.style.backgroundColor = '#FF0909';
         break;
@@ -737,7 +701,7 @@ export class GraphBar extends HTMLElement {
     }
 
     const score = wrapper.appendChild(document.createElement('p'));
-    score.textContent = dataScore;
+    score.textContent = graphData.score;
   }
 }
 
@@ -855,53 +819,43 @@ export class CharacterMedia extends HTMLElement {
   }
 
   connectedCallback() {
+    const character = this.data;
+
     const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const mediaId = this.getAttribute('data-media-id');
-    const mediaType = this.getAttribute('data-media-type');
-    const coverImage = this.getAttribute('data-cover-img');
-    const title = this.getAttribute('data-title');
-    let actorId, actorName, actorImage;
-    if (this.hasAttribute('data-actor-id')) {
-      actorId = this.getAttribute('data-actor-id');
-      actorName = this.getAttribute('data-actor-name');
-      actorImage = this.getAttribute('data-actor-img');
-    }
-
     const mediaButton = wrapper.appendChild(document.createElement('button'));
     mediaButton.setAttribute('class', 'button media-button');
     mediaButton.addEventListener('click', () => {
-      showMediaPage(mediaId, mediaType);
+      showMediaPage(character.id, character.type);
     });
 
     const coverImageElement = mediaButton.appendChild(document.createElement('img'));
     coverImageElement.setAttribute('class', 'image');
-    coverImageElement.src = coverImage;
-    coverImageElement.alt = title;
+    coverImageElement.src = character.coverImage.large;
+    coverImageElement.alt = character.title.userPreferred;
 
     const titleElement = wrapper.appendChild(document.createElement('h3'));
     titleElement.setAttribute('class', 'title');
-    titleElement.textContent = title;
+    titleElement.textContent = character.title.userPreferred;
     titleElement.addEventListener('click', () => {
-      showMediaPage(mediaId, mediaType);
+      showMediaPage(character.id, character.type);
     });
 
-    if (actorId !== undefined) {
+    if (character.voiceActors.length > 0) {
       const actorElement = wrapper.appendChild(document.createElement('p'));
       actorElement.setAttribute('class', 'actor-name');
-      actorElement.textContent = actorName;
+      actorElement.textContent = character.voiceActors[0].voiceActor.name.full;
       actorElement.addEventListener('click', () => {
-        showStaffPage(actorId);
+        showStaffPage(character.voiceActors[0].voiceActor.id);
       });
       const actorButton = wrapper.appendChild(document.createElement('button'));
       actorButton.setAttribute('class', 'button actor-button');
       actorButton.addEventListener('click', () => {
-        showStaffPage(actorId);
+        showStaffPage(character.voiceActors[0].voiceActor.id);
       });
       const actorImageElement = actorButton.appendChild(document.createElement('img'));
       actorImageElement.setAttribute('class', 'image');
-      actorImageElement.src = actorImage;
-      actorImageElement.alt = actorName;
+      actorImageElement.src = character.voiceActors[0].voiceActor.image.medium;
+      actorImageElement.alt = character.voiceActors[0].voiceActor.name.full;
     }
   }
 }
@@ -965,46 +919,39 @@ export class StaffChar extends HTMLElement {
   }
 
   connectedCallback() {
+    const character = this.dataChar;
+    const media = this.dataNode;
+
     const wrapper = this.shadowRoot.querySelector('.wrapper');
-
-    const mediaId = this.getAttribute('data-media-id');
-    const mediaType = this.getAttribute('data-media-type');
-    const charId = this.getAttribute('data-char-id');
-    const charImage = this.getAttribute('data-char-img');
-    const mediaImage = this.getAttribute('data-media-img');
-    const charName = this.getAttribute('data-char-name');
-    const mediaTitle = this.getAttribute('data-media-title');
-    const mediaRole = this.getAttribute('data-media-role');
-
     const characterButton = wrapper.appendChild(document.createElement('button'));
     characterButton.setAttribute('class', 'button char-button');
-    characterButton.addEventListener('click', () => showCharacterPage(charId));
+    characterButton.addEventListener('click', () => showCharacterPage(character.id));
 
     const charImageElement = characterButton.appendChild(document.createElement('img'));
     charImageElement.setAttribute('class', 'image');
-    charImageElement.src = charImage;
-    charImageElement.alt = charName;
+    charImageElement.src = character.image.large;
+    charImageElement.alt = character.name.full;
 
     const mediaButton = wrapper.appendChild(document.createElement('button'));
     mediaButton.setAttribute('class', 'button media-button');
-    mediaButton.addEventListener('click', () => showMediaPage(mediaId));
+    mediaButton.addEventListener('click', () => showMediaPage(media.id));
 
     const mediaImageElement = mediaButton.appendChild(document.createElement('img'));
     mediaImageElement.setAttribute('class', 'image');
-    mediaImageElement.src = mediaImage;
-    mediaImageElement.alt = mediaTitle;
+    mediaImageElement.src = media.coverImage.medium;
+    mediaImageElement.alt = media.title.userPreferred;
 
     const nameElement = wrapper.appendChild(document.createElement('h3'));
     nameElement.setAttribute('class', 'name');
     const strongName = nameElement.appendChild(document.createElement('strong'));
-    strongName.textContent = charName;
-    mediaRole === 'MAIN' && nameElement.append(' Main');
-    nameElement.addEventListener('click', () => showCharacterPage(charId));
+    strongName.textContent = character.name.full;
+    character.role === 'MAIN' && nameElement.append(' Main');
+    nameElement.addEventListener('click', () => showCharacterPage(character.id));
 
     const titleElement = wrapper.appendChild(document.createElement('p'));
     titleElement.setAttribute('class', 'title');
-    titleElement.textContent = mediaTitle;
-    titleElement.addEventListener('click', () => showMediaPage(mediaId, mediaType));
+    titleElement.textContent = media.title.userPreferred;
+    titleElement.addEventListener('click', () => showMediaPage(media.id, media.type));
   }
 }
 
@@ -1056,29 +1003,25 @@ export class StaffRole extends HTMLElement {
   }
 
   connectedCallback() {
-    const wrapper = this.shadowRoot.querySelector('.wrapper');
-    const id = this.getAttribute('data-id');
-    const type = this.getAttribute('data-type');
-    const imageSrc = this.getAttribute('data-image');
-    const title = this.getAttribute('data-title');
-    const role = this.getAttribute('data-role');
+    const role = this.data;
 
+    const wrapper = this.shadowRoot.querySelector('.wrapper');
     const button = wrapper.appendChild(document.createElement('button'));
     button.setAttribute('class', 'button');
-    button.addEventListener('click', () => showMediaPage(id, type));
+    button.addEventListener('click', () => showMediaPage(role.id, role.type));
 
     const imageElement = button.appendChild(document.createElement('img'));
     imageElement.setAttribute('class', 'image');
-    imageElement.src = imageSrc;
-    imageElement.alt = title;
+    imageElement.src = role.coverImage.large;
+    imageElement.alt = role.title.userPreferred;
 
     const titleElement = wrapper.appendChild(document.createElement('h3'));
     titleElement.setAttribute('class', 'title');
-    titleElement.textContent = title;
-    titleElement.addEventListener('click', () => showMediaPage(id, type));
+    titleElement.textContent = role.title.userPreferred;
+    titleElement.addEventListener('click', () => showMediaPage(role.id, role.type));
 
     const roleElement = wrapper.appendChild(document.createElement('p'));
     roleElement.setAttribute('class', 'role');
-    roleElement.textContent = role;
+    roleElement.textContent = role.role;
   }
 }
