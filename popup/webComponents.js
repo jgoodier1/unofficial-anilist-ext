@@ -138,7 +138,7 @@ export class HomeCard extends HTMLElement {
     updateElement.setAttribute('class', 'update on-img');
     updateElement.setAttribute('tabIndex', '0');
     updateElement.addEventListener('click', () => {
-      updateEntry(entry.id, status, entry.progress + 1);
+      updateEntry(entry.id, entry.status, entry.progress + 1);
       updateElement.textContent = `${entry.progress + 1} +`;
       progressElement.textContent = `Progress: ${entry.progress + 1} ${
         totalContent !== 'null' ? '/' + totalContent : ''
