@@ -300,7 +300,18 @@ export async function editEntry(id, status, score, progress) {
   return fetch('https://graphql.anilist.co', options)
     .then(res => res.json())
     .then(json => {
-      return json.data.SaveMediaListEntry;
+      if (json.errors) {
+        return {
+          listEntry: json.data.SaveMediaListEntry,
+          hasError: true,
+          errors: json.errors[0].validation // prob shouldn't assume only 1 error in array
+        };
+      } else {
+        return {
+          listEntry: json.data.SaveMediaListEntry,
+          hasError: false
+        };
+      }
     });
 }
 

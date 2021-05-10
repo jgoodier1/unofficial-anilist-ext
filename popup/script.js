@@ -27,7 +27,8 @@ import {
   ParsedMarkdown,
   CharacterMedia,
   StaffChar,
-  StaffRole
+  StaffRole,
+  ErrorMessage
 } from './webComponents.js';
 
 import { COLOURS, MONTHS } from './constants.js';
@@ -44,6 +45,7 @@ customElements.define('parsed-markdown', ParsedMarkdown);
 customElements.define('char-media', CharacterMedia);
 customElements.define('staff-char', StaffChar);
 customElements.define('staff-role', StaffRole);
+customElements.define('error-message', ErrorMessage);
 
 // nav buttons
 document.getElementById('home-button').addEventListener('click', () => {
@@ -442,12 +444,27 @@ function openEditView(media, listType, prevContainer, entry) {
     if (entry) {
       const scoreValue = scoreInput.value || 0;
       const progressValue = progressInput.value || 0;
-      editEntry(entry.id, statusSelect.value, scoreValue, progressValue);
-      updatedListAndHome(entry, {
-        status: statusSelect.value,
-        score: scoreValue,
-        progress: progressValue
-      });
+      const mutationResult = await editEntry(
+        entry.id,
+        statusSelect.value,
+        scoreValue,
+        progressValue
+      );
+      if (mutationResult.hasError === false) {
+        updatedListAndHome(entry, {
+          status: statusSelect.value,
+          score: scoreValue,
+          progress: progressValue
+        });
+        editContainer.classList.add('hide');
+        document.getElementById(prevContainer).classList.remove('hide');
+      } else {
+        // display error
+        const error = document.createElement('error-message');
+        error.style.gridColumn = '1/4';
+        error.errors = mutationResult.errors;
+        wrapper.append(error);
+      }
     } else {
       const scoreValue = scoreInput.value || 0;
       const progressValue = progressInput.value || 0;
@@ -458,9 +475,9 @@ function openEditView(media, listType, prevContainer, entry) {
         progressValue
       );
       addToListAndHome(entry, statusSelect.value);
+      editContainer.classList.add('hide');
+      document.getElementById(prevContainer).classList.remove('hide');
     }
-    editContainer.classList.add('hide');
-    document.getElementById(prevContainer).classList.remove('hide');
   });
 
   // only want the delete button if the entry already exists
@@ -1109,7 +1126,6 @@ export async function showMediaPage(id, type) {
     const statusCard = document.createElement('status-card');
     statusCard.index = i;
     statusCard.stat = stat;
-    console.log(stat);
 
     statsInnerWrapper.appendChild(statusCard);
   });
@@ -1233,9 +1249,11 @@ export async function showCharacterPage(id) {
     gender.prepend(key);
   }
 
-  const parsedDescription = document.createElement('parsed-markdown');
-  parsedDescription.setAttribute('data', character.description);
-  descriptionWrapper.append(parsedDescription);
+  if (character.description) {
+    const parsedDescription = document.createElement('parsed-markdown');
+    parsedDescription.setAttribute('data', character.description);
+    descriptionWrapper.append(parsedDescription);
+  }
 
   const outerWrapper = pageContainer.appendChild(document.createElement('section'));
   outerWrapper.classList.add('char-card-outer-wrapper');
@@ -1346,9 +1364,11 @@ export async function showStaffPage(id) {
   }
 
   // parses the markdown and sets inner html
-  const parsedDescription = document.createElement('parsed-markdown');
-  parsedDescription.setAttribute('data', staff.description);
-  descriptionWrapper.append(parsedDescription);
+  if (staff.description) {
+    const parsedDescription = document.createElement('parsed-markdown');
+    parsedDescription.setAttribute('data', staff.description);
+    descriptionWrapper.append(parsedDescription);
+  }
 
   /**
    * Creates the character role cards
