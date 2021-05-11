@@ -214,7 +214,7 @@ export class EditView extends HTMLElement {
         if (mutationResult.hasError === false) {
           this.updatedListAndHome(
             // id will get overwritten, but we only need mediaListEntry.id, so that's ok
-            { ...media, ...mediaListEntry },
+            { media: media, ...mediaListEntry },
             {
               status: statusSelect.value,
               score: scoreValue,
@@ -289,18 +289,7 @@ export class EditView extends HTMLElement {
       // remove from home if status changes from current/repeating to something else
       // also fix all other popovers
       if (updatedStatus && updatedStatus !== 'CURRENT' && updatedStatus !== 'REPEATING') {
-        const allHomeCards = document.querySelectorAll(
-          `home-card[data-type="${oldEntry.type}"]`
-        );
-        allHomeCards.forEach(card => {
-          const currentPosition = card.getAttribute('data-position');
-          const removedPosition = homeEntry.getAttribute('data-position');
-          if (currentPosition > removedPosition) {
-            const newPosition = +currentPosition - 1;
-            card.setAttribute('data-position', newPosition);
-          }
-        });
-        document.getElementById('home-' + oldEntry.type).removeChild(homeEntry);
+        this.adjustHomeCardsRemove(homeEntry, oldEntry.media.type);
       }
     }
     // this maybe should be `else if` since I only want it to do this if one of these
@@ -308,7 +297,7 @@ export class EditView extends HTMLElement {
     if (updatedStatus && (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')) {
       // add it to the home page in the right spot.
       this.createHomeCard(oldEntry);
-      this.adjustHomeCards(oldEntry.type);
+      this.adjustHomeCards(oldEntry.media.type);
     }
 
     // update the list
@@ -325,7 +314,11 @@ export class EditView extends HTMLElement {
         const removedEntry = currentSection.removeChild(listEntry);
 
         // add it to the new one.
-        this.addToListSection(removedEntry, updatedStatus, oldEntry.title.userPreferred);
+        this.addToListSection(
+          removedEntry,
+          updatedStatus,
+          oldEntry.media.title.userPreferred
+        );
       }
     }
   }
@@ -356,8 +349,7 @@ export class EditView extends HTMLElement {
   deleteFromListAndHome(entry, mediaType) {
     if (entry.status === 'CURRENT' || entry.status === 'REPEATING') {
       const homeEntry = document.getElementById('home-' + entry.id);
-      const homeWrapper = document.getElementById('home-' + mediaType);
-      homeWrapper.removeChild(homeEntry);
+      this.adjustHomeCardsRemove(homeEntry, mediaType);
     }
 
     // check if it's been rendered
@@ -387,6 +379,19 @@ export class EditView extends HTMLElement {
       // triggers the `attributeChangedCallback` on the `HomeCard` component
       card.setAttribute('data-position', newPosition);
     });
+  }
+
+  adjustHomeCardsRemove(entry, mediaType) {
+    const allHomeCards = document.querySelectorAll(`home-card[data-type="${mediaType}"]`);
+    allHomeCards.forEach(card => {
+      const currentPosition = card.getAttribute('data-position');
+      const removedPosition = entry.getAttribute('data-position');
+      if (currentPosition > removedPosition) {
+        const newPosition = +currentPosition - 1;
+        card.setAttribute('data-position', newPosition);
+      }
+    });
+    document.getElementById('home-' + mediaType).removeChild(entry);
   }
 
   /**
