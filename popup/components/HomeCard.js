@@ -145,6 +145,7 @@ export class HomeCard extends HTMLElement {
       progressElement.textContent = `Progress: ${progress} ${
         totalContent !== null ? '/' + totalContent : ''
       }`;
+      this.setAttribute('data-progress', progress);
     });
 
     if (entry.media.nextAiringEpisode && entry.media.nextAiringEpisode.episode) {
@@ -191,6 +192,7 @@ export class HomeCard extends HTMLElement {
   }
 
   // update the position of the the popover when a new card is added to the home page
+  // also update the progress count when changed in EditView
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'data-position' && oldValue !== null) {
       const popover = this.shadowRoot.querySelector('.popover');
