@@ -144,6 +144,9 @@ async function homeList(listType) {
 
 /**
  * creates the media card for the home page
+ * ALL UPDATES HERE SHOULD ALSO BE DONE TO EDITVIEW.JS. It has a copy of the function that is
+ * slightly different. I copied it rather than just reusing it because it made sense to me
+ * to have the logic inside the component
  * @param {Object} entry list entry from the API
  * @param {number} position the position that the card is to be place in
  */
@@ -160,7 +163,6 @@ function createHomeCard(entry, position) {
     document.getElementById('home').appendChild(listContainer);
   }
 
-  // const totalContent = this.getAttribute('data-total-content');
   const homeCard = document.createElement('home-card');
   homeCard.id = 'home-' + entry.id;
   homeCard.entry = entry;

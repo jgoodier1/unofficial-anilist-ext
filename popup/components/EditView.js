@@ -213,7 +213,6 @@ export class EditView extends HTMLElement {
         );
         if (mutationResult.hasError === false) {
           this.updatedListAndHome(
-            // id will get overwritten, but we only need mediaListEntry.id, so that's ok
             { media: media, ...mediaListEntry },
             {
               status: statusSelect.value,
@@ -281,7 +280,7 @@ export class EditView extends HTMLElement {
       const homeEntry = document.getElementById('home-' + oldEntry.id);
       if (updatedStatus === undefined) {
         if (updatedProgress) {
-          // update it like how we update the popover position
+          // this triggers `attributeChangedCallback` in HomeCard
           homeEntry.setAttribute('data-progress', updatedProgress);
         }
       }
@@ -345,6 +344,7 @@ export class EditView extends HTMLElement {
   /**
    * Removes the entry from the list and home pages, so that they can be removed without requerying
    * @param {Object} entry the list entry
+   * @param {string} mediaType either ANIME or MANGA
    */
   deleteFromListAndHome(entry, mediaType) {
     if (entry.status === 'CURRENT' || entry.status === 'REPEATING') {
@@ -381,6 +381,11 @@ export class EditView extends HTMLElement {
     });
   }
 
+  /**
+   * removes a `home-card` and adjusts the popover positions
+   * @param {Object} entry the `home-card` element to be removd
+   * @param {string} mediaType either ANIME or MANGA
+   */
   adjustHomeCardsRemove(entry, mediaType) {
     const allHomeCards = document.querySelectorAll(`home-card[data-type="${mediaType}"]`);
     allHomeCards.forEach(card => {
@@ -433,7 +438,6 @@ export class EditView extends HTMLElement {
       document.getElementById('home').appendChild(listContainer);
     }
 
-    // const totalContent = this.getAttribute('data-total-content');
     const homeCard = document.createElement('home-card');
     homeCard.id = 'home-' + entry.id;
     homeCard.entry = entry;
