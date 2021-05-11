@@ -3,7 +3,6 @@ import {
   getFullList,
   getUser,
   search,
-  checkIfOnList,
   getMediaPage,
   getCharacterPage,
   getStaffPage,
@@ -338,7 +337,8 @@ function showListByStatus(statusList, statusType) {
  * One of `list`, `search`, or `page`
  * @param {Object} entry optional, the entire list entry
  */
-function openEditView(media, listType, prevContainer, entry) {
+// function openEditView(media, listType, prevContainer, entry) {
+function openEditView(mediaId, prevContainer) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
 
@@ -348,10 +348,8 @@ function openEditView(media, listType, prevContainer, entry) {
 
   const view = document.createElement('edit-view');
   view.data = {
-    media,
-    listType,
-    prevContainer,
-    entry
+    mediaId,
+    prevContainer
   };
 
   editContainer.append(view);
@@ -396,7 +394,7 @@ export function createRow(entry) {
   );
 
   editButton.addEventListener('click', () => {
-    openEditView(entry.media, entry.media.type, 'list', entry);
+    openEditView(entry.media.id, 'list');
   });
 
   const title = row.appendChild(document.createElement('h3'));
@@ -527,21 +525,7 @@ function showSearchResults(allResults) {
         );
 
         editButton.addEventListener('click', async () => {
-          if (i === 0) {
-            const entry = await checkIfOnList(result.id);
-            if (entry.exists) {
-              openEditView(entry.data.media, 'ANIME', 'search', entry.data);
-            } else {
-              openEditView(entry.data, 'ANIME', 'search');
-            }
-          } else {
-            const entry = await checkIfOnList(result.id);
-            if (entry.exists) {
-              openEditView(entry.data.media, 'MANGA', 'search', entry.data);
-            } else {
-              openEditView(entry.data, 'MANGA', 'search');
-            }
-          }
+          openEditView(result.id, 'search');
         });
         // people
       } else if (i === 2 || i === 3) {
@@ -595,10 +579,7 @@ export async function showMediaPage(id, type) {
   button.textContent = media.mediaListEntry ? media.mediaListEntry.status : 'Add to List';
   button.classList.add('page-top-button');
   button.addEventListener('click', () => {
-    openEditView(media, media.type, 'page', {
-      ...media.mediaListEntry,
-      media: { ...media }
-    });
+    openEditView(media.id, 'page');
   });
 
   // this is going to be really long, so bear with me

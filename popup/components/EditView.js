@@ -1,4 +1,4 @@
-import { addEntry, editEntry, deleteEntry } from '../queries.js';
+import { addEntry, editEntry, deleteEntry, checkIfOnList } from '../queries.js';
 import { createRow } from '../script.js';
 
 export class EditView extends HTMLElement {
@@ -100,9 +100,10 @@ export class EditView extends HTMLElement {
     this.shadowRoot.append(wrapper, style);
   }
 
-  connectedCallback() {
-    const { media, entry, prevContainer, listType } = this.data;
-    console.log(this.data);
+  async connectedCallback() {
+    const { mediaId, prevContainer } = this.data;
+
+    const { mediaListEntry, ...media } = await checkIfOnList(mediaId);
 
     const editContainer = document.getElementById('edit');
 
@@ -137,7 +138,7 @@ export class EditView extends HTMLElement {
 
     const optionCurrent = statusSelect.appendChild(document.createElement('option'));
     optionCurrent.value = 'CURRENT';
-    optionCurrent.textContent = listType === 'ANIME' ? 'Watching' : 'Reading';
+    optionCurrent.textContent = media.type === 'ANIME' ? 'Watching' : 'Reading';
     const optionCompleted = statusSelect.appendChild(document.createElement('option'));
     optionCompleted.value = 'COMPLETED';
     optionCompleted.textContent = 'Completed';
@@ -150,13 +151,13 @@ export class EditView extends HTMLElement {
     const optionPlanning = statusSelect.appendChild(document.createElement('option'));
     optionPlanning.value = 'PLANNING';
     // this would always say 'Read' if it's not in its own variable
-    const planningContent = listType === 'ANIME' ? 'Watch' : 'Read';
+    const planningContent = media.type === 'ANIME' ? 'Watch' : 'Read';
     optionPlanning.textContent = 'Planning to ' + planningContent;
     const optionRepeating = statusSelect.appendChild(document.createElement('option'));
     optionRepeating.value = 'REPEATING';
-    optionRepeating.textContent = listType === 'ANIME' ? 'Rewatching' : 'Rereading';
+    optionRepeating.textContent = media.type === 'ANIME' ? 'Rewatching' : 'Rereading';
 
-    if (entry) statusSelect.value = entry.status;
+    if (mediaListEntry) statusSelect.value = mediaListEntry.status;
 
     const scoreLabel = form.appendChild(document.createElement('label'));
     scoreLabel.classList.add('edit-score');
@@ -169,7 +170,7 @@ export class EditView extends HTMLElement {
     scoreInput.setAttribute('min', '0');
     scoreInput.setAttribute('max', '10');
     scoreInput.setAttribute('step', '0.5');
-    if (entry) scoreInput.value = entry.score;
+    if (mediaListEntry) scoreInput.value = mediaListEntry.score;
 
     const progressLabel = form.appendChild(document.createElement('label'));
     progressLabel.classList.add('edit-progress');
@@ -178,9 +179,9 @@ export class EditView extends HTMLElement {
 
     // have a max progress so that the mutation doesn't return an error
     let maxProgress;
-    if (listType === 'ANIME' && media.episodes !== null) {
+    if (media.type === 'ANIME' && media.episodes !== null) {
       maxProgress = media.episodes;
-    } else if (listType === 'MANGA' && media.chapters !== null) {
+    } else if (media.type === 'MANGA' && media.chapters !== null) {
       maxProgress = media.chapters;
     } else maxProgress = 99999;
 
@@ -190,7 +191,7 @@ export class EditView extends HTMLElement {
     progressInput.setAttribute('min', '0');
     progressInput.setAttribute('max', maxProgress);
     progressInput.setAttribute('step', '1');
-    if (entry) progressInput.value = entry.progress;
+    if (mediaListEntry) progressInput.value = mediaListEntry.progress;
 
     const saveButton = form.appendChild(document.createElement('button'));
     saveButton.classList.add('edit-save', 'edit-button');
@@ -201,21 +202,25 @@ export class EditView extends HTMLElement {
       event.preventDefault();
       // if we come from the media page, we might have entry, put it would only have media
       //inside of entry, so, I should be checking if entry exists here, rather than in the search query
-      if (entry && entry.id) {
+      if (mediaListEntry) {
         const scoreValue = scoreInput.value || 0;
         const progressValue = progressInput.value || 0;
         const mutationResult = await editEntry(
-          entry.id,
+          mediaListEntry.id,
           statusSelect.value,
           scoreValue,
           progressValue
         );
         if (mutationResult.hasError === false) {
-          this.updatedListAndHome(entry, {
-            status: statusSelect.value,
-            score: scoreValue,
-            progress: progressValue
-          });
+          this.updatedListAndHome(
+            // id will get overwritten, but we only need mediaListEntry.id, so that's ok
+            { ...media, ...mediaListEntry },
+            {
+              status: statusSelect.value,
+              score: scoreValue,
+              progress: progressValue
+            }
+          );
           editContainer.classList.add('hide');
           document.getElementById(prevContainer).classList.remove('hide');
         } else {
@@ -241,14 +246,14 @@ export class EditView extends HTMLElement {
     });
 
     // only want the delete button if the entry already exists
-    if (entry) {
+    if (mediaListEntry) {
       const deleteButton = form.appendChild(document.createElement('button'));
       deleteButton.classList.add('edit-delete', 'edit-button');
       deleteButton.setAttribute('type', 'button');
       deleteButton.textContent = 'Delete';
       deleteButton.addEventListener('click', () => {
-        deleteEntry(entry.id);
-        this.deleteFromListAndHome(entry);
+        deleteEntry(mediaListEntry.id);
+        this.deleteFromListAndHome(mediaListEntry, media.type);
         editContainer.classList.add('hide');
         document.getElementById('home').classList.remove('hide');
       });
@@ -285,7 +290,7 @@ export class EditView extends HTMLElement {
       // also fix all other popovers
       if (updatedStatus && updatedStatus !== 'CURRENT' && updatedStatus !== 'REPEATING') {
         const allHomeCards = document.querySelectorAll(
-          `home-card[data-type="${oldEntry.media.type}"]`
+          `home-card[data-type="${oldEntry.type}"]`
         );
         allHomeCards.forEach(card => {
           const currentPosition = card.getAttribute('data-position');
@@ -295,7 +300,7 @@ export class EditView extends HTMLElement {
             card.setAttribute('data-position', newPosition);
           }
         });
-        document.getElementById('home-' + oldEntry.media.type).removeChild(homeEntry);
+        document.getElementById('home-' + oldEntry.type).removeChild(homeEntry);
       }
     }
     // this maybe should be `else if` since I only want it to do this if one of these
@@ -303,7 +308,7 @@ export class EditView extends HTMLElement {
     if (updatedStatus && (updatedStatus === 'CURRENT' || updatedStatus === 'REPEATING')) {
       // add it to the home page in the right spot.
       this.createHomeCard(oldEntry);
-      this.adjustHomeCards(oldEntry.media.type);
+      this.adjustHomeCards(oldEntry.type);
     }
 
     // update the list
@@ -320,11 +325,7 @@ export class EditView extends HTMLElement {
         const removedEntry = currentSection.removeChild(listEntry);
 
         // add it to the new one.
-        this.addToListSection(
-          removedEntry,
-          updatedStatus,
-          oldEntry.media.title.userPreferred
-        );
+        this.addToListSection(removedEntry, updatedStatus, oldEntry.title.userPreferred);
       }
     }
   }
@@ -352,10 +353,10 @@ export class EditView extends HTMLElement {
    * Removes the entry from the list and home pages, so that they can be removed without requerying
    * @param {Object} entry the list entry
    */
-  deleteFromListAndHome(entry) {
+  deleteFromListAndHome(entry, mediaType) {
     if (entry.status === 'CURRENT' || entry.status === 'REPEATING') {
       const homeEntry = document.getElementById('home-' + entry.id);
-      const homeWrapper = document.getElementById('home-' + entry.media.type);
+      const homeWrapper = document.getElementById('home-' + mediaType);
       homeWrapper.removeChild(homeEntry);
     }
 
@@ -406,6 +407,14 @@ export class EditView extends HTMLElement {
     section.insertBefore(row, section.children[newIndex + 1]);
   }
 
+  /**
+   * creates the media card for the home page
+   * ALL CHANGES HERE MUST ALSO BE MADE IN SCRIPT.JS IN THE IDENTICALLY NAMED FUNCTION.
+   * This one is here because the two function are slightly different in
+   * where they position the card. I think it also makes sense to move it here so that its
+   * easier to understand what this component is doing
+   * @param {Object} entry the list entry from the API
+   */
   createHomeCard(entry) {
     const totalContent =
       entry.media.type === 'ANIME' ? entry.media.episodes : entry.media.chapters;

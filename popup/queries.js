@@ -501,33 +501,11 @@ export async function checkIfOnList(mediaId) {
   }
 
   const query = `
-  query($mediaId: Int, $userId: Int){
-    MediaList(mediaId: $mediaId, userId: $userId) {
-      id
-      status
-      progress
-      score
-      media {
-        id
-        chapters
-        episodes
-        title {
-          userPreferred
-        }
-        coverImage {
-          medium
-        }
-        type
-      }
-    }
-  }`;
-
-  const query2 = `
   query($mediaId: Int){
     Media(id: $mediaId) {
       id
-      episodes
       chapters
+      episodes
       title {
         userPreferred
       }
@@ -535,12 +513,19 @@ export async function checkIfOnList(mediaId) {
         medium
       }
       type
+      mediaListEntry {
+        id
+        status
+        progress
+        score
+      }
     }
   }`;
 
   const options = {
     method: 'POST',
     headers: {
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json',
       Accept: 'application/json'
     },
@@ -551,27 +536,8 @@ export async function checkIfOnList(mediaId) {
   };
   return fetch('https://graphql.anilist.co', options)
     .then(res => res.json())
-    .then(async json => {
-      if (json.errors && json.errors[0].message === 'Not Found.') {
-        // it's not on their list
-        return fetch('https://graphql.anilist.co', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json'
-          },
-          body: JSON.stringify({
-            query: query2,
-            variables: { mediaId }
-          })
-        })
-          .then(res => res.json())
-          .then(json => {
-            return { data: json.data.Media, exists: false };
-          });
-      } else {
-        return { data: json.data.MediaList, exists: true };
-      }
+    .then(json => {
+      return json.data.Media;
     });
 }
 
