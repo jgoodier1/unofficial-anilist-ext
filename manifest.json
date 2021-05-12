@@ -1,7 +1,7 @@
 {
   "name": "Unoffical Anilist Extension",
   "description": "Easily update your list from an extension.",
-  "version": "1.1",
+  "version": "1.1.1",
   "manifest_version": 2,
   "icons": {
     "48": "icons/icon.svg"
