@@ -183,7 +183,7 @@ export class HomeCard extends HTMLElement {
 
     const progressElement = popover.appendChild(document.createElement('p'));
     progressElement.textContent = `Progress: ${entry.progress} ${
-      totalContent !== null ? '/' + totalContent : ''
+      totalContent !== null ? '/ ' + totalContent : ''
     }`;
     progressElement.setAttribute('class', 'progress');
   }
@@ -200,7 +200,7 @@ export class HomeCard extends HTMLElement {
       const progressElement = this.shadowRoot.querySelector('.progress');
       const updateElement = this.shadowRoot.querySelector('.update');
       progressElement.textContent = `Progress: ${newValue} ${
-        this.totalContent !== null ? '/' + this.totalContent : ''
+        this.totalContent !== null ? '/ ' + this.totalContent : ''
       }`;
       updateElement.textContent = `${newValue} +`;
     }
