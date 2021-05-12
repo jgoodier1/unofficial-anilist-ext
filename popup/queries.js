@@ -301,10 +301,18 @@ export async function editEntry(id, status, score, progress) {
     .then(res => res.json())
     .then(json => {
       if (json.errors) {
+        const errors = [];
+        json.errors.forEach(error => {
+          for (let validationError in error.validation) {
+            // this assumes theres only 1 type of each error (ie score or id only have 1 error)
+            // I've only ever seen them have 1, so I'm okay with this for now
+            errors.push(error.validation[validationError][0]);
+          }
+        });
         return {
           listEntry: json.data.SaveMediaListEntry,
           hasError: true,
-          errors: json.errors[0].validation // prob shouldn't assume only 1 error in array
+          errors
         };
       } else {
         return {
@@ -342,9 +350,20 @@ export async function deleteEntry(id) {
       variables: { id }
     })
   };
-  fetch('https://graphql.anilist.co', options)
+  return fetch('https://graphql.anilist.co', options)
     .then(res => res.json())
-    .then(json => console.log(json));
+    .then(json => {
+      if (json.errors) {
+        return {
+          hasError: true,
+          errors: [json.errors[0].validation.id[0]]
+        };
+      } else {
+        return {
+          hasError: false
+        };
+      }
+    });
 }
 
 /**
@@ -604,7 +623,26 @@ export async function addEntry(mediaId, status, score, progress) {
   return fetch('https://graphql.anilist.co', options)
     .then(res => res.json())
     .then(json => {
-      return json.data.SaveMediaListEntry;
+      if (json.errors) {
+        const errors = [];
+        json.errors.forEach(error => {
+          for (let validationError in error.validation) {
+            // this assumes theres only 1 type of each error (ie score or id only have 1 error)
+            // I've only ever seen them have 1, so I'm okay with this for now
+            errors.push(error.validation[validationError][0]);
+          }
+        });
+        return {
+          listEntry: json.data.SaveMediaListEntry,
+          hasError: true,
+          errors
+        };
+      } else {
+        return {
+          listEntry: json.data.SaveMediaListEntry,
+          hasError: false
+        };
+      }
     });
 }
 

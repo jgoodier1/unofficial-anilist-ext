@@ -18,8 +18,7 @@ export class ErrorMessage extends HTMLElement {
     // TODO: figure out why it's jumping
     style.textContent = `
       .wrapper{
-        color: white;
-        background-color: red;
+        background-color: #fa4b4b;
         padding: 0 16px;
       }
       h2 {
@@ -37,9 +36,11 @@ export class ErrorMessage extends HTMLElement {
     const errors = this.errors;
 
     const list = this.shadowRoot.querySelector('ul');
-    for (const error in errors) {
-      const message = list.appendChild(document.createElement('li'));
-      message.textContent = errors[error];
-    }
+
+    errors.forEach(error => {
+      const listItem = document.createElement('li');
+      listItem.textContent = error;
+      list.append(listItem);
+    });
   }
 }

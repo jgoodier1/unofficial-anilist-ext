@@ -53,10 +53,19 @@ export class EditView extends HTMLElement {
         grid-row: 1;
       }
 
-      #status-select {
+      select {
         width: 100%;
         font-size: 16px;
         padding: 4px 0;
+        background-color: white;
+        border: 1px solid #8F8F9D;
+        /* explicit height to match the height of the inputs */
+        height: 31.6px;
+      }
+      option {
+        height: 31.6px;
+        padding-left: 6px;
+        line-height: 1.6;
       }
 
       .edit-score {
@@ -167,8 +176,10 @@ export class EditView extends HTMLElement {
     const scoreInput = scoreLabel.appendChild(document.createElement('input'));
     scoreInput.id = 'score-input';
     scoreInput.setAttribute('type', 'number');
-    scoreInput.setAttribute('min', '0');
-    scoreInput.setAttribute('max', '10');
+    // these are commented out because the popup on Firefox doesn't show the default browser error
+    // if the value is not in this range, so I did validation myself below
+    // scoreInput.setAttribute('min', '0');
+    // scoreInput.setAttribute('max', '10');
     scoreInput.setAttribute('step', '0.5');
     if (mediaListEntry) scoreInput.value = mediaListEntry.score;
 
@@ -188,8 +199,10 @@ export class EditView extends HTMLElement {
     const progressInput = progressLabel.appendChild(document.createElement('input'));
     progressInput.id = 'progress-input';
     progressInput.setAttribute('type', 'number');
-    progressInput.setAttribute('min', '0');
-    progressInput.setAttribute('max', maxProgress);
+    // these are commented out because the popup on Firefox doesn't show the default browser error
+    // if the value is not in this range, so I did validation myself below
+    // progressInput.setAttribute('min', '0');
+    // progressInput.setAttribute('max', maxProgress);
     progressInput.setAttribute('step', '1');
     if (mediaListEntry) progressInput.value = mediaListEntry.progress;
 
@@ -200,18 +213,41 @@ export class EditView extends HTMLElement {
 
     form.addEventListener('submit', async event => {
       event.preventDefault();
-      // if we come from the media page, we might have entry, put it would only have media
-      //inside of entry, so, I should be checking if entry exists here, rather than in the search query
+      const existingError = wrapper.querySelector('error-message');
+      if (existingError) wrapper.removeChild(existingError);
+      // input validation
+      if (
+        progressInput.value < 0 ||
+        (maxProgress && progressInput.value > maxProgress) ||
+        scoreInput.value < 0 ||
+        scoreInput.value > 10
+      ) {
+        const error = document.createElement('error-message');
+        error.style.gridColumn = '1/4';
+        error.errors = [];
+        if (
+          progressInput.value < 0 ||
+          (maxProgress && progressInput.value > maxProgress)
+        ) {
+          if (!maxProgress) error.errors.push('Progress must be above 0');
+          else error.errors.push(`Progress must be between 0 and ${maxProgress}`);
+        }
+        if (scoreInput.value < 0 || scoreInput.value > 10) {
+          error.errors.push('Score must be between 0 and 10');
+        }
+        wrapper.append(error);
+        return;
+      }
       if (mediaListEntry) {
         const scoreValue = scoreInput.value || 0;
         const progressValue = progressInput.value || 0;
-        const mutationResult = await editEntry(
+        const editResults = await editEntry(
           mediaListEntry.id,
           statusSelect.value,
           scoreValue,
           progressValue
         );
-        if (mutationResult.hasError === false) {
+        if (!editResults.hasError) {
           this.updatedListAndHome(
             { media: media, ...mediaListEntry },
             {
@@ -226,7 +262,7 @@ export class EditView extends HTMLElement {
           // display error
           const error = document.createElement('error-message');
           error.style.gridColumn = '1/4';
-          error.errors = mutationResult.errors;
+          error.errors = editResults.errors;
           wrapper.append(error);
         }
       } else {
@@ -238,9 +274,17 @@ export class EditView extends HTMLElement {
           scoreValue,
           progressValue
         );
-        this.addToListAndHome(entry, statusSelect.value);
-        editContainer.classList.add('hide');
-        document.getElementById(prevContainer).classList.remove('hide');
+        if (!entry.hasError) {
+          this.addToListAndHome(entry.listEntry, statusSelect.value);
+          editContainer.classList.add('hide');
+          document.getElementById(prevContainer).classList.remove('hide');
+        } else {
+          // display error
+          const error = document.createElement('error-message');
+          error.style.gridColumn = '1/4';
+          error.errors = entry.errors;
+          wrapper.append(error);
+        }
       }
     });
 
@@ -250,11 +294,18 @@ export class EditView extends HTMLElement {
       deleteButton.classList.add('edit-delete', 'edit-button');
       deleteButton.setAttribute('type', 'button');
       deleteButton.textContent = 'Delete';
-      deleteButton.addEventListener('click', () => {
-        deleteEntry(mediaListEntry.id);
-        this.deleteFromListAndHome(mediaListEntry, media.type);
-        editContainer.classList.add('hide');
-        document.getElementById('home').classList.remove('hide');
+      deleteButton.addEventListener('click', async () => {
+        const mutation = await deleteEntry(mediaListEntry.id);
+        if (!mutation.hasError) {
+          this.deleteFromListAndHome(mediaListEntry, media.type);
+          editContainer.classList.add('hide');
+          document.getElementById('home').classList.remove('hide');
+        } else {
+          const error = document.createElement('error-message');
+          error.style.gridColumn = '1/4';
+          error.errors = mutation.errors;
+          wrapper.append(error);
+        }
       });
     }
   }
