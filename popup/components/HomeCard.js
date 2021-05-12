@@ -141,10 +141,7 @@ export class HomeCard extends HTMLElement {
       let progress = Number(this.getAttribute('data-progress'));
       progress += 1;
       updateEntry(entry.id, entry.status, progress);
-      updateElement.textContent = `${progress} +`;
-      progressElement.textContent = `Progress: ${progress} ${
-        totalContent !== null ? '/' + totalContent : ''
-      }`;
+      // this triggers `attributeChangedCallback`, which updates the `home-card` progress indicator
       this.setAttribute('data-progress', progress);
     });
 
