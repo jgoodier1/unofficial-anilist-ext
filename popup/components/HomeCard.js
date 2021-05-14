@@ -161,9 +161,17 @@ export class HomeCard extends HTMLElement {
       const minutes = Math.trunc(hourRemainder / MINUTE);
 
       const timeElement = episodeElement.appendChild(document.createElement('p'));
-      if (days === 0) timeElement.textContent = `${hours}h ${minutes}m`;
-      if (days === 0 && hours === 0) timeElement.textContent = `${minutes}m`;
-      else timeElement.textContent = `${days}d ${hours}h ${minutes}m`;
+      if (days === 0) {
+        if (hours === 0) timeElement.textContent = `${minutes}m`;
+        else if (minutes === 0) timeElement.textContent = `${hours}h`;
+        else timeElement.textContent = `${hours}h ${minutes}m`;
+      } else {
+        if (hours !== 0 && minutes !== 0) {
+          timeElement.textContent = `${days}d ${hours}h ${minutes}m`;
+        } else if (minutes === 0) timeElement.textContent = `${days} ${hours}h`;
+        else if (hours === 0) timeElement.textContent = `${days}d ${minutes}m`;
+        else timeElement.textContent = `${days}d`;
+      }
 
       if (entry.media.nextAiringEpisode.episode - entry.progress > 1) {
         episodeElement.style.borderBottom = '4px solid #ff6d6d';
