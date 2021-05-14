@@ -25,7 +25,8 @@ import {
   CharacterMedia,
   StaffChar,
   StaffRole,
-  ErrorMessage
+  ErrorMessage,
+  EditButton
 } from './components/index.js';
 
 import { COLOURS, MONTHS } from './constants.js';
@@ -44,6 +45,7 @@ customElements.define('staff-char', StaffChar);
 customElements.define('staff-role', StaffRole);
 customElements.define('error-message', ErrorMessage);
 customElements.define('edit-view', EditView);
+customElements.define('edit-button', EditButton);
 
 // nav buttons
 document.getElementById('home-button').addEventListener('click', () => {
@@ -340,7 +342,7 @@ function showListByStatus(statusList, statusType) {
  * @param {Object} entry optional, the entire list entry
  */
 // function openEditView(media, listType, prevContainer, entry) {
-function openEditView(mediaId, prevContainer) {
+export function openEditView(mediaId, prevContainer) {
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
 
@@ -577,12 +579,14 @@ export async function showMediaPage(id, type) {
   const title = topContent.appendChild(document.createElement('h1'));
   title.textContent = media.title.userPreferred;
   title.classList.add('page-top-title');
-  const button = topContent.appendChild(document.createElement('button'));
-  button.textContent = media.mediaListEntry ? media.mediaListEntry.status : 'Add to List';
+
+  const button = document.createElement('edit-button');
+  const buttonStatus = media.mediaListEntry ? media.mediaListEntry.status : 'Add to List';
+  button.mediaType = media.type;
+  button.mediaId = media.id;
+  button.setAttribute('data-status', buttonStatus);
   button.classList.add('page-top-button');
-  button.addEventListener('click', () => {
-    openEditView(media.id, 'page');
-  });
+  topContent.append(button);
 
   // this is going to be really long, so bear with me
   const dataSection = pageContainer.appendChild(document.createElement('section'));

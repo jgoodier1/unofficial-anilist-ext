@@ -238,6 +238,7 @@ export class EditView extends HTMLElement {
         wrapper.append(error);
         return;
       }
+      // edit the entry if its on the list already
       if (mediaListEntry) {
         const scoreValue = scoreInput.value || 0;
         const progressValue = progressInput.value || 0;
@@ -256,6 +257,8 @@ export class EditView extends HTMLElement {
               progress: progressValue
             }
           );
+          const editButton = document.querySelector('edit-button');
+          if (editButton) editButton.setAttribute('data-status', statusSelect.value);
           editContainer.classList.add('hide');
           document.getElementById(prevContainer).classList.remove('hide');
         } else {
@@ -265,6 +268,7 @@ export class EditView extends HTMLElement {
           error.errors = editResults.errors;
           wrapper.append(error);
         }
+        // add the entry if its not on the list already
       } else {
         const scoreValue = scoreInput.value || 0;
         const progressValue = progressInput.value || 0;
@@ -276,6 +280,9 @@ export class EditView extends HTMLElement {
         );
         if (!entry.hasError) {
           this.addToListAndHome(entry.listEntry, statusSelect.value);
+
+          const editButton = document.querySelector('edit-button');
+          if (editButton) editButton.setAttribute('data-status', statusSelect.value);
           editContainer.classList.add('hide');
           document.getElementById(prevContainer).classList.remove('hide');
         } else {
@@ -298,6 +305,8 @@ export class EditView extends HTMLElement {
         const mutation = await deleteEntry(mediaListEntry.id);
         if (!mutation.hasError) {
           this.deleteFromListAndHome(mediaListEntry, media.type);
+          const editButton = document.querySelector('edit-button');
+          if (editButton) editButton.setAttribute('data-status', '');
           editContainer.classList.add('hide');
           document.getElementById('home').classList.remove('hide');
         } else {

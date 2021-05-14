@@ -2,6 +2,7 @@ export { HomeCard } from './HomeCard.js';
 export { EditView } from './EditView.js';
 export { ErrorMessage } from './ErrorMessage.js';
 export { ParsedMarkdown } from './ParsedMarkdown.js';
+export { EditButton } from './mediaPage/EditButton.js';
 export { DataComponent } from './mediaPage/DataComponent.js';
 export { RelationCard } from './mediaPage/RelationCard.js';
 export { CharacterCard } from './mediaPage/CharacterCard.js';
