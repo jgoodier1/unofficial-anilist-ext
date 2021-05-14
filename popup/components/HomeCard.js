@@ -19,6 +19,9 @@ export class HomeCard extends HTMLElement {
 
     const style = document.createElement('style');
     style.textContent = `
+      * {
+        box-sizing: border-box;
+      }
       *:focus {
         outline: 4px solid #00c0ff;
       }
@@ -70,10 +73,28 @@ export class HomeCard extends HTMLElement {
         background: #edf1f5;
         padding: 0 0.5rem;
         position: absolute;
-        width: 214px;
+        width: 230px;
         height: 118px;
         top: -1px;
-
+        grid-template-rows: auto;
+        align-items: center;
+      }
+      .popover-content {
+        margin: 0;
+      }
+      .episodes-behind {
+        color: #005fc4;
+        font-size: 12px;
+      }
+      .title {
+        color:black;
+        font-size: 14px;
+        max-height: 80px;
+        overflow: hidden;
+      }
+      .progress {
+        color: #4f4f4f;
+        font-size: 12px;
       }
       .left {
         left: 85px;
@@ -82,15 +103,6 @@ export class HomeCard extends HTMLElement {
         right: 85px;
         justify-items: end;
         text-align: right;
-      }
-      .title {
-        color:black;
-        font-size: 14px;
-        /* font-weight: lighter; */
-      }
-      .progress {
-        color: #4f4f4f;
-        font-size: 12px;
       }
       .image:hover ~ .popover,
       .image:focus ~ .popover,
@@ -145,6 +157,7 @@ export class HomeCard extends HTMLElement {
       this.setAttribute('data-progress', progress);
     });
 
+    let episodesBehind;
     if (entry.media.nextAiringEpisode && entry.media.nextAiringEpisode.episode) {
       const episodeElement = wrapper.appendChild(document.createElement('div'));
       episodeElement.setAttribute('class', 'on-img episode');
@@ -166,15 +179,16 @@ export class HomeCard extends HTMLElement {
         else if (minutes === 0) timeElement.textContent = `${hours}h`;
         else timeElement.textContent = `${hours}h ${minutes}m`;
       } else {
-        if (hours !== 0 && minutes !== 0) {
-          timeElement.textContent = `${days}d ${hours}h ${minutes}m`;
+        if (hours === 0 && minutes === 0) {
+          timeElement.textContent = `${days}d`;
         } else if (minutes === 0) timeElement.textContent = `${days} ${hours}h`;
         else if (hours === 0) timeElement.textContent = `${days}d ${minutes}m`;
-        else timeElement.textContent = `${days}d`;
+        else timeElement.textContent = `${days}d ${hours}h ${minutes}m`;
       }
 
       if (entry.media.nextAiringEpisode.episode - entry.progress > 1) {
         episodeElement.style.borderBottom = '4px solid #ff6d6d';
+        episodesBehind = entry.media.nextAiringEpisode.episode - entry.progress - 1;
       }
     }
 
@@ -185,15 +199,21 @@ export class HomeCard extends HTMLElement {
       popover.setAttribute('class', 'left popover');
     } else popover.setAttribute('class', 'right popover');
 
+    if (episodesBehind) {
+      const behindElement = popover.appendChild(document.createElement('p'));
+      behindElement.textContent = episodesBehind + ' episodes behind';
+      behindElement.setAttribute('class', 'episodes-behind popover-content');
+    }
+
     const titleElement = popover.appendChild(document.createElement('p'));
     titleElement.textContent = entry.media.title.userPreferred;
-    titleElement.setAttribute('class', 'title');
+    titleElement.setAttribute('class', 'title popover-content');
 
     const progressElement = popover.appendChild(document.createElement('p'));
     progressElement.textContent = `Progress: ${entry.progress} ${
       totalContent !== null ? '/ ' + totalContent : ''
     }`;
-    progressElement.setAttribute('class', 'progress');
+    progressElement.setAttribute('class', 'progress popover-content');
   }
 
   // update the position of the the popover when a new card is added to the home page
