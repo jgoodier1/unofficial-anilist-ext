@@ -18,8 +18,8 @@ export class DataComponent extends HTMLElement {
       width: max-content;
       font-size: 14px;
     }
-    .title {
-      font-weight: 500;
+    .value {
+      font-weight: 600;
     }
     `;
 

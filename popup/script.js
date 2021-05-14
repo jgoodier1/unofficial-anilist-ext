@@ -588,156 +588,123 @@ export async function showMediaPage(id, type) {
   const dataSection = pageContainer.appendChild(document.createElement('section'));
   dataSection.classList.add('page-section', 'page-data-section');
 
-  if (media.nextAiringEpisode !== null) {
-    const airingData = document.createElement('data-comp');
-    airingData.setAttribute('data-title', 'Airing');
-    airingData.setAttribute('data-value', `Ep ${media.nextAiringEpisode.episode}`);
-    dataSection.append(airingData);
+  function createDataComponent(title, value) {
+    const component = document.createElement('data-comp');
+    component.setAttribute('data-title', title);
+    component.setAttribute('data-value', value);
+    dataSection.append(component);
   }
-  const formatData = document.createElement('data-comp');
-  formatData.setAttribute('data-title', 'Format');
-  formatData.setAttribute('data-value', media.format);
-  dataSection.append(formatData);
+
+  if (media.nextAiringEpisode !== null) {
+    const DAY = 86400;
+    const HOUR = 3600;
+    const MINUTE = 60;
+    const days = Math.trunc(media.nextAiringEpisode.timeUntilAiring / DAY);
+    const dayRemainder = media.nextAiringEpisode.timeUntilAiring % DAY;
+    const hours = Math.trunc(dayRemainder / HOUR);
+    const hourRemainder = dayRemainder % HOUR;
+    const minutes = Math.trunc(hourRemainder / MINUTE);
+
+    let timeTilEpisode = '';
+    if (days === 0) {
+      if (hours === 0) timeTilEpisode = `${minutes}m`;
+      else if (minutes === 0) timeTilEpisode = `${hours}h`;
+      else timeTilEpisode = `${hours}h ${minutes}m`;
+    } else {
+      if (hours !== 0 && minutes !== 0) {
+        timeTilEpisode = `${days}d ${hours}h ${minutes}m`;
+      } else if (minutes === 0) timeTilEpisode = `${days} ${hours}h`;
+      else if (hours === 0) timeTilEpisode = `${days}d ${minutes}m`;
+      else timeTilEpisode = `${days}d`;
+    }
+    createDataComponent(
+      'Airing',
+      `Ep ${media.nextAiringEpisode.episode}: ${timeTilEpisode}`
+    );
+  }
+
+  createDataComponent('Format', media.format);
 
   if (media.type === 'ANIME') {
     if (media.episodes !== null) {
-      const episodesData = document.createElement('data-comp');
-      episodesData.setAttribute('data-title', 'Episodes');
-      episodesData.setAttribute('data-value', media.episodes);
-      dataSection.append(episodesData);
+      createDataComponent('Episodes', media.episodes);
     }
     if (media.duration) {
-      const durationData = document.createElement('data-comp');
-      durationData.setAttribute('data-title', 'Episode Duration');
-      durationData.setAttribute('data-value', `${media.duration} min`);
-      dataSection.append(durationData);
+      createDataComponent('Episode Duration', `${media.duration} min`);
     }
   } else if (media.type === 'MANGA') {
     if (media.chapters !== null) {
-      const chapterssData = document.createElement('data-comp');
-      chapterssData.setAttribute('data-title', 'Chapters');
-      chapterssData.setAttribute('data-value', media.chapters);
-      dataSection.append(chapterssData);
+      createDataComponent('Chapters', media.chapters);
     }
     if (media.volumes !== null) {
-      const volumesData = document.createElement('data-comp');
-      volumesData.setAttribute('data-title', 'Volumes');
-      volumesData.setAttribute('data-value', media.volumes);
-      dataSection.append(volumesData);
+      createDataComponent('Volumes', media.volumes);
     }
   }
 
   if (media.startDate.day !== null) {
-    const startDateData = document.createElement('data-comp');
-    startDateData.setAttribute('data-title', 'Start Date');
-    startDateData.setAttribute(
-      'data-value',
+    createDataComponent(
+      'Start Date',
       `${MONTHS[media.startDate.month]} ${media.startDate.day}, ${media.startDate.year}`
     );
-    dataSection.append(startDateData);
   }
 
   if (media.endDate.day !== null) {
-    const endDateData = document.createElement('data-comp');
-    endDateData.setAttribute('data-title', 'End Date');
-    endDateData.setAttribute(
-      'data-value',
+    createDataComponent(
+      'End Date',
       `${MONTHS[media.endDate.month]} ${media.endDate.day}, ${media.endDate.year}`
     );
-    dataSection.append(endDateData);
   }
 
   if (media.type === 'ANIME' && media.season !== null) {
-    const seasonData = document.createElement('data-comp');
-    seasonData.setAttribute('data-title', 'Season');
-    seasonData.setAttribute('data-value', media.season + ' ' + media.seasonYear);
-    dataSection.append(seasonData);
+    createDataComponent('Season', media.season + ' ' + media.seasonYear);
   }
 
   if (media.averageScore) {
-    const avgScoreData = document.createElement('data-comp');
-    avgScoreData.setAttribute('data-title', 'Average Score');
-    avgScoreData.setAttribute('data-value', media.averageScore + '%');
-    dataSection.append(avgScoreData);
+    createDataComponent('Average Score', media.averageScore + '%');
   }
   if (media.meanScore) {
-    const meanScoreData = document.createElement('data-comp');
-    meanScoreData.setAttribute('data-title', 'Mean Score');
-    meanScoreData.setAttribute('data-value', media.meanScore + '%');
-    dataSection.append(meanScoreData);
+    createDataComponent('Mean Score', media.meanScore + '%');
   }
-  const popularityData = document.createElement('data-comp');
-  popularityData.setAttribute('data-title', 'Popularity');
-  popularityData.setAttribute('data-value', media.popularity);
-  dataSection.append(popularityData);
-  const favouritesData = document.createElement('data-comp');
-  favouritesData.setAttribute('data-title', 'Favourites');
-  favouritesData.setAttribute('data-value', media.favourites);
-  dataSection.append(favouritesData);
+  createDataComponent('Popularity', media.popularity);
+
+  createDataComponent('Favourites', media.favourites);
 
   if (media.type === 'ANIME') {
     if (media.studios !== null) {
       const mainStudio = media.studios.edges.filter(studio => studio.isMain);
-      const studioData = document.createElement('data-comp');
-      studioData.setAttribute('data-title', 'Studios');
-      studioData.setAttribute('data-value', mainStudio[0].node.name);
-      dataSection.append(studioData);
+      createDataComponent('Studios', mainStudio[0].node.name);
       if (media.studios.edges.length > 1) {
         const producers = media.studios.edges.filter(studio => !studio.isMain);
         const producerName = producers.map(prod => prod.node.name);
         const producersString = producerName.join(', ');
-        const producerData = document.createElement('data-comp');
-        producerData.setAttribute('data-title', 'Producers');
-        producerData.setAttribute('data-value', producersString);
-        dataSection.append(producerData);
+        createDataComponent('Producers', producersString);
       }
     }
   }
-  const sourceData = document.createElement('data-comp');
-  sourceData.setAttribute('data-title', 'Source');
-  sourceData.setAttribute('data-value', media.source);
-  dataSection.append(sourceData);
+  createDataComponent('Source', media.source);
 
   if (media.hashtag !== null) {
-    const hastagData = document.createElement('data-comp');
-    hastagData.setAttribute('data-title', 'Hashtag');
-    hastagData.setAttribute('data-value', media.hashtag);
-    dataSection.append(hastagData);
+    createDataComponent('Hashtag', media.hashtag);
   }
 
   if (media.genres.length > 0) {
-    const genreData = document.createElement('data-comp');
-    genreData.setAttribute('data-title', 'Genres');
     const genres = media.genres.join(', ');
-    genreData.setAttribute('data-value', genres);
-    dataSection.append(genreData);
+    createDataComponent('Genres', genres);
   }
 
   if (media.title.romaji) {
-    const RomajiData = document.createElement('data-comp');
-    RomajiData.setAttribute('data-title', 'Romaji');
-    RomajiData.setAttribute('data-value', media.title.romaji);
-    dataSection.append(RomajiData);
+    createDataComponent('Romaji', media.title.romaji);
   }
   if (media.title.english) {
-    const EnglishData = document.createElement('data-comp');
-    EnglishData.setAttribute('data-title', 'English');
-    EnglishData.setAttribute('data-value', media.title.english);
-    dataSection.append(EnglishData);
+    createDataComponent('English', media.title.english);
   }
   if (media.title.native) {
-    const NativeData = document.createElement('data-comp');
-    NativeData.setAttribute('data-title', 'Native');
-    NativeData.setAttribute('data-value', media.title.native);
-    dataSection.append(NativeData);
+    createDataComponent('Native', media.title.native);
   }
 
   if (media.synonyms.length > 0) {
-    const synonymData = document.createElement('data-comp');
     const synonyms = media.synonyms.join(', ');
-    synonymData.setAttribute('data-title', 'Synonyms');
-    synonymData.setAttribute('data-value', synonyms);
-    dataSection.append(synonymData);
+    createDataComponent('Synonyms', synonyms);
   }
   // end data
 
