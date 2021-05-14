@@ -1,4 +1,4 @@
-import { showMediaPage } from '../../script.js';
+import { showMediaPage } from '../../pages/media.js';
 
 /**
  * the recommendation card for the media page. Shows the image and title

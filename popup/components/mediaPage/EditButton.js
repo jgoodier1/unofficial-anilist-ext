@@ -1,4 +1,4 @@
-import { openEditView } from '../../script.js';
+import { openEditView } from '../../pages/edit.js';
 
 export class EditButton extends HTMLElement {
   static get observedAttributes() {

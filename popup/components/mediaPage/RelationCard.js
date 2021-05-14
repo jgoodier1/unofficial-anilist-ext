@@ -1,4 +1,4 @@
-import { showMediaPage } from '../../script.js';
+import { showMediaPage } from '../../pages/media.js';
 
 /**
  * the relation card on the media page. ie. source material, adapations, etc.

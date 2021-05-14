@@ -1,4 +1,4 @@
-import { showStaffPage } from '../../script.js';
+import { showStaffPage } from '../../pages/staff.js';
 
 /**
  * the staff card for the media page. Show their name, image and what their role was

@@ -1,4 +1,5 @@
-import { showCharacterPage, showStaffPage } from '../../script.js';
+import { showCharacterPage } from '../../pages/character.js';
+import { showStaffPage } from '../../pages/staff.js';
 
 /**
  * character card for the media page. Show the character name, their role and,

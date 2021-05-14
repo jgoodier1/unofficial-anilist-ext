@@ -1,4 +1,4 @@
-import { showMediaPage } from '../../script.js';
+import { showMediaPage } from '../../pages/media.js';
 
 /**
  * Staff role card for the staff page. Roles are for example, original creator, song performance, etc.

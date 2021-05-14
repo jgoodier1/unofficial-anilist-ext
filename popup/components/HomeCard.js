@@ -1,5 +1,5 @@
 import { updateEntry } from '../queries.js';
-import { showMediaPage } from '../script.js';
+import { showMediaPage } from '../pages/media.js';
 import { LEFT_POSITIONS } from '../constants.js';
 
 /**

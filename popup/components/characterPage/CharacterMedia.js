@@ -1,4 +1,5 @@
-import { showMediaPage, showStaffPage } from '../../script.js';
+import { showMediaPage } from '../../pages/media.js';
+import { showStaffPage } from '../../pages/staff.js';
 
 /**
  * The media card for the character page. Show the media image and title,

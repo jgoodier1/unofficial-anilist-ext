@@ -1,5 +1,5 @@
 import { addEntry, editEntry, deleteEntry, checkIfOnList } from '../queries.js';
-import { createRow } from '../script.js';
+import { createRow } from '../utils.js';
 
 export class EditView extends HTMLElement {
   constructor() {
