@@ -847,11 +847,11 @@ export async function getMediaPage(id, type) {
  * @param {number} id the character's id
  * @returns an object with the character's data
  */
-export async function getCharacterPage(id) {
+export async function getCharacterPage(id, onList) {
   const token = (await browser.storage.local.get('token')).token;
 
   const query = `
-  query($id: Int){
+  query($id: Int, $onList: Boolean){
     Character(id: $id) {
       id
       name {
@@ -872,7 +872,7 @@ export async function getCharacterPage(id) {
         month
         day
       }
-      media(page: 1, sort: POPULARITY_DESC) {
+      media(page: 1, sort: POPULARITY_DESC, onList: $onList) {
         pageInfo {
           total
           perPage
@@ -929,7 +929,7 @@ export async function getCharacterPage(id) {
     },
     body: JSON.stringify({
       query: query,
-      variables: { id }
+      variables: { id, onList }
     })
   };
 
@@ -945,11 +945,11 @@ export async function getCharacterPage(id) {
  * @param {number} id the staff's id number
  * @returns an object with the staff data
  */
-export async function getStaffPage(id) {
+export async function getStaffPage(id, onList) {
   const token = (await browser.storage.local.get('token')).token;
 
   const query = `
-  query($id: Int){
+  query($id: Int, $onList: Boolean){
     Staff(id: $id) {
       id
       name {
@@ -978,7 +978,7 @@ export async function getStaffPage(id) {
         month
         day
       }
-      characterMedia(page: 1, sort: START_DATE_DESC) {
+      characterMedia(page: 1, sort: START_DATE_DESC, onList: $onList) {
         pageInfo {
           total
           perPage
@@ -1017,7 +1017,7 @@ export async function getStaffPage(id) {
           }
         }
       }
-      staffMedia(page: 1, type: null, sort: START_DATE_DESC) {
+      staffMedia(page: 1, type: null, sort: START_DATE_DESC, onList: $onList) {
         pageInfo {
           total
           perPage
@@ -1056,7 +1056,7 @@ export async function getStaffPage(id) {
     },
     body: JSON.stringify({
       query: query,
-      variables: { id }
+      variables: { id, onList }
     })
   };
 
@@ -1073,14 +1073,14 @@ export async function getStaffPage(id) {
  * @param {number} page the next page number
  * @returns an object with the info for the new page of appearances
  */
-export async function getCharacterAppearances(id, page) {
+export async function getCharacterAppearances(id, page, onList) {
   const token = (await browser.storage.local.get('token')).token;
 
   const query = `
-  query($id: Int, $page: Int) {
+  query($id: Int, $page: Int, $onList: Boolean) {
     Character(id: $id) {
       id
-      media(page: $page, sort: POPULARITY_DESC) {
+      media(page: $page, sort: POPULARITY_DESC, onList: $onList) {
         pageInfo {
           total
           perPage
@@ -1136,7 +1136,7 @@ export async function getCharacterAppearances(id, page) {
     },
     body: JSON.stringify({
       query: query,
-      variables: { id, page }
+      variables: { id, page, onList }
     })
   };
 
@@ -1153,14 +1153,14 @@ export async function getCharacterAppearances(id, page) {
  * @param {number} page the next page number
  * @returns an object with the data for the new page of character roles
  */
-export async function getCharacterMedia(id, page) {
+export async function getCharacterMedia(id, page, onList) {
   const token = (await browser.storage.local.get('token')).token;
 
   const query = `
-  query($id: Int, $page: Int, ){
+  query($id: Int, $page: Int, $onList: Boolean ){
     Staff(id: $id) {
       id
-      characterMedia(page: $page, sort: START_DATE_DESC) {
+      characterMedia(page: $page, sort: START_DATE_DESC, onList: $onList) {
         pageInfo {
           total
           perPage
@@ -1211,7 +1211,7 @@ export async function getCharacterMedia(id, page) {
     },
     body: JSON.stringify({
       query: query,
-      variables: { id, page }
+      variables: { id, page, onList }
     })
   };
 
@@ -1228,14 +1228,14 @@ export async function getCharacterMedia(id, page) {
  * @param {number} page the new page
  * @returns an object with the  data for the new page of staff roles.
  */
-export async function getRoleMedia(id, page) {
+export async function getRoleMedia(id, page, onList) {
   const token = (await browser.storage.local.get('token')).token;
 
   const query = `
-  query($id: Int, $page: Int, ){
+  query($id: Int, $page: Int, $onList: Boolean){
     Staff(id: $id) {
       id
-      staffMedia(page: $page, type: null, sort: START_DATE_DESC) {
+      staffMedia(page: $page, type: null, sort: START_DATE_DESC, onList: $onList) {
         pageInfo {
           total
           perPage
@@ -1273,7 +1273,7 @@ export async function getRoleMedia(id, page) {
     },
     body: JSON.stringify({
       query: query,
-      variables: { id, page }
+      variables: { id, page, onList }
     })
   };
 

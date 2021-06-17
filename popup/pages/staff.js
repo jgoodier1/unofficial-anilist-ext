@@ -7,6 +7,8 @@ import { MONTHS } from '../constants.js';
  * @param {number} id
  */
 export async function showStaffPage(id) {
+  let onList = false;
+
   const allContainers = document.querySelectorAll('.container');
   allContainers.forEach(container => container.classList.add('hide'));
 
@@ -14,7 +16,7 @@ export async function showStaffPage(id) {
   pageContainer.classList.remove('hide');
   while (pageContainer.firstChild) pageContainer.removeChild(pageContainer.firstChild);
 
-  const staff = await getStaffPage(id);
+  let staff = await getStaffPage(id, onList);
 
   // names and images
   createTopSection(staff);
@@ -75,93 +77,122 @@ export async function showStaffPage(id) {
     descriptionWrapper.append(parsedDescription);
   }
 
-  /**
-   * Creates the character role cards
-   * @param {Object[]} dataArray Array of data to create character cards
-   */
-  function createCharacterCards(dataArray) {
-    dataArray.forEach(character => {
-      const card = document.createElement('staff-char');
-      card.dataNode = character.node;
-      card.dataChar = character.characters[0];
-      card.dataChar.role = character.characterRole;
+  // from here down are character and staff roles
+  const sectionWrapper = document.createElement('div');
+  pageContainer.appendChild(sectionWrapper);
 
-      document.getElementById('card-wrapper').append(card);
-    });
-  }
+  const onListLabel = document.createElement('label');
+  onListLabel.classList.add('onlist-label');
+  onListLabel.textContent = 'On My List';
+  sectionWrapper.appendChild(onListLabel);
 
-  if (staff.characterMedia.pageInfo.total !== 0) {
-    const charWrapper = pageContainer.appendChild(document.createElement('section'));
-    charWrapper.classList.add('char-card-outer-wrapper');
+  const onListCheckbox = document.createElement('input');
+  onListCheckbox.type = 'checkbox';
+  onListLabel.append(onListCheckbox);
 
-    const charHeading = charWrapper.appendChild(document.createElement('h2'));
-    charHeading.textContent = 'Character Roles';
-    charHeading.classList.add('char-card-heading');
+  onListCheckbox.addEventListener('click', async e => {
+    if (e.target.checked) {
+      onList = true;
+    } else {
+      onList = false;
+    }
+    staff = await getStaffPage(id, onList);
+    while (onListLabel.nextSibling) sectionWrapper.removeChild(onListLabel.nextSibling);
+    createAllCards(staff);
+    // console.log(staff);
+  });
 
-    const cardWrapper = charWrapper.appendChild(document.createElement('div'));
-    cardWrapper.id = 'card-wrapper';
-    cardWrapper.classList.add('char-card-wrapper');
+  function createAllCards(staff) {
+    /**
+     * Creates the character role cards
+     * @param {Object[]} dataArray Array of data to create character cards
+     */
+    function createCharacterCards(dataArray) {
+      dataArray.forEach(character => {
+        const card = document.createElement('staff-char');
+        card.dataNode = character.node;
+        card.dataChar = character.characters[0];
+        card.dataChar.role = character.characterRole;
 
-    createCharacterCards(staff.characterMedia.edges);
-
-    if (staff.characterMedia.pageInfo.hasNextPage) {
-      let charPage = 2;
-      const nextCharButton = charWrapper.appendChild(document.createElement('button'));
-      nextCharButton.classList.add('char-button');
-      nextCharButton.textContent = 'Show More Characters';
-      nextCharButton.addEventListener('click', async () => {
-        const newCharacters = await getCharacterMedia(id, charPage);
-        createCharacterCards(newCharacters.characterMedia.edges);
-        if (newCharacters.characterMedia.pageInfo.hasNextPage) charPage++;
-        else {
-          nextCharButton.remove();
-        }
+        document.getElementById('card-wrapper').append(card);
       });
+    }
+
+    if (staff.characterMedia.pageInfo.total !== 0) {
+      const charWrapper = sectionWrapper.appendChild(document.createElement('section'));
+      charWrapper.classList.add('char-card-outer-wrapper');
+
+      const charHeading = charWrapper.appendChild(document.createElement('h2'));
+      charHeading.textContent = 'Character Roles';
+      charHeading.classList.add('char-card-heading');
+
+      const cardWrapper = charWrapper.appendChild(document.createElement('div'));
+      cardWrapper.id = 'card-wrapper';
+      cardWrapper.classList.add('char-card-wrapper');
+
+      createCharacterCards(staff.characterMedia.edges);
+
+      if (staff.characterMedia.pageInfo.hasNextPage) {
+        let charPage = 2;
+        const nextCharButton = charWrapper.appendChild(document.createElement('button'));
+        nextCharButton.classList.add('char-button');
+        nextCharButton.textContent = 'Show More Characters';
+        nextCharButton.addEventListener('click', async () => {
+          const newCharacters = await getCharacterMedia(id, charPage, onList);
+          createCharacterCards(newCharacters.characterMedia.edges);
+          if (newCharacters.characterMedia.pageInfo.hasNextPage) charPage++;
+          else {
+            nextCharButton.remove();
+          }
+        });
+      }
+    }
+
+    /**
+     * Creates the staff role cards
+     * In it's own function so that is can be used in pagination
+     * @param {Object[]} dataArray Array of data needed to create the card
+     */
+    function createRoleCards(dataArray) {
+      dataArray.forEach(role => {
+        const card = document.createElement('staff-role');
+        card.data = role.node;
+        card.data.role = role.staffRole;
+
+        document.getElementById('role-card-wrapper').append(card);
+      });
+    }
+    if (staff.staffMedia.pageInfo.total !== 0) {
+      const roleWrapper = sectionWrapper.appendChild(document.createElement('section'));
+      roleWrapper.classList.add('char-card-outer-wrapper');
+
+      const roleHeading = roleWrapper.appendChild(document.createElement('h2'));
+      roleHeading.textContent = 'Staff Roles';
+      roleHeading.classList.add('char-card-heading');
+
+      const roleCardWrapper = roleWrapper.appendChild(document.createElement('div'));
+      roleCardWrapper.id = 'role-card-wrapper';
+      roleCardWrapper.classList.add('char-card-wrapper');
+
+      createRoleCards(staff.staffMedia.edges);
+
+      // pagination
+      if (staff.staffMedia.pageInfo.hasNextPage) {
+        let staffPage = 2;
+        const nextRoleButton = roleWrapper.appendChild(document.createElement('button'));
+        nextRoleButton.classList.add('char-button');
+        nextRoleButton.textContent = 'Show More Roles';
+        nextRoleButton.addEventListener('click', async () => {
+          const newCharacters = await getRoleMedia(id, staffPage, onList);
+          createRoleCards(newCharacters.staffMedia.edges);
+          if (newCharacters.staffMedia.pageInfo.hasNextPage) staffPage++;
+          else {
+            nextRoleButton.remove();
+          }
+        });
+      }
     }
   }
 
-  /**
-   * Creates the staff role cards
-   * In it's own function so that is can be used in pagination
-   * @param {Object[]} dataArray Array of data needed to create the card
-   */
-  function createRoleCards(dataArray) {
-    dataArray.forEach(role => {
-      const card = document.createElement('staff-role');
-      card.data = role.node;
-      card.data.role = role.staffRole;
-
-      document.getElementById('role-card-wrapper').append(card);
-    });
-  }
-  if (staff.staffMedia.pageInfo.total !== 0) {
-    const roleWrapper = pageContainer.appendChild(document.createElement('section'));
-    roleWrapper.classList.add('char-card-outer-wrapper');
-
-    const roleHeading = roleWrapper.appendChild(document.createElement('h2'));
-    roleHeading.textContent = 'Staff Roles';
-    roleHeading.classList.add('char-card-heading');
-
-    const roleCardWrapper = roleWrapper.appendChild(document.createElement('div'));
-    roleCardWrapper.id = 'role-card-wrapper';
-    roleCardWrapper.classList.add('char-card-wrapper');
-
-    createRoleCards(staff.staffMedia.edges);
-
-    // pagination
-    if (staff.staffMedia.pageInfo.hasNextPage) {
-      let staffPage = 2;
-      const nextRoleButton = roleWrapper.appendChild(document.createElement('button'));
-      nextRoleButton.classList.add('char-button');
-      nextRoleButton.textContent = 'Show More Roles';
-      nextRoleButton.addEventListener('click', async () => {
-        const newCharacters = await getRoleMedia(id, staffPage);
-        createRoleCards(newCharacters.staffMedia.edges);
-        if (newCharacters.staffMedia.pageInfo.hasNextPage) staffPage++;
-        else {
-          nextRoleButton.remove();
-        }
-      });
-    }
-  }
+  createAllCards(staff);
 }
