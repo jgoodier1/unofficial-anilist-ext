@@ -1,4 +1,4 @@
-import { getMediaPage } from '../queries.js';
+import { getMediaCharacter, getMediaPage, getMediaStaff } from '../queries.js';
 import { MONTHS, COLOURS } from '../constants.js';
 
 /**
@@ -43,6 +43,120 @@ export async function showMediaPage(id, type) {
   button.setAttribute('data-status', buttonStatus);
   button.classList.add('page-top-button');
   topContent.append(button);
+
+  const tabsSection = pageContainer.appendChild(document.createElement('section'));
+  tabsSection.classList.add('page-tab');
+  const overviewTab = tabsSection.appendChild(document.createElement('button'));
+  overviewTab.textContent = 'Overview';
+  overviewTab.classList.add('page-tab-button');
+  const characterTab = tabsSection.appendChild(document.createElement('button'));
+  characterTab.textContent = 'Characters';
+  characterTab.classList.add('page-tab-button');
+  const staffTab = tabsSection.appendChild(document.createElement('button'));
+  staffTab.textContent = 'Staff';
+  staffTab.classList.add('page-tab-button');
+
+  let currentTab = 'overview';
+
+  overviewTab.addEventListener('click', () => {
+    if (currentTab === 'overview') return;
+    else currentTab = 'overview';
+    const allTabs = document.querySelectorAll('.tab-wrapper');
+    allTabs.forEach(tab => tab.classList.add('hide'));
+    const overviewTab = document.getElementById('overview-tab');
+    overviewTab.classList.remove('hide');
+  });
+
+  characterTab.addEventListener('click', async () => {
+    if (currentTab === 'character') return;
+    else currentTab = 'character';
+
+    const allTabs = document.querySelectorAll('.tab-wrapper');
+    allTabs.forEach(tab => tab.classList.add('hide'));
+    const characterTab = document.getElementById('character-tab');
+    characterTab.classList.remove('hide');
+
+    if (characterTab.firstChild) return;
+
+    let characters = await getMediaCharacter(id, 1);
+
+    const characterCardWrapper = document.createElement('div');
+    characterTab.append(characterCardWrapper);
+
+    characters.edges.forEach(character => {
+      const characterElement = document.createElement('character-card');
+      characterElement.dataCharacter = character.node;
+      characterElement.dataCharacter.role = character.role;
+      characterElement.dataCharacter.voiceActors = character.voiceActors;
+
+      characterCardWrapper.append(characterElement);
+    });
+
+    if (characters.pageInfo.hasNextPage) {
+      const moreCharactersButton = document.createElement('button');
+      moreCharactersButton.textContent = 'Show More Characters';
+      moreCharactersButton.classList.add('char-button');
+      characterTab.append(moreCharactersButton);
+      // create button
+      moreCharactersButton.addEventListener('click', async () => {
+        characters = await getMediaCharacter(id, characters.pageInfo.currentPage + 1);
+        characters.edges.forEach(character => {
+          const characterElement = document.createElement('character-card');
+          characterElement.dataCharacter = character.node;
+          characterElement.dataCharacter.role = character.role;
+          characterElement.dataCharacter.voiceActors = character.voiceActors;
+
+          characterCardWrapper.append(characterElement);
+        });
+        if (!characters.pageInfo.hasNextPage) moreCharactersButton.remove();
+      });
+    }
+  });
+
+  staffTab.addEventListener('click', async () => {
+    if (currentTab === 'staff') return;
+    else currentTab = 'staff';
+
+    const allTabs = document.querySelectorAll('.tab-wrapper');
+    allTabs.forEach(tab => tab.classList.add('hide'));
+    const staffTab = document.getElementById('staff-tab');
+    staffTab.classList.remove('hide');
+
+    if (staffTab.firstChild) return;
+
+    const staffCardWrapper = document.createElement('div');
+    staffTab.append(staffCardWrapper);
+
+    let staffMembers = await getMediaStaff(id, 1);
+    staffMembers.edges.forEach(staff => {
+      const staffElement = document.createElement('staff-card');
+      staffElement.dataStaff = staff.node;
+      staffElement.dataStaff.role = staff.role;
+
+      staffCardWrapper.append(staffElement);
+    });
+
+    if (staffMembers.pageInfo.hasNextPage) {
+      const moreStaffButton = document.createElement('button');
+      moreStaffButton.textContent = 'Show More Staff';
+      moreStaffButton.classList.add('char-button');
+      staffTab.append(moreStaffButton);
+
+      moreStaffButton.addEventListener('click', async () => {
+        staffMembers = await getMediaStaff(id, staffMembers.pageInfo.currentPage + 1);
+
+        staffMembers.edges.forEach(staff => {
+          const staffElement = document.createElement('staff-card');
+          staffElement.dataStaff = staff.node;
+          staffElement.dataStaff.role = staff.role;
+
+          staffCardWrapper.append(staffElement);
+        });
+
+        if (!staffMembers.pageInfo.hasNextPage) moreStaffButton.remove();
+      });
+    }
+  });
 
   // this is going to be really long, so bear with me
   const dataSection = pageContainer.appendChild(document.createElement('section'));
@@ -168,7 +282,13 @@ export async function showMediaPage(id, type) {
   }
   // end data
 
-  const descriptionSection = pageContainer.appendChild(document.createElement('section'));
+  const overviewWrapper = pageContainer.appendChild(document.createElement('div'));
+  overviewWrapper.classList.add('tab-wrapper');
+  overviewWrapper.id = 'overview-tab';
+
+  const descriptionSection = overviewWrapper.appendChild(
+    document.createElement('section')
+  );
   descriptionSection.classList.add('page-section', 'page-desc-section');
 
   const descriptionHeading = descriptionSection.appendChild(document.createElement('h2'));
@@ -183,7 +303,9 @@ export async function showMediaPage(id, type) {
 
   //relations
   if (media.relations.edges.length > 0) {
-    const relationsSection = pageContainer.appendChild(document.createElement('section'));
+    const relationsSection = overviewWrapper.appendChild(
+      document.createElement('section')
+    );
     relationsSection.classList.add('page-section');
 
     const relationsHeading = relationsSection.appendChild(document.createElement('h2'));
@@ -205,7 +327,7 @@ export async function showMediaPage(id, type) {
   }
 
   if (media.characters.edges !== null) {
-    const charactersSection = pageContainer.appendChild(
+    const charactersSection = overviewWrapper.appendChild(
       document.createElement('section')
     );
     charactersSection.classList.add('page-section');
@@ -224,7 +346,7 @@ export async function showMediaPage(id, type) {
     });
   }
 
-  const staffSection = pageContainer.appendChild(document.createElement('section'));
+  const staffSection = overviewWrapper.appendChild(document.createElement('section'));
   staffSection.classList.add('page-section');
 
   const staffHeading = staffSection.appendChild(document.createElement('h2'));
@@ -240,7 +362,9 @@ export async function showMediaPage(id, type) {
     staffSection.append(staffElement);
   });
 
-  const statusStatsSection = pageContainer.appendChild(document.createElement('section'));
+  const statusStatsSection = overviewWrapper.appendChild(
+    document.createElement('section')
+  );
   statusStatsSection.classList.add('page-section');
 
   const statusStatsHeading = statusStatsSection.appendChild(document.createElement('h2'));
@@ -291,7 +415,7 @@ export async function showMediaPage(id, type) {
 
   // a graph showing the distribution of scores
   if (media.stats.scoreDistribution.length > 0) {
-    const scoreSection = pageContainer.appendChild(document.createElement('section'));
+    const scoreSection = overviewWrapper.appendChild(document.createElement('section'));
     scoreSection.classList.add('page-section');
 
     const scoreHeading = scoreSection.appendChild(document.createElement('h2'));
@@ -313,7 +437,7 @@ export async function showMediaPage(id, type) {
     });
   }
 
-  const recommendSection = pageContainer.appendChild(document.createElement('section'));
+  const recommendSection = overviewWrapper.appendChild(document.createElement('section'));
   recommendSection.classList.add('page-section');
 
   const recommendHeading = recommendSection.appendChild(document.createElement('h2'));
@@ -330,4 +454,12 @@ export async function showMediaPage(id, type) {
 
     recommendCarousel.append(recElement);
   });
+
+  // create the wrappers for the character and staff tabs
+  const characterTabWrapper = pageContainer.appendChild(document.createElement('div'));
+  characterTabWrapper.classList.add('tab-wrapper', 'page-tab-wrapper', 'hide');
+  characterTabWrapper.id = 'character-tab';
+  const staffTabWrapper = pageContainer.appendChild(document.createElement('div'));
+  staffTabWrapper.classList.add('tab-wrapper', 'page-tab-wrapper', 'hide');
+  staffTabWrapper.id = 'staff-tab';
 }

@@ -1283,3 +1283,109 @@ export async function getRoleMedia(id, page, onList) {
       return json.data.Staff;
     });
 }
+
+export async function getMediaCharacter(id, page) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  query($id: Int, $page: Int){
+    Media(id: $id) {
+      characters(page: $page, perPage: 25, sort: [ROLE, RELEVANCE, ID]) {
+        edges {
+          id
+          role
+          name
+          voiceActors(language: JAPANESE, sort: [RELEVANCE, ID]) {
+            id
+            name {
+              full
+            }
+            language: languageV2
+            image {
+              medium
+            }
+          }
+          node {
+            id
+            name {
+              full
+            }
+            image {
+              medium
+            }
+          }
+        }
+        pageInfo {
+          total
+          currentPage
+          hasNextPage
+        }
+      }
+    }
+  }`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id, page }
+    })
+  };
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.Media.characters;
+    });
+}
+export async function getMediaStaff(id, page) {
+  const token = (await browser.storage.local.get('token')).token;
+
+  const query = `
+  query($id: Int, $page: Int){
+    Media(id: $id) {
+      staffPreview: staff(page: $page, perPage: 25, sort: [RELEVANCE, ID]) {
+        edges {
+          id
+          role
+          node {
+            id
+            name {
+              full
+            }
+            image {
+              medium
+            }
+          }
+        }
+        pageInfo {
+          total
+          currentPage
+          hasNextPage
+        }
+      }
+    }
+  }`;
+
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      query: query,
+      variables: { id, page }
+    })
+  };
+  return fetch('https://graphql.anilist.co', options)
+    .then(res => res.json())
+    .then(json => {
+      return json.data.Media.staffPreview;
+    });
+}

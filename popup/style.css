@@ -410,6 +410,27 @@ label {
   grid-row: 2;
 }
 
+.page-tab {
+  display: flex;
+  justify-content: space-between;
+  margin: 16px 32px;
+  padding: 8px;
+  background-color: var(--colour-container);
+}
+
+.page-tab-button {
+  border: none;
+  background: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.page-tab-wrapper {
+  margin: 16px 32px;
+  display: grid;
+}
+
 .page-data-section {
   display: flex;
   overflow-x: auto;
