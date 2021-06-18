@@ -3,3 +3,6 @@
 /web-ext-artifacts
 .web-extension-id
 auth-token.txt
+.snowpack
+build
+node_modules
