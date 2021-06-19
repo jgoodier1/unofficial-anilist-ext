@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
-const NavBar = props => {
+const NavBar = ({ logOut }) => {
   return (
     <header>
       <Nav>
@@ -15,7 +15,6 @@ const NavBar = props => {
                 x='0px'
                 y='0px'
                 viewBox='0 0 254.182 254.182'
-                xml:space='preserve'
                 fill='white'
               >
                 <g>
@@ -40,7 +39,6 @@ const NavBar = props => {
                 version='1.1'
                 xmlns='http://www.w3.org/2000/svg'
                 viewBox='0 0 92.123 63.123'
-                xml:space='preserve'
                 fill='white'
               >
                 <g>
@@ -53,7 +51,7 @@ const NavBar = props => {
                   <circle cx='4.029' cy='11.463' r='4.029' />
                   <circle cx='4.029' cy='30.062' r='4.029' />
                   <circle cx='4.029' cy='48.661' r='4.029' />
-                  <text x='60.7' y='61' style={{ fontSize: '40px', fontWeight: '600' }}>
+                  <text x='60.7' y='61' style={{ fontSize: '40px', fontWeight: 600 }}>
                     A
                   </text>
                 </g>
@@ -66,7 +64,6 @@ const NavBar = props => {
                 version='1.1'
                 xmlns='http://www.w3.org/2000/svg'
                 viewBox='0 0 92.123 63.123'
-                xml:space='preserve'
                 fill='white'
               >
                 <g>
@@ -79,7 +76,7 @@ const NavBar = props => {
                   <circle cx='4.029' cy='11.463' r='4.029' />
                   <circle cx='4.029' cy='30.062' r='4.029' />
                   <circle cx='4.029' cy='48.661' r='4.029' />
-                  <text x='60.7' y='61' style={{ fontSize: '40px', fontWeight: '600' }}>
+                  <text x='60.7' y='61' style={{ fontSize: '40px', fontWeight: 600 }}>
                     M
                   </text>
                 </g>
@@ -117,7 +114,7 @@ const NavBar = props => {
               </Svg>
             </SettingsButton>
             <SettingsMenu id='settings-menu'>
-              <SignOutButton onClick={props.logOut}>Sign Out</SignOutButton>
+              <SignOutButton onClick={logOut}>Sign Out</SignOutButton>
             </SettingsMenu>
           </SettingsWrapper>
         </NavUl>

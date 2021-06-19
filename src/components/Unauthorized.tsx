@@ -1,7 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const Unauthorized = ({ submitToken }) => {
+interface Props {
+  submitToken: (e: React.FormEvent<HTMLFormElement>) => void;
+}
+
+const Unauthorized: React.FC<Props> = ({ submitToken }) => {
   return (
     <Wrapper>
       <Heading>Unofficial AniList Extension</Heading>
@@ -17,8 +21,8 @@ const Unauthorized = ({ submitToken }) => {
       <Form onSubmit={submitToken}>
         <TextArea
           name='token'
-          rows='15'
-          cols='30'
+          rows={15}
+          cols={30}
           placeholder='input token'
           required
         ></TextArea>

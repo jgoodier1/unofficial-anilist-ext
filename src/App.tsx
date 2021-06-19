@@ -7,24 +7,25 @@ import List from './components/List';
 import Search from './components/Search';
 
 function App() {
-  const [token, setToken] = useState();
-  const [authState, setAuthState] = useState('unauth');
+  const [token, setToken] = useState('');
+  const [authState, setAuthState] = useState<'auth' | 'unauth' | 'error'>('unauth');
 
-  const TokenContext = React.createContext();
+  const TokenContext = React.createContext('');
 
-  useEffect(async () => {
+  useEffect(() => {
     // setAuthState('auth');
-    let result = await browser.storage.local.get('token');
-    if (result.token) {
-      setToken(result.token);
-      setAuthState('auth');
-    }
+    browser.storage.local.get('token').then(result => {
+      if (result.token && typeof result.token === 'string') {
+        setToken(result.token);
+        setAuthState('auth');
+      }
+    });
   });
 
-  const submitToken = async e => {
+  const submitToken = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    let newToken = e.target.token.value;
+    let newToken = e.currentTarget.token.value;
     newToken.trim();
 
     const res = await getUser(newToken);
