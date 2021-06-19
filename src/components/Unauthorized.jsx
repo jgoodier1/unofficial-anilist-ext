@@ -1,34 +1,34 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const Unathorized = (props) => {
+const Unauthorized = ({ submitToken }) => {
   return (
     <Wrapper>
       <Heading>Unofficial AniList Extension</Heading>
       <p>
         Step 1:{' '}
-        <Link href="https://anilist.co/api/v2/oauth/authorize?client_id=4953&response_type=token">
+        <Link href='https://anilist.co/api/v2/oauth/authorize?client_id=4953&response_type=token'>
           Authorize on Anilist
         </Link>
       </p>
       <p>
-        Step 2: <label htmlFor="token">Input your token</label>{' '}
+        Step 2: <label htmlFor='token'>Input your token</label>{' '}
       </p>
-      <Form onSubmit={props.onSubmit}>
+      <Form onSubmit={submitToken}>
         <TextArea
-          name="token"
-          rows="15"
-          cols="30"
-          placeholder="input token"
+          name='token'
+          rows='15'
+          cols='30'
+          placeholder='input token'
           required
         ></TextArea>
-        <Button type="submit">Submit</Button>
+        <Button type='submit'>Submit</Button>
       </Form>
     </Wrapper>
   );
 };
 
-export default Unathorized;
+export default Unauthorized;
 
 const Wrapper = styled.main`
   width: 432px;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import { getUser } from './queries';
-import Unathorized from './components/Unathorized';
+import Home from './components/Home';
 import NavBar from './components/NavBar';
 import List from './components/List';
 import Search from './components/Search';
@@ -43,26 +43,8 @@ function App() {
     await browser.storage.local.remove('token');
   };
 
-  let renderedApp = <Unathorized onSubmit={submitToken} />;
-
-  if (authState === 'auth') {
-    renderedApp = <button onClick={logOut}>Log out</button>;
-  } else if (authState === 'unath') {
-    renderedApp = <Unathorized onSubmit={submitToken} />;
-  } else if (authState === 'error') {
-    renderedApp = (
-      <>
-        <div>There was an error. Please try again</div>
-        <button onClick={() => setAuthState('unauth')}>Dismiss</button>
-      </>
-    );
-  }
-
   const routes = (
     <Switch>
-      <Route exact path='/'>
-        <Unathorized />
-      </Route>
       <Route path='/anime'>
         <List />
       </Route>
@@ -72,13 +54,15 @@ function App() {
       <Route path='/search'>
         <Search />
       </Route>
+      <Route path='/'>
+        <Home authState={authState} submitToken={submitToken} />
+      </Route>
     </Switch>
   );
 
   return (
     <TokenContext.Provider value={token}>
       {authState === 'auth' && <NavBar logOut={logOut} />}
-      {renderedApp}
       {routes}
     </TokenContext.Provider>
   );
