@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Switch, Route } from 'react-router-dom';
 import { getUser } from './queries';
 import Unathorized from './components/Unathorized';
+import NavBar from './components/NavBar';
+import List from './components/List';
+import Search from './components/Search';
 
 function App() {
   const [token, setToken] = useState();
@@ -9,7 +13,7 @@ function App() {
   const TokenContext = React.createContext();
 
   useEffect(async () => {
-    // await browser.storage.local.set({ token: '8548509834850808308' });
+    // setAuthState('auth');
     let result = await browser.storage.local.get('token');
     if (result.token) {
       setToken(result.token);
@@ -27,6 +31,7 @@ function App() {
     console.log(res);
     if (typeof res === 'number') {
       setToken(newToken);
+      setAuthState('auth');
       await browser.storage.local.set({ token: newToken });
     } else {
       setAuthState('error');
@@ -53,7 +58,30 @@ function App() {
     );
   }
 
-  return <TokenContext.Provider value={token}>{renderedApp}</TokenContext.Provider>;
+  const routes = (
+    <Switch>
+      <Route exact path='/'>
+        <Unathorized />
+      </Route>
+      <Route path='/anime'>
+        <List />
+      </Route>
+      <Route path='/manga'>
+        <List />
+      </Route>
+      <Route path='/search'>
+        <Search />
+      </Route>
+    </Switch>
+  );
+
+  return (
+    <TokenContext.Provider value={token}>
+      {authState === 'auth' && <NavBar logOut={logOut} />}
+      {renderedApp}
+      {routes}
+    </TokenContext.Provider>
+  );
 }
 
 export default App;
