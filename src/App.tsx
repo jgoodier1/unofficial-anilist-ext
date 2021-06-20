@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Switch, Route } from 'react-router-dom';
+import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { getUser } from './queries';
 import Home from './components/Home';
+import Unauthorized from './components/Unauthorized';
 import NavBar from './components/NavBar';
 import List from './components/List';
 import Search from './components/Search';
+import { UserIdContext } from './context';
 
 function App() {
   const [token, setToken] = useState('');
+  const [userId, setUserId] = useState<number>(0);
   const [authState, setAuthState] = useState<'auth' | 'unauth' | 'error'>('unauth');
-
-  const TokenContext = React.createContext('');
 
   useEffect(() => {
     // setAuthState('auth');
@@ -22,6 +24,14 @@ function App() {
     });
   });
 
+  useEffect(() => {
+    browser.storage.local.get('userId').then(result => {
+      if (result.userId && typeof result.userId === 'number') {
+        setUserId(result.userId);
+      }
+    });
+  });
+
   const submitToken = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -29,11 +39,12 @@ function App() {
     newToken.trim();
 
     const res = await getUser(newToken);
-    console.log(res);
     if (typeof res === 'number') {
       setToken(newToken);
+      setUserId(res);
       setAuthState('auth');
       await browser.storage.local.set({ token: newToken });
+      await browser.storage.local.set({ userId: res });
     } else {
       setAuthState('error');
     }
@@ -55,17 +66,42 @@ function App() {
       <Route path='/search'>
         <Search />
       </Route>
-      <Route path='/'>
-        <Home authState={authState} submitToken={submitToken} />
-      </Route>
+      {authState === 'auth' && (
+        <Route path='/'>
+          <Home />
+        </Route>
+      )}
+      {authState === 'unauth' && (
+        <Route path='/'>
+          <Unauthorized submitToken={submitToken} />
+        </Route>
+      )}
+      {authState === 'error' && (
+        <Route path='/'>
+          <p>Error.</p>
+        </Route>
+      )}
     </Switch>
   );
 
+  // this is here because this is where I get the token
+  // if I put it in index, then I don't think I'd be able to log in because ApolloProvider would not get
+  // the new token
+  const client = new ApolloClient({
+    uri: 'https://graphql.anilist.co',
+    cache: new InMemoryCache(),
+    headers: {
+      Authorization: 'Bearer ' + token
+    }
+  });
+
   return (
-    <TokenContext.Provider value={token}>
-      {authState === 'auth' && <NavBar logOut={logOut} />}
-      {routes}
-    </TokenContext.Provider>
+    <ApolloProvider client={client}>
+      <UserIdContext.Provider value={userId}>
+        {authState === 'auth' && <NavBar logOut={logOut} />}
+        {routes}
+      </UserIdContext.Provider>
+    </ApolloProvider>
   );
 }
 

@@ -2,7 +2,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
-const NavBar = ({ logOut }) => {
+interface Props {
+  logOut: () => void;
+}
+
+const NavBar: React.FC<Props> = ({ logOut }) => {
   return (
     <header>
       <Nav>
