@@ -3,6 +3,10 @@ import { useParams } from 'react-router-dom';
 import { gql, useQuery } from '@apollo/client';
 import styled from 'styled-components';
 
+import RelationCard from './RelationCard';
+import CharacterCard from './CharacterCard';
+import StaffCard from './StaffCard';
+
 interface Media {
   id: number;
   title: {
@@ -31,14 +35,14 @@ interface Media {
   seasonYear: number | undefined;
   type: 'ANIME' | 'MANGA';
   format: string;
-  status(version: 2): string;
+  status: string;
   episodes: number | undefined;
   duration: number | undefined;
   chapters: number | undefined;
   volumes: number | undefined;
   genres: string[] | undefined;
   synonyms: string[] | undefined;
-  source(version: 2): string;
+  source: string;
   isAdult: boolean;
   meanScore: number | undefined;
   averageScore: number | undefined;
@@ -54,7 +58,7 @@ interface Media {
   relations: {
     edges: {
       id: number;
-      relationType(version: 2): string;
+      relationType: string;
       node: {
         id: number;
         type: 'ANIME' | 'MANGA';
@@ -62,12 +66,12 @@ interface Media {
           userPreferred: string;
         };
         format: string;
-        status(version: 2): string;
+        status: string;
         coverImage: {
           medium: string;
         };
-      }[];
-    };
+      };
+    }[];
   };
   characters: {
     edges: {
@@ -92,8 +96,8 @@ interface Media {
         image: {
           medium: string;
         };
-      }[];
-    };
+      };
+    }[];
   };
   staffPreview: {
     edges: {
@@ -107,7 +111,7 @@ interface Media {
         image: {
           medium: string;
         };
-      }[];
+      };
     }[];
   };
   studios: {
@@ -560,7 +564,33 @@ const Media = () => {
       {/* overview */}
       <Section>
         <Heading>Description</Heading>
-        <Description>{media.description}</Description>
+        {/* not displaying properly. There are html elements in the string */}
+        <Description
+          dangerouslySetInnerHTML={{ __html: media.description }}
+        ></Description>
+      </Section>
+
+      <Section>
+        <Heading>Relations</Heading>
+        <RelationsCarousel>
+          {media.relations.edges.map(relation => {
+            return <RelationCard relation={relation} key={relation.id} />;
+          })}
+        </RelationsCarousel>
+      </Section>
+
+      <Section>
+        <Heading>Characters</Heading>
+        {media.characters.edges.map(character => {
+          return <CharacterCard character={character} key={character.id} />;
+        })}
+      </Section>
+
+      <Section>
+        <Heading>Staff</Heading>
+        {media.staffPreview.edges.map(staff => {
+          return <StaffCard staff={staff} key={staff.id} />;
+        })}
       </Section>
     </Wrapper>
   );
@@ -660,4 +690,10 @@ const Heading = styled.h2`
 const Description = styled.p`
   background-color: #fafafa;
   padding: 16px;
+`;
+
+const RelationsCarousel = styled.div`
+  margin-bottom: 16px;
+  display: flex;
+  overflow-x: scroll;
 `;
