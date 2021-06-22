@@ -87,7 +87,7 @@ const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
     } else {
       if (hours === 0 && minutes === 0) {
         timeToNextEpisode = `${days}d`;
-      } else if (minutes === 0) timeToNextEpisode = `${days} ${hours}h`;
+      } else if (minutes === 0) timeToNextEpisode = `${days}d ${hours}h`;
       else if (hours === 0) timeToNextEpisode = `${days}d ${minutes}m`;
       else timeToNextEpisode = `${days}d ${hours}h ${minutes}m`;
     }
@@ -109,7 +109,7 @@ const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
   return (
     <CardWrapper>
       <StyledLink
-        to={`/media/${entry.id}`}
+        to={`/media/${entry.media.id}`}
         style={{ backgroundImage: `url(${entry.media.coverImage.medium})` }}
       ></StyledLink>
       <Updater onClick={updateHandler}>

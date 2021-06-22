@@ -4,6 +4,7 @@ import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { getUser } from './queries';
 import Home from './components/Home';
 import Unauthorized from './components/Unauthorized';
+import Media from './components/Media';
 import NavBar from './components/NavBar';
 import List from './components/List';
 import Search from './components/Search';
@@ -57,6 +58,9 @@ function App() {
 
   const routes = (
     <Switch>
+      <Route path='/media/:id'>
+        <Media />
+      </Route>
       <Route path='/anime'>
         <List />
       </Route>
