@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { gql, useQuery } from '@apollo/client';
 import styled from 'styled-components';
@@ -383,6 +383,9 @@ const EDIT_BUTTON: EditKeys = {
 };
 
 const Media = () => {
+  const [compState, setCompState] = useState<'Overview' | 'Characters' | 'Staff'>(
+    'Overview'
+  );
   const { id } = useParams<{ id: string }>();
 
   const { data, loading, error } = useQuery(GET_MEDIA, { variables: { id } });
@@ -454,6 +457,12 @@ const Media = () => {
           </EditButton>
         </TopContentWrapper>
       </TopSection>
+
+      <TabButtonWrapper>
+        <TabButton onClick={() => setCompState('Overview')}>Overview</TabButton>
+        <TabButton onClick={() => setCompState('Characters')}>Characters</TabButton>
+        <TabButton onClick={() => setCompState('Staff')}>Staff</TabButton>
+      </TabButtonWrapper>
 
       <DataSection>
         {media.nextAiringEpisode && timeTilEpisode && (
@@ -592,73 +601,81 @@ const Media = () => {
       </DataSection>
 
       {/* overview */}
-      <Section>
-        <Heading>Description</Heading>
-        {/* not displaying properly. There are html elements in the string */}
-        <Description
-          dangerouslySetInnerHTML={{ __html: media.description }}
-        ></Description>
-      </Section>
+      {compState === 'Overview' && (
+        <div>
+          <Section>
+            <Heading>Description</Heading>
+            {/* not displaying properly. There are html elements in the string */}
+            <Description
+              dangerouslySetInnerHTML={{ __html: media.description }}
+            ></Description>
+          </Section>
 
-      <Section>
-        <Heading>Relations</Heading>
-        <Carousel>
-          {media.relations.edges.map(relation => {
-            return <RelationCard relation={relation} key={relation.id} />;
-          })}
-        </Carousel>
-      </Section>
+          <Section>
+            <Heading>Relations</Heading>
+            <Carousel>
+              {media.relations.edges.map(relation => {
+                return <RelationCard relation={relation} key={relation.id} />;
+              })}
+            </Carousel>
+          </Section>
 
-      <Section>
-        <Heading>Characters</Heading>
-        {media.characters.edges.map(character => {
-          return <CharacterCard character={character} key={character.id} />;
-        })}
-      </Section>
-
-      <Section>
-        <Heading>Staff</Heading>
-        {media.staffPreview.edges.map(staff => {
-          return <StaffCard staff={staff} key={staff.id} />;
-        })}
-      </Section>
-
-      <Section>
-        <Heading>Status Distribution</Heading>
-        <StatusWrapper>
-          {sortedStatuses.map((status, i) => {
-            return <StatusCard status={status} index={i} key={status.status} />;
-          })}
-          <StatusPercentBarWrapper>
-            {sortedStatuses.map((status, i) => {
-              return (
-                <StatusPercentBar
-                  width={(status.amount / media.popularity) * 400}
-                  index={i}
-                />
-              );
+          <Section>
+            <Heading>Characters</Heading>
+            {media.characters.edges.map(character => {
+              return <CharacterCard character={character} key={character.id} />;
             })}
-          </StatusPercentBarWrapper>
-        </StatusWrapper>
-      </Section>
+          </Section>
 
-      <Section>
-        <Heading>Score Distribution</Heading>
-        <ScoreWrapper>
-          {media.stats.scoreDistribution.map(score => {
-            return <GraphBar score={score} max={largestAmount.amount} />;
-          })}
-        </ScoreWrapper>
-      </Section>
+          <Section>
+            <Heading>Staff</Heading>
+            {media.staffPreview.edges.map(staff => {
+              return <StaffCard staff={staff} key={staff.id} />;
+            })}
+          </Section>
 
-      <Section>
-        <Heading>Recommendations</Heading>
-        <Carousel>
-          {media.recommendations.nodes.map(recommendation => {
-            return <RecommendationCard recommendation={recommendation} />;
-          })}
-        </Carousel>
-      </Section>
+          <Section>
+            <Heading>Status Distribution</Heading>
+            <StatusWrapper>
+              {sortedStatuses.map((status, i) => {
+                return <StatusCard status={status} index={i} key={status.status} />;
+              })}
+              <StatusPercentBarWrapper>
+                {sortedStatuses.map((status, i) => {
+                  return (
+                    <StatusPercentBar
+                      width={(status.amount / media.popularity) * 400}
+                      index={i}
+                    />
+                  );
+                })}
+              </StatusPercentBarWrapper>
+            </StatusWrapper>
+          </Section>
+
+          <Section>
+            <Heading>Score Distribution</Heading>
+            <ScoreWrapper>
+              {media.stats.scoreDistribution.map(score => {
+                return <GraphBar score={score} max={largestAmount.amount} />;
+              })}
+            </ScoreWrapper>
+          </Section>
+
+          <Section>
+            <Heading>Recommendations</Heading>
+            <Carousel>
+              {media.recommendations.nodes.map(recommendation => {
+                return <RecommendationCard recommendation={recommendation} />;
+              })}
+            </Carousel>
+          </Section>
+        </div>
+      )}
+
+      {compState === 'Characters' && <div>Characters</div>}
+
+      {compState === 'Staff' && <div>Staff</div>}
     </Wrapper>
   );
 };
@@ -744,6 +761,27 @@ const DataValue = styled.div`
   width: max-content;
   font-size: 14px;
   font-weight: 600;
+`;
+
+const TabButtonWrapper = styled.section`
+  display: flex;
+  justify-content: space-between;
+  margin: 16px 32px;
+  padding: 8px;
+  background-color: #fafafa;
+`;
+
+const TabButton = styled.button`
+  border: none;
+  background: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+`;
+
+const TabWrapper = styled.div`
+  margin: 16px 32px;
+  display: grid;
 `;
 
 const Section = styled.section`
