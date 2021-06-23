@@ -8,8 +8,8 @@ interface Props {
 
 const NavBar: React.FC<Props> = ({ logOut }) => {
   return (
-    <header>
-      <Nav>
+    <Header>
+      <nav>
         <NavUl>
           <li>
             <ResizedNavLink exact to='/'>
@@ -122,16 +122,17 @@ const NavBar: React.FC<Props> = ({ logOut }) => {
             </SettingsMenu>
           </SettingsWrapper>
         </NavUl>
-      </Nav>
-    </header>
+      </nav>
+    </Header>
   );
 };
 
 export default NavBar;
 
-const Nav = styled.nav`
+const Header = styled.header`
   position: sticky;
   top: 0;
+  z-index: 2;
 `;
 
 const NavUl = styled.ul`
