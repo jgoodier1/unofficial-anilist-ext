@@ -14,7 +14,11 @@ interface BarStyleProps {
   score: number;
 }
 
-const BAR_COLOURS = {
+interface BarKey {
+  [key: number]: string;
+}
+
+const BAR_COLOURS: BarKey = {
   10: '#FF0909',
   20: '#FD3E02',
   30: '#FF9900',

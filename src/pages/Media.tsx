@@ -357,6 +357,31 @@ const GET_MEDIA = gql`
   }
 `;
 
+interface EditKeys {
+  [key: string]: {
+    [key: string]: string;
+  };
+}
+
+const EDIT_BUTTON: EditKeys = {
+  ANIME: {
+    CURRENT: 'Watching',
+    PLANNING: 'Planning',
+    COMPLETED: 'Completed',
+    DROPPED: 'Dropped',
+    PAUSED: 'Paused',
+    REPEATING: 'Rewatching'
+  },
+  MANGA: {
+    CURRENT: 'Reading',
+    PLANNING: 'Planning',
+    COMPLETED: 'Completed',
+    DROPPED: 'Dropped',
+    PAUSED: 'Paused',
+    REPEATING: 'Rereading'
+  }
+};
+
 const Media = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -423,7 +448,9 @@ const Media = () => {
           <Title>{media.title.userPreferred}</Title>
           {/* button content should not just be the status */}
           <EditButton>
-            {media.mediaListEntry ? media.mediaListEntry.status : 'Add to List'}
+            {media.mediaListEntry
+              ? EDIT_BUTTON[media.type][media.mediaListEntry.status]
+              : 'Add to List'}
           </EditButton>
         </TopContentWrapper>
       </TopSection>
