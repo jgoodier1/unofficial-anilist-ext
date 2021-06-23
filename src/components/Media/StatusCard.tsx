@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { COLOURS } from '../constants';
+import { COLOURS } from '../../constants';
 
 interface Props {
   status: {

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { getUser } from './queries';
-import Home from './components/Home';
-import Unauthorized from './components/Unauthorized';
-import Media from './components/Media';
+import Home from './pages/Home';
+import Unauthorized from './pages/Unauthorized';
+import Media from './pages/Media';
 import NavBar from './components/NavBar';
-import List from './components/List';
-import Search from './components/Search';
+import List from './pages/List';
+import Search from './pages/Search';
 import { UserIdContext } from './context';
 
 function App() {

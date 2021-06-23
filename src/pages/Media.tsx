@@ -3,12 +3,12 @@ import { useParams } from 'react-router-dom';
 import { gql, useQuery } from '@apollo/client';
 import styled from 'styled-components';
 
-import RelationCard from './RelationCard';
-import CharacterCard from './CharacterCard';
-import StaffCard from './StaffCard';
-import StatusCard from './StatusCard';
-import GraphBar from './GraphBar';
-import RecommendationCard from './RecommendationCard';
+import RelationCard from '../components/Media/RelationCard';
+import CharacterCard from '../components/Media/CharacterCard';
+import StaffCard from '../components/Media/StaffCard';
+import StatusCard from '../components/Media/StatusCard';
+import GraphBar from '../components/Media/GraphBar';
+import RecommendationCard from '../components/Media/RecommendationCard';
 
 import { MONTHS, COLOURS } from '../constants';
 

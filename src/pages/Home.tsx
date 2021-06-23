@@ -3,7 +3,7 @@ import { useQuery, gql } from '@apollo/client';
 import styled from 'styled-components';
 import { UserIdContext } from '../context';
 
-import HomeCard from './HomeCard';
+import HomeCard from '../components/HomeCard';
 
 interface Props {
   type: 'ANIME' | 'MANGA';
