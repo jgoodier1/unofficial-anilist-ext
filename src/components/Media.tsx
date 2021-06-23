@@ -6,6 +6,11 @@ import styled from 'styled-components';
 import RelationCard from './RelationCard';
 import CharacterCard from './CharacterCard';
 import StaffCard from './StaffCard';
+import StatusCard from './StatusCard';
+import GraphBar from './GraphBar';
+import RecommendationCard from './RecommendationCard';
+
+import { MONTHS, COLOURS } from '../constants';
 
 interface Media {
   id: number;
@@ -46,7 +51,7 @@ interface Media {
   isAdult: boolean;
   meanScore: number | undefined;
   averageScore: number | undefined;
-  popularity: number | undefined;
+  popularity: number;
   favourites: number | undefined;
   hashtag: string | undefined;
   isFavourite: boolean;
@@ -165,16 +170,21 @@ interface Media {
     statusDistribution: {
       status: number;
       amount: number;
-    };
+    }[];
     scoreDistribution: {
       score: number;
       amount: number;
-    };
+    }[];
   };
 }
 
 interface CoverImageProps {
   banner: string | undefined;
+}
+
+interface StatusPercentBarProps {
+  index: number;
+  width: number;
 }
 
 // also had type as a variable before, but AFAICT, I don't need to
@@ -347,22 +357,6 @@ const GET_MEDIA = gql`
   }
 `;
 
-const MONTHS = [
-  '',
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'June',
-  'July',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec'
-];
-
 const Media = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -406,6 +400,15 @@ const Media = () => {
     const producerName = allProducers.map(prod => prod.node.name);
     producers = producerName.join(', ');
   }
+
+  const sortedStatuses = media.stats.statusDistribution.sort((a, b) => {
+    if (a.amount < b.amount) return 1;
+    else return -1;
+  });
+
+  const largestAmount = media.stats.scoreDistribution.reduce((max, score) => {
+    return max.amount > score.amount ? max : score;
+  });
 
   return (
     <Wrapper>
@@ -572,11 +575,11 @@ const Media = () => {
 
       <Section>
         <Heading>Relations</Heading>
-        <RelationsCarousel>
+        <Carousel>
           {media.relations.edges.map(relation => {
             return <RelationCard relation={relation} key={relation.id} />;
           })}
-        </RelationsCarousel>
+        </Carousel>
       </Section>
 
       <Section>
@@ -591,6 +594,43 @@ const Media = () => {
         {media.staffPreview.edges.map(staff => {
           return <StaffCard staff={staff} key={staff.id} />;
         })}
+      </Section>
+
+      <Section>
+        <Heading>Status Distribution</Heading>
+        <StatusWrapper>
+          {sortedStatuses.map((status, i) => {
+            return <StatusCard status={status} index={i} key={status.status} />;
+          })}
+          <StatusPercentBarWrapper>
+            {sortedStatuses.map((status, i) => {
+              return (
+                <StatusPercentBar
+                  width={(status.amount / media.popularity) * 400}
+                  index={i}
+                />
+              );
+            })}
+          </StatusPercentBarWrapper>
+        </StatusWrapper>
+      </Section>
+
+      <Section>
+        <Heading>Score Distribution</Heading>
+        <ScoreWrapper>
+          {media.stats.scoreDistribution.map(score => {
+            return <GraphBar score={score} max={largestAmount.amount} />;
+          })}
+        </ScoreWrapper>
+      </Section>
+
+      <Section>
+        <Heading>Recommendations</Heading>
+        <Carousel>
+          {media.recommendations.nodes.map(recommendation => {
+            return <RecommendationCard recommendation={recommendation} />;
+          })}
+        </Carousel>
       </Section>
     </Wrapper>
   );
@@ -692,8 +732,34 @@ const Description = styled.p`
   padding: 16px;
 `;
 
-const RelationsCarousel = styled.div`
+const Carousel = styled.div`
   margin-bottom: 16px;
   display: flex;
   overflow-x: scroll;
+`;
+
+const StatusWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  background-color: #fafafa;
+  gap: 16px;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: 0;
+`;
+
+const StatusPercentBarWrapper = styled.div`
+  display: flex;
+`;
+const StatusPercentBar = styled.span<StatusPercentBarProps>`
+  height: 10px;
+  width: ${props => props.width + 'px'};
+  background-color: ${props => COLOURS[props.index]};
+`;
+
+const ScoreWrapper = styled.div`
+  background-color: #fafafa;
+  display: flex;
+  justify-content: space-around;
+  align-items: end;
 `;
