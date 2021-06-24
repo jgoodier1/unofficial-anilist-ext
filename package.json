@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "start": "snowpack dev",
-    "build": "snowpack build"
+    "build": "snowpack build",
+    "test": "web-test-runner \"src/**/*.test.tsx\""
   },
   "dependencies": {
     "@apollo/client": "^3.3.20",
@@ -22,6 +23,7 @@
     "@snowpack/plugin-typescript": "^1.2.1",
     "@snowpack/web-test-runner-plugin": "^0.2.2",
     "@testing-library/react": "^11.2.6",
+    "@types/chai": "^4.2.19",
     "@types/react": "^17.0.11",
     "@types/react-dom": "^17.0.8",
     "@types/react-router-dom": "^5.1.7",
