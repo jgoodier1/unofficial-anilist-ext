@@ -88,12 +88,32 @@ function App() {
     </Switch>
   );
 
+  const cache = new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          staff: {
+            keyArgs: false,
+            merge(existing = [], incoming) {
+              return [...existing, ...incoming];
+            }
+          },
+          characters: {
+            keyArgs: false,
+            merge(existing = [], incoming) {
+              return [...existing, ...incoming];
+            }
+          }
+        }
+      }
+    }
+  });
   // this is here because this is where I get the token
   // if I put it in index, then I don't think I'd be able to log in because ApolloProvider would not get
   // the new token
   const client = new ApolloClient({
     uri: 'https://graphql.anilist.co',
-    cache: new InMemoryCache(),
+    cache,
     headers: {
       Authorization: 'Bearer ' + token
     }

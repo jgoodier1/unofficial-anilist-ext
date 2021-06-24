@@ -9,6 +9,8 @@ import StaffCard from '../components/Media/StaffCard';
 import StatusCard from '../components/Media/StatusCard';
 import GraphBar from '../components/Media/GraphBar';
 import RecommendationCard from '../components/Media/RecommendationCard';
+import CharacterTab from '../components/Media/CharacterTab';
+import StaffTab from '../components/Media/StaffTab';
 
 import { MONTHS, COLOURS } from '../constants';
 
@@ -84,9 +86,9 @@ interface Media {
       role: string;
       name: string;
       voiceActors: {
-        id: string;
+        id: number;
         name: {
-          full: number;
+          full: string;
         };
         language: string;
         image: {
@@ -147,19 +149,6 @@ interface Media {
       };
     }[];
   };
-  externalLinks: {
-    site: string;
-    url: string;
-  };
-  // not using
-  tags: {
-    id: number;
-    name: string;
-    description: string;
-    rank: number;
-    isMediaSpoiler: boolean;
-    isGeneralSpoiler: boolean;
-  };
   mediaListEntry: {
     id: number;
     status: string;
@@ -188,8 +177,8 @@ interface StatusPercentBarProps {
 }
 
 // also had type as a variable before, but AFAICT, I don't need to
-const GET_MEDIA = gql`
-  query ($id: Int) {
+export const GET_MEDIA = gql`
+  query GetMedia($id: Int) {
     Media(id: $id) {
       id
       title {
@@ -325,18 +314,6 @@ const GET_MEDIA = gql`
           }
         }
       }
-      externalLinks {
-        site
-        url
-      }
-      tags {
-        id
-        name
-        description
-        rank
-        isMediaSpoiler
-        isGeneralSpoiler
-      }
       mediaListEntry {
         id
         status
@@ -387,7 +364,6 @@ const Media = () => {
     'Overview'
   );
   const { id } = useParams<{ id: string }>();
-
   const { data, loading, error } = useQuery(GET_MEDIA, { variables: { id } });
 
   if (loading) return <p>Loading...</p>;
@@ -673,9 +649,9 @@ const Media = () => {
         </div>
       )}
 
-      {compState === 'Characters' && <div>Characters</div>}
+      {compState === 'Characters' && <CharacterTab id={id} />}
 
-      {compState === 'Staff' && <div>Staff</div>}
+      {compState === 'Staff' && <StaffTab id={id} />}
     </Wrapper>
   );
 };

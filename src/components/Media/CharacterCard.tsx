@@ -8,9 +8,9 @@ interface Character {
     role: string;
     name: string;
     voiceActors: {
-      id: string;
+      id: number;
       name: {
-        full: number;
+        full: string;
       };
       language: string;
       image: {
