@@ -405,7 +405,9 @@ const Media = () => {
     producers = producerName.join(', ');
   }
 
-  const sortedStatuses = media.stats.statusDistribution.sort((a, b) => {
+  // apollo didn't like how it was because the array was read-only
+  const statuses = [...media.stats.statusDistribution];
+  const sortedStatuses = statuses.sort((a, b) => {
     if (a.amount < b.amount) return 1;
     else return -1;
   });
@@ -622,6 +624,7 @@ const Media = () => {
                     <StatusPercentBar
                       width={(status.amount / media.popularity) * 400}
                       index={i}
+                      key={status.status}
                     />
                   );
                 })}
@@ -633,7 +636,9 @@ const Media = () => {
             <Heading>Score Distribution</Heading>
             <ScoreWrapper>
               {media.stats.scoreDistribution.map(score => {
-                return <GraphBar score={score} max={largestAmount.amount} />;
+                return (
+                  <GraphBar score={score} max={largestAmount.amount} key={score.score} />
+                );
               })}
             </ScoreWrapper>
           </Section>
@@ -642,7 +647,12 @@ const Media = () => {
             <Heading>Recommendations</Heading>
             <Carousel>
               {media.recommendations.nodes.map(recommendation => {
-                return <RecommendationCard recommendation={recommendation} />;
+                return (
+                  <RecommendationCard
+                    recommendation={recommendation}
+                    key={recommendation.id}
+                  />
+                );
               })}
             </Carousel>
           </Section>
