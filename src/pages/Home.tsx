@@ -41,7 +41,7 @@ interface Entry {
 }
 
 const HOME_QUERY = gql`
-  query ($userId: Int, $type: MediaType, $status: MediaListStatus) {
+  query GetHome($userId: Int, $type: MediaType, $status: MediaListStatus) {
     MediaListCollection(userId: $userId, type: $type, status: $status) {
       lists {
         entries {
