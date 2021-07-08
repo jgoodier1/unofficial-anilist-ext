@@ -8,36 +8,44 @@ interface Props {
   id: string;
 }
 
-interface Characters {
-  edges: {
+export interface Characters {
+  edges: Character[];
+  pageInfo: {
+    total: number;
+    currentPage: number;
+    hasNextPage: boolean;
+  };
+}
+
+export interface Character {
+  id: number;
+  role: string;
+  name: string;
+  voiceActors: {
     id: number;
-    role: string;
-    name: string;
-    voiceActors: {
-      id: number;
-      name: {
-        full: string;
-      };
-      language: string;
-      image: {
-        medium: string;
-      };
-    }[];
-    node: {
-      id: number;
-      name: {
-        full: string;
-      };
-      image: {
-        medium: string;
-      };
+    name: {
+      full: string;
+    };
+    language: string;
+    image: {
+      medium: string;
     };
   }[];
+  node: {
+    id: number;
+    name: {
+      full: string;
+    };
+    image: {
+      medium: string;
+    };
+  };
 }
 
 export const GET_CHARACTER_MEDIA = gql`
-  query ($id: Int, $page: Int) {
+  query GetCharacters($id: Int, $page: Int) {
     Media(id: $id) {
+      id
       characters(page: $page, perPage: 25, sort: [ROLE, RELEVANCE, ID]) {
         edges {
           id
@@ -78,6 +86,8 @@ const CharacterTab: React.FC<Props> = ({ id }) => {
     variables: { id, page: 1 }
   });
 
+  console.log(data);
+
   if (loading) return <p>Loading</p>;
 
   if (error) {
@@ -85,20 +95,18 @@ const CharacterTab: React.FC<Props> = ({ id }) => {
     return <p>There was an error</p>;
   }
 
-  const characters: Characters = data.Media.characters;
-
   const loadMore = () => {
     const page = data.Media.characters.pageInfo.currentPage + 1;
-    console.log(page);
-    fetchMore({ variables: { page } });
-    console.log(data);
+    fetchMore({
+      variables: { page }
+    });
   };
 
   return (
     <Wrapper>
       <div>
-        {characters.edges.map(character => {
-          return <CharacterCard character={character} />;
+        {data.Media.characters.edges.map((character: Character) => {
+          return <CharacterCard character={character} key={character.id} />;
         })}
       </div>
       {data.Media.characters.pageInfo.hasNextPage && (

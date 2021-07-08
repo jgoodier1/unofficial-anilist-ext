@@ -10,6 +10,8 @@ import List from './pages/List';
 import Search from './pages/Search';
 import { UserIdContext } from './context';
 
+import { Characters, Character } from './components/Media/CharacterTab';
+
 function App() {
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState<number>(0);
@@ -90,18 +92,44 @@ function App() {
 
   const cache = new InMemoryCache({
     typePolicies: {
-      Query: {
+      Media: {
         fields: {
-          staff: {
-            keyArgs: false,
-            merge(existing = [], incoming) {
-              return [...existing, ...incoming];
-            }
-          },
           characters: {
             keyArgs: false,
-            merge(existing = [], incoming) {
-              return [...existing, ...incoming];
+            merge(existing: Characters, incoming: Characters) {
+              if (!incoming) return existing;
+              if (!existing) return incoming;
+
+              const edges: Character[] = [];
+              // only pushing if old data is less than six because it's the easiest way to not have
+              // dupes. Dupes are happening because each edge is an object with '__ref': 'CharacterEdge:SOME_NUMBER',
+              // so I can't do existing.edges.includes(newEdge) because they're objects
+              // Obviously not the right way to do it. Will change later, but want to move on now
+              if (existing.edges.length !== 6) {
+                existing.edges.forEach(edge => {
+                  edges.push(edge);
+                });
+              }
+              incoming.edges.forEach(edge => {
+                edges.push(edge);
+              });
+
+              // const edges = [...existing.edges];
+              // incoming.edges.forEach((edge, i: number) => {
+              //   // if (i >= 6) return edges.push(edge);
+              //   // console.log(edge['__ref']);
+              //   edges.forEach(oldEdge => {
+              //     if (oldEdge['__ref'] !== edge['__ref']) {
+              //       edges.push(edge);
+              //     }
+              //   });
+              // });
+
+              const result = {
+                edges,
+                pageInfo: incoming.pageInfo
+              };
+              return result;
             }
           }
         }
