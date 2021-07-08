@@ -11,6 +11,7 @@ import Search from './pages/Search';
 import { UserIdContext } from './context';
 
 import { Characters, Character } from './components/Media/CharacterTab';
+import { Staff, StaffEdge } from './components/Media/StaffTab';
 
 function App() {
   const [token, setToken] = useState('');
@@ -130,6 +131,30 @@ function App() {
                 pageInfo: incoming.pageInfo
               };
               return result;
+            }
+          },
+          staff: {
+            keyArgs: false,
+            merge(existing: Staff, incoming: Staff) {
+              if (!incoming) return existing;
+              if (!existing) return incoming;
+
+              // console.log(existing, incoming);
+              const edges: StaffEdge[] = [];
+              // same thing as above
+              if (existing.edges.length !== 4) {
+                existing.edges.forEach(edge => {
+                  edges.push(edge);
+                });
+              }
+              incoming.edges.forEach(edge => {
+                edges.push(edge);
+              });
+
+              return {
+                edges,
+                pageInfo: incoming.pageInfo
+              };
             }
           }
         }

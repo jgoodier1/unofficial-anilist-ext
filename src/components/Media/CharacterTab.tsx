@@ -3,6 +3,7 @@ import { useQuery, gql } from '@apollo/client';
 import styled from 'styled-components';
 
 import CharacterCard from './CharacterCard';
+import FetchMoreButton from '../FetchMoreButton';
 
 interface Props {
   id: string;
@@ -86,7 +87,7 @@ const CharacterTab: React.FC<Props> = ({ id }) => {
     variables: { id, page: 1 }
   });
 
-  console.log(data);
+  // console.log(data);
 
   if (loading) return <p>Loading</p>;
 
@@ -110,7 +111,7 @@ const CharacterTab: React.FC<Props> = ({ id }) => {
         })}
       </div>
       {data.Media.characters.pageInfo.hasNextPage && (
-        <button onClick={loadMore}>Fetch more</button>
+        <FetchMoreButton onClick={loadMore}>Show More</FetchMoreButton>
       )}
     </Wrapper>
   );

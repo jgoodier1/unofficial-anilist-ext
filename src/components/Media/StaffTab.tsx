@@ -3,30 +3,39 @@ import { useQuery, gql } from '@apollo/client';
 import styled from 'styled-components';
 
 import StaffCard from './StaffCard';
+import FetchMoreButton from '../FetchMoreButton';
 
 interface Props {
   id: string;
 }
 
-interface Staff {
-  edges: {
+export interface Staff {
+  edges: StaffEdge[];
+  pageInfo: {
+    total: number;
+    currentPage: number;
+    hasNextPage: number;
+  };
+}
+
+export interface StaffEdge {
+  id: number;
+  role: string;
+  node: {
     id: number;
-    role: string;
-    node: {
-      id: number;
-      name: {
-        full: string;
-      };
-      image: {
-        medium: string;
-      };
+    name: {
+      full: string;
     };
-  }[];
+    image: {
+      medium: string;
+    };
+  };
 }
 
 export const GET_STAFF = gql`
-  query ($id: Int, $page: Int) {
+  query GetStaff($id: Int, $page: Int) {
     Media(id: $id) {
+      id
       staffPreview: staff(page: $page, perPage: 25, sort: [RELEVANCE, ID]) {
         edges {
           id
@@ -52,9 +61,8 @@ export const GET_STAFF = gql`
 `;
 
 const StaffTab: React.FC<Props> = ({ id }) => {
-  const [page, setPage] = useState(1);
   const { data, error, loading, fetchMore } = useQuery(GET_STAFF, {
-    variables: { id, page }
+    variables: { id }
   });
 
   if (loading) return <p>Loading...</p>;
@@ -64,24 +72,21 @@ const StaffTab: React.FC<Props> = ({ id }) => {
     return <p>There was an error.</p>;
   }
 
-  console.log(data);
-
-  const staff: Staff = data.Media.staffPreview;
-
   const loadMore = () => {
-    console.log('clicked');
-    fetchMore({ variables: { page: page + 1 } });
-    setPage(page => page++);
+    const page = data.Media.staffPreview.pageInfo.currentPage + 1;
+    fetchMore({ variables: { page: page } });
   };
 
   return (
     <Wrapper>
       <div>
-        {staff.edges.map(member => {
-          return <StaffCard staff={member} />;
+        {data.Media.staffPreview.edges.map((member: StaffEdge) => {
+          return <StaffCard staff={member} key={member.id} />;
         })}
       </div>
-      <button onClick={loadMore}>Fetch more</button>
+      {data.Media.staffPreview.pageInfo.hasNextPage && (
+        <FetchMoreButton onClick={loadMore}>Show more</FetchMoreButton>
+      )}
     </Wrapper>
   );
 };
