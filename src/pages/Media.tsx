@@ -399,7 +399,7 @@ const Media = () => {
   let studio, producers;
   if (media.type === 'ANIME' && media.studios) {
     const mainStudio = media.studios.edges.filter(studio => studio.isMain);
-    studio = mainStudio[0].node.name;
+    if (mainStudio.length > 0) studio = mainStudio[0].node.name;
     const allProducers = media.studios.edges.filter(studio => !studio.isMain);
     const producerName = allProducers.map(prod => prod.node.name);
     producers = producerName.join(', ');
