@@ -183,7 +183,6 @@ const List = () => {
 export default List;
 
 const ListSection: React.FC<ListSectionProps> = ({ status, list }) => {
-  console.log(list);
   if (list.length === 0) return <div></div>;
   return (
     <section>
@@ -194,7 +193,8 @@ const ListSection: React.FC<ListSectionProps> = ({ status, list }) => {
         <ProgressHeader>Progress</ProgressHeader>
       </Header>
       {list.map(list => {
-        const entries = list.entries;
+        // the field is read-only
+        const entries = [...list.entries];
         entries.sort((a, b) => {
           if (a.media.title.userPreferred > b.media.title.userPreferred) return 1;
           else return -1;
