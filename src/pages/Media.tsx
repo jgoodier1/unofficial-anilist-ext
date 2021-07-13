@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { gql, useQuery } from '@apollo/client';
 import styled from 'styled-components';
 
@@ -428,11 +428,11 @@ const Media = () => {
         <TopContentWrapper>
           <Title>{media.title.userPreferred}</Title>
           {/* button content should not just be the status */}
-          <EditButton>
+          <EditLink to={`/edit/${media.id}`}>
             {media.mediaListEntry
               ? EDIT_BUTTON[media.type][media.mediaListEntry.status]
               : 'Add to List'}
-          </EditButton>
+          </EditLink>
         </TopContentWrapper>
       </TopSection>
 
@@ -479,6 +479,10 @@ const Media = () => {
             <DataValue>{media.volumes}</DataValue>
           </DataWrapper>
         )}
+        <DataWrapper>
+          <DataTitle>Status</DataTitle>
+          <DataValue>{media.status}</DataValue>
+        </DataWrapper>
         {media.startDate.day && media.startDate.month && (
           <DataWrapper>
             <DataTitle>Start Date</DataTitle>
@@ -608,6 +612,7 @@ const Media = () => {
           <Section>
             <Heading>Staff</Heading>
             {media.staffPreview.edges.map(staff => {
+              if (staff.id === 127053) console.log('staff', staff);
               return <StaffCard staff={staff} key={staff.id} />;
             })}
           </Section>
@@ -710,17 +715,17 @@ const Title = styled.h1`
   width: fit-content;
 `;
 
-const EditButton = styled.button`
+const EditLink = styled(Link)`
   grid-row: 2;
   width: -moz-fit-content;
   height: -moz-fit-content;
   font-size: 16px;
-  border: none;
   background-color: #02b2d9;
   padding: 5px 12px;
   color: white;
   cursor: pointer;
   border-radius: 8px;
+  text-decoration: none;
 `;
 
 const DataSection = styled.section`

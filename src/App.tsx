@@ -8,6 +8,7 @@ import Media from './pages/Media';
 import NavBar from './components/NavBar';
 import List from './pages/List';
 import Search from './pages/Search';
+import Edit from './pages/Edit';
 import { UserIdContext } from './context';
 
 import { Characters, Character } from './components/Media/CharacterTab';
@@ -73,6 +74,9 @@ function App() {
       <Route path='/search'>
         <Search />
       </Route>
+      <Route path='/edit/:id'>
+        <Edit />
+      </Route>
       {authState === 'auth' && (
         <Route path='/'>
           <Home />
@@ -95,6 +99,8 @@ function App() {
     typePolicies: {
       Media: {
         fields: {
+          // characters and staff are sometimes being doubled on media page
+          // I assume is a cache issue
           characters: {
             keyArgs: false,
             merge(existing: Characters, incoming: Characters) {
