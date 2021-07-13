@@ -44,7 +44,7 @@ interface EpisodeStylingProps {
 }
 
 const UPDATE_ENTRY = gql`
-  mutation ($id: Int, $status: MediaListStatus, $progress: Int) {
+  mutation updateEntry($id: Int, $status: MediaListStatus, $progress: Int) {
     SaveMediaListEntry(id: $id, status: $status, progress: $progress) {
       id
       status
