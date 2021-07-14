@@ -11,8 +11,22 @@ import Search from './pages/Search';
 import Edit from './pages/Edit';
 import { UserIdContext } from './context';
 
-import { Characters, Character } from './components/Media/CharacterTab';
-import { Staff, StaffEdge } from './components/Media/StaffTab';
+interface Edge {
+  __ref: string;
+}
+
+interface CacheInterface {
+  edges: Edge[];
+  pageInfo?: {
+    total: number;
+    currentPage: number;
+    hasNextPage: boolean;
+  };
+}
+
+interface ObjKey extends Edge {
+  [key: string]: any;
+}
 
 function App() {
   const [token, setToken] = useState('');
@@ -99,38 +113,30 @@ function App() {
     typePolicies: {
       Media: {
         fields: {
-          // characters and staff are sometimes being doubled on media page
-          // I assume is a cache issue
           characters: {
             keyArgs: false,
-            merge(existing: Characters, incoming: Characters) {
+            merge(existing: CacheInterface, incoming: CacheInterface) {
               if (!incoming) return existing;
               if (!existing) return incoming;
 
-              const edges: Character[] = [];
-              // only pushing if old data is less than six because it's the easiest way to not have
-              // dupes. Dupes are happening because each edge is an object with '__ref': 'CharacterEdge:SOME_NUMBER',
-              // so I can't do existing.edges.includes(newEdge) because they're objects
-              // Obviously not the right way to do it. Will change later, but want to move on now
-              if (existing.edges.length !== 6) {
-                existing.edges.forEach(edge => {
-                  edges.push(edge);
-                });
-              }
-              incoming.edges.forEach(edge => {
+              // get the exsting edges so that they can be compared to the new ones
+              const existingValues = existing.edges.map((edge: ObjKey) => {
+                for (const ref in edge) {
+                  return edge[ref];
+                }
+              });
+
+              const edges: Edge[] = [];
+              existing.edges.forEach(edge => {
                 edges.push(edge);
               });
 
-              // const edges = [...existing.edges];
-              // incoming.edges.forEach((edge, i: number) => {
-              //   // if (i >= 6) return edges.push(edge);
-              //   // console.log(edge['__ref']);
-              //   edges.forEach(oldEdge => {
-              //     if (oldEdge['__ref'] !== edge['__ref']) {
-              //       edges.push(edge);
-              //     }
-              //   });
-              // });
+              incoming.edges.forEach(edge => {
+                // only push new edge to cache if it's not already there
+                if (!existingValues.includes(edge['__ref'])) {
+                  edges.push(edge);
+                }
+              });
 
               const result = {
                 edges,
@@ -141,20 +147,24 @@ function App() {
           },
           staff: {
             keyArgs: false,
-            merge(existing: Staff, incoming: Staff) {
+            merge(existing: CacheInterface, incoming: CacheInterface) {
               if (!incoming) return existing;
               if (!existing) return incoming;
 
-              // console.log(existing, incoming);
-              const edges: StaffEdge[] = [];
-              // same thing as above
-              if (existing.edges.length !== 4) {
-                existing.edges.forEach(edge => {
-                  edges.push(edge);
-                });
-              }
-              incoming.edges.forEach(edge => {
+              const existingValues = existing.edges.map((edge: ObjKey) => {
+                for (const ref in edge) {
+                  return edge[ref];
+                }
+              });
+
+              const edges: Edge[] = [];
+              existing.edges.forEach(edge => {
                 edges.push(edge);
+              });
+              incoming.edges.forEach(edge => {
+                if (!existingValues.includes(edge['__ref'])) {
+                  edges.push(edge);
+                }
               });
 
               return {
