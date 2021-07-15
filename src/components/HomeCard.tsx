@@ -21,7 +21,6 @@ interface Entry {
     };
     episodes: number | undefined;
     chapters: number | undefined;
-    siteUrl: string;
     coverImage: {
       medium: string;
     };

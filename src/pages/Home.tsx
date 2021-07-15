@@ -1,7 +1,8 @@
 import React, { useContext } from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { UserIdContext } from '../context';
+import { GET_LISTS } from '../queries';
 
 import HomeCard from '../components/HomeCard';
 
@@ -26,7 +27,6 @@ interface Entry {
     };
     episodes: number | undefined;
     chapters: number | undefined;
-    siteUrl: string;
     coverImage: {
       medium: string;
     };
@@ -40,45 +40,11 @@ interface Entry {
   };
 }
 
-const HOME_QUERY = gql`
-  query GetHome($userId: Int, $type: MediaType, $status: MediaListStatus) {
-    MediaListCollection(userId: $userId, type: $type, status: $status) {
-      lists {
-        entries {
-          id
-          status
-          progress
-          updatedAt
-          media {
-            id
-            title {
-              userPreferred
-            }
-            episodes
-            chapters
-            siteUrl
-            coverImage {
-              medium
-            }
-            status
-            type
-            nextAiringEpisode {
-              airingAt
-              timeUntilAiring
-              episode
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
 const HomeSection: React.FC<Props> = ({ type }) => {
   const userId = useContext(UserIdContext);
 
   if (userId === 0) return <p>Loading...</p>;
-  const { loading, error, data } = useQuery(HOME_QUERY, {
+  const { loading, error, data } = useQuery(GET_LISTS, {
     variables: {
       userId,
       type

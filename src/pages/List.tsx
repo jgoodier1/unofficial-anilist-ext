@@ -1,8 +1,9 @@
 import React, { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { UserIdContext } from '../context';
+import { GET_LISTS } from '../queries';
 
 interface List {
   entries: {
@@ -10,6 +11,7 @@ interface List {
     status: 'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED';
     score: number;
     progress: number;
+    updatedAt: number;
     media: {
       id: number;
       title: {
@@ -41,6 +43,7 @@ interface ListSectionProps {
       status: 'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED';
       score: number;
       progress: number;
+      updatedAt: number;
       media: {
         id: number;
         title: {
@@ -73,6 +76,7 @@ interface ListRowProps {
     status: 'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED';
     score: number;
     progress: number;
+    updatedAt: number;
     media: {
       id: number;
       title: {
@@ -97,39 +101,6 @@ interface ListRowProps {
   };
 }
 
-const GET_LIST = gql`
-  query GetList($userId: Int, $type: MediaType) {
-    MediaListCollection(userId: $userId, type: $type) {
-      lists {
-        entries {
-          id
-          status
-          score
-          progress
-          media {
-            id
-            title {
-              userPreferred
-            }
-            episodes
-            chapters
-            coverImage {
-              medium
-            }
-            type
-            status
-            nextAiringEpisode {
-              airingAt
-              timeUntilAiring
-              episode
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
 const List = () => {
   const location = useLocation();
   let type = '';
@@ -138,7 +109,7 @@ const List = () => {
 
   const userId = useContext(UserIdContext);
 
-  const { data, error, loading } = useQuery(GET_LIST, {
+  const { data, error, loading } = useQuery(GET_LISTS, {
     variables: { type, userId }
   });
 
