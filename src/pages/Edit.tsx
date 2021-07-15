@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import styled from 'styled-components';
+
+import { UserIdContext } from '../context';
 
 interface Media {
   id: number;
@@ -114,6 +116,10 @@ const EDIT_ENTRY = gql`
       mediaId
       score
       progress
+      status
+      media {
+        type
+      }
     }
   }
 `;
@@ -126,6 +132,27 @@ const DELETE_ENTRY = gql`
   }
 `;
 
+const CACHE = gql`
+  query cache($status: MediaListStatus, $type: MediaType, $userId: Int) {
+    MediaListCollection(status: $status, type: $type, userId: $userId) {
+      lists {
+        entries {
+          id
+          status
+          progress
+          updatedAt
+          media {
+            id
+            title {
+              userPreferred
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 const Edit = () => {
   const [status, setStatus] = useState<
     'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED'
@@ -134,6 +161,7 @@ const Edit = () => {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(false);
 
+  const userId = useContext(UserIdContext);
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
 
@@ -146,7 +174,32 @@ const Edit = () => {
   const [
     editEntry,
     { data: mutationData, loading: mutationLoading, error: mutationError }
-  ] = useMutation(EDIT_ENTRY);
+  ] = useMutation(EDIT_ENTRY, {
+    // this doesn't do anything
+    update(cache, { data: { SaveMediaListEntry } }) {
+      // console.log(cache.data.data);
+
+      // this always returns  null
+      const MediaList = cache.readQuery({
+        query: CACHE,
+        variables: {
+          status: SaveMediaListEntry.status,
+          type: SaveMediaListEntry.media.type,
+          userId
+        }
+      });
+      console.log(MediaList);
+      // cache.modify({
+      //   fields: {
+      //     MediaListCollection(existingCollection: {}) {
+      //       console.log(existingCollection);
+      //       console.log(data);
+      //       return existingCollection;
+      //     }
+      //   }
+      // });
+    }
+  });
 
   const [deleteEntry, { data: deleteData, loading: deleteLoading, error: deleteError }] =
     useMutation(DELETE_ENTRY);
@@ -195,7 +248,6 @@ const Edit = () => {
       console.log(mutationError, '1');
     }
     if (!mutationLoading) {
-      console.log(mutationData);
       // this will always go to the else block, even when there is an error
       if (mutationError) {
         setError(true);
