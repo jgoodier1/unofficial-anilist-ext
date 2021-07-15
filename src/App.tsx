@@ -9,6 +9,7 @@ import NavBar from './components/NavBar';
 import List from './pages/List';
 import Search from './pages/Search';
 import Edit from './pages/Edit';
+import Staff from './pages/Staff';
 import { UserIdContext } from './context';
 
 interface Edge {
@@ -91,6 +92,9 @@ function App() {
       <Route path='/edit/:id'>
         <Edit />
       </Route>
+      <Route path='/staff/:id'>
+        <Staff />
+      </Route>
       {authState === 'auth' && (
         <Route path='/'>
           <Home />
@@ -111,6 +115,20 @@ function App() {
 
   const cache = new InMemoryCache({
     typePolicies: {
+      MediaListCollection: {
+        // keyFields(obj1, { typename }) {
+        //   console.log(obj1, typename);
+        //   if (typename) {
+        //     const keyField = typename + ':' + obj1.lists[0].entries[0].media.type;
+
+        //     return [keyField];
+        //   } else return false;
+        // }
+        keyFields: false
+      },
+      MediaTitle: {
+        keyFields: ['userPreferred']
+      },
       Media: {
         fields: {
           characters: {
