@@ -33,7 +33,7 @@ export interface StaffEdge {
 }
 
 export const GET_STAFF = gql`
-  query GetStaff($id: Int, $page: Int) {
+  query GetStaffTab($id: Int, $page: Int) {
     Media(id: $id) {
       id
       staffPreview: staff(page: $page, perPage: 25, sort: [RELEVANCE, ID]) {
