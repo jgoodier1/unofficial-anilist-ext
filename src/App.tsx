@@ -129,6 +129,9 @@ function App() {
       MediaTitle: {
         keyFields: ['userPreferred']
       },
+      MediaCoverImage: {
+        keyFields: ['medium']
+      },
       Media: {
         fields: {
           characters: {
@@ -189,6 +192,60 @@ function App() {
                 edges,
                 pageInfo: incoming.pageInfo
               };
+            }
+          }
+        }
+      },
+      Staff: {
+        fields: {
+          characterMedia: {
+            keyArgs: false,
+            merge(existing: CacheInterface, incoming: CacheInterface) {
+              if (!incoming) return existing;
+              if (!existing) return incoming;
+
+              const existingValues = existing.edges.map((edge: ObjKey) => {
+                for (const ref in edge) {
+                  return edge[ref];
+                }
+              });
+
+              const edges: Edge[] = [];
+              existing.edges.forEach(edge => {
+                edges.push(edge);
+              });
+              incoming.edges.forEach(edge => {
+                if (!existingValues.includes(edge['__ref'])) {
+                  edges.push(edge);
+                }
+              });
+
+              return { edges, pageInfo: incoming.pageInfo };
+            }
+          },
+          staffMedia: {
+            keyArgs: false,
+            merge(existing: CacheInterface, incoming: CacheInterface) {
+              if (!incoming) return existing;
+              if (!existing) return incoming;
+
+              const existingValues = existing.edges.map((edge: ObjKey) => {
+                for (const ref in edge) {
+                  return edge[ref];
+                }
+              });
+
+              const edges: Edge[] = [];
+              existing.edges.forEach(edge => {
+                edges.push(edge);
+              });
+              incoming.edges.forEach(edge => {
+                if (!existingValues.includes(edge['__ref'])) {
+                  edges.push(edge);
+                }
+              });
+
+              return { edges, pageInfo: incoming.pageInfo };
             }
           }
         }

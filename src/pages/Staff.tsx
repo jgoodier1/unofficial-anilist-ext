@@ -5,6 +5,9 @@ import styled from 'styled-components';
 import ParsedMarkdown from '../components/ParsedMarkdown';
 
 import { MONTHS } from '../constants';
+import CharacterCard from '../components/Staff/CharacterCard';
+import RoleCard from '../components/Staff/RoleCard';
+import FetchMoreButton from '../components/FetchMoreButton';
 
 interface Staff {
   id: number;
@@ -43,6 +46,7 @@ interface Staff {
       hasNextPage: number;
     };
     edges: {
+      id: number;
       characterRole: 'MAIN' | 'SUPPORTING' | 'BACKGROUND';
       characterName: string | null;
       node: {
@@ -76,8 +80,8 @@ interface Staff {
         image: {
           large: string;
         };
-      };
-    };
+      }[];
+    }[];
   };
   staffMedia: {
     pageInfo: {
@@ -88,6 +92,7 @@ interface Staff {
       hasNextPage: number;
     };
     edges: {
+      id: number;
       staffRole: string;
       node: {
         id: number;
@@ -109,12 +114,31 @@ interface Staff {
             | 'REPEATING';
         } | null;
       };
+    }[];
+  };
+}
+
+interface StaffRole {
+  id: number;
+  staffRole: string;
+  node: {
+    id: number;
+    type: 'ANIME' | 'MANGA';
+    title: {
+      userPreferred: string;
     };
+    coverImage: {
+      large: string;
+    };
+    mediaListEntry: {
+      id: number;
+      status: 'CURRENT' | 'COMPLETED' | 'PLANNING' | 'DROPPED' | 'PAUSED' | 'REPEATING';
+    } | null;
   };
 }
 
 const GET_STAFF = gql`
-  query ($id: Int, $onList: Boolean, $page: Int, $sort: [MediaSort]) {
+  query GetStaffPage($id: Int, $onList: Boolean, $page: Int, $sort: [MediaSort]) {
     Staff(id: $id) {
       id
       name {
@@ -123,6 +147,8 @@ const GET_STAFF = gql`
         alternative
       }
       image {
+        # need medium for keyArg, not actually being used
+        medium
         large
       }
       description
@@ -152,6 +178,7 @@ const GET_STAFF = gql`
           hasNextPage
         }
         edges {
+          id
           characterRole
           characterName
           node {
@@ -163,9 +190,9 @@ const GET_STAFF = gql`
             coverImage {
               medium
             }
-            startDate {
-              year
-            }
+            # startDate {
+            #   year
+            # }
             mediaListEntry {
               id
               status
@@ -178,6 +205,8 @@ const GET_STAFF = gql`
             }
             image {
               large
+              # need medium for keyArgs. Not actually using it
+              medium
             }
           }
         }
@@ -191,6 +220,7 @@ const GET_STAFF = gql`
           hasNextPage
         }
         edges {
+          id
           staffRole
           node {
             id
@@ -200,6 +230,93 @@ const GET_STAFF = gql`
             }
             coverImage {
               large
+              medium
+            }
+            mediaListEntry {
+              id
+              status
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const GET_MORE_CHARACTER = gql`
+  query GetMoreCharacters($id: Int, $onList: Boolean, $page: Int, $sort: [MediaSort]) {
+    Staff(id: $id) {
+      id
+      characterMedia(page: $page, sort: $sort, onList: $onList) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          id
+          characterRole
+          characterName
+          node {
+            id
+            type
+            title {
+              userPreferred
+            }
+            coverImage {
+              medium
+            }
+            # startDate {
+            #   year
+            # }
+            mediaListEntry {
+              id
+              status
+            }
+          }
+          characters {
+            id
+            name {
+              full
+            }
+            image {
+              large
+              # need medium for keyArgs. Not actually using it
+              medium
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const GET_MORE_ROLES = gql`
+  query GetMoreRoles($id: Int, $onList: Boolean, $page: Int, $sort: [MediaSort]) {
+    Staff(id: $id) {
+      id
+      staffMedia(page: $page, sort: $sort, onList: $onList) {
+        pageInfo {
+          total
+          perPage
+          currentPage
+          lastPage
+          hasNextPage
+        }
+        edges {
+          id
+          staffRole
+          node {
+            id
+            type
+            title {
+              userPreferred
+            }
+            coverImage {
+              large
+              medium
             }
             mediaListEntry {
               id
@@ -214,11 +331,8 @@ const GET_STAFF = gql`
 
 const Staff = () => {
   const { id } = useParams<{ id: string }>();
-  const { data, loading, error } = useQuery(GET_STAFF, {
-    variables: { id, page: 1, sort: 'START_DATE_DESC' },
-    // doesn't return data without this, even though you can see it in the network tab
-    // probably has to do with unique identifies in the cache
-    fetchPolicy: 'no-cache'
+  const { data, loading, error, fetchMore } = useQuery(GET_STAFF, {
+    variables: { id, page: 1, sort: 'START_DATE_DESC' }
   });
 
   if (loading) return <p>Loading...</p>;
@@ -229,7 +343,7 @@ const Staff = () => {
   }
 
   const staff: Staff = data.Staff;
-  console.log(staff);
+  // console.log(staff);
 
   let names = '';
   if (staff.name.native) {
@@ -255,6 +369,29 @@ const Staff = () => {
       yearsActive = staff.yearsActive.join('-');
     } else yearsActive = staff.yearsActive[0] + '-';
   }
+
+  let animeStaffRoles: StaffRole[] = [],
+    mangaStaffRoles: StaffRole[] = [];
+  if (staff.staffMedia.pageInfo.total !== 0) {
+    animeStaffRoles = staff.staffMedia.edges.filter(role => role.node.type === 'ANIME');
+    mangaStaffRoles = staff.staffMedia.edges.filter(role => role.node.type === 'MANGA');
+  }
+
+  const handleMoreCharacters = () => {
+    const page = staff.characterMedia.pageInfo.currentPage + 1;
+    fetchMore({
+      variables: { page, id, sort: 'START_DATE_DESC' },
+      query: GET_MORE_CHARACTER
+    });
+  };
+
+  const handleMoreRoles = () => {
+    const page = staff.staffMedia.pageInfo.currentPage + 1;
+    fetchMore({
+      variables: { page, id, sort: 'START_DATE_DESC' },
+      query: GET_MORE_ROLES
+    });
+  };
 
   return (
     <main>
@@ -295,6 +432,52 @@ const Staff = () => {
           </div>
         )}
       </Description>
+      {staff.characterMedia.pageInfo.total !== 0 && (
+        <CardSection>
+          <CardHeading>Character Roles</CardHeading>
+          <CardWrapper>
+            {staff.characterMedia.edges.map(character => {
+              return <CharacterCard character={character} key={character.id} />;
+            })}
+          </CardWrapper>
+          {staff.characterMedia.pageInfo.hasNextPage && (
+            <FetchMoreButton onClick={handleMoreCharacters}>
+              Show More Characters
+            </FetchMoreButton>
+          )}
+        </CardSection>
+      )}
+
+      {staff.staffMedia.pageInfo.total !== 0 && animeStaffRoles.length > 0 && (
+        <CardSection>
+          <CardHeading>Anime Staff Roles</CardHeading>
+          <CardWrapper>
+            {animeStaffRoles.map(role => {
+              return <RoleCard role={role} key={role.id} />;
+            })}
+            {/*
+              button will look weird if person has anime and manga roles
+              because button will be here and bellow, both the same
+            */}
+          </CardWrapper>
+          {staff.staffMedia.pageInfo.hasNextPage && (
+            <FetchMoreButton onClick={handleMoreRoles}>Show More Roles</FetchMoreButton>
+          )}
+        </CardSection>
+      )}
+      {staff.staffMedia.pageInfo.total !== 0 && mangaStaffRoles.length > 0 && (
+        <CardSection>
+          <CardHeading>Manga Staff Roles</CardHeading>
+          <CardWrapper>
+            {mangaStaffRoles.map(role => {
+              return <RoleCard role={role} key={role.id} />;
+            })}
+          </CardWrapper>
+          {staff.staffMedia.pageInfo.hasNextPage && (
+            <FetchMoreButton onClick={handleMoreRoles}>Show More Roles</FetchMoreButton>
+          )}
+        </CardSection>
+      )}
     </main>
   );
 };
@@ -324,4 +507,22 @@ const Description = styled.section`
 
 const DescRow = styled.p`
   margin: 0;
+`;
+
+const CardSection = styled.section`
+  display: grid;
+  margin-bottom: 16px;
+`;
+
+const CardHeading = styled.h2`
+  margin: 0;
+  margin-left: 32px;
+  margin-top: 16px;
+`;
+
+const CardWrapper = styled.section`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 32px;
 `;

@@ -63,6 +63,8 @@ const GET_EDIT_DATA = gql`
       }
       coverImage {
         large
+        # not using this. Taking it so that it can be used as keyfield
+        medium
       }
       bannerImage
       type
