@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, gql } from '@apollo/client';
 import styled from 'styled-components';
@@ -55,12 +55,13 @@ const UPDATE_ENTRY = gql`
 const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30];
 
 const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
+  const [progress, setProgress] = useState(entry.progress);
   const [updateEntry, { data, loading, error }] = useMutation(UPDATE_ENTRY);
   const updateHandler = () => {
     if (loading) return;
-    entry.progress++;
+    setProgress(progress => progress + 1);
     updateEntry({
-      variables: { id: entry.id, status: entry.status, progress: entry.progress }
+      variables: { id: entry.id, status: entry.status, progress: progress + 1 }
     });
     console.log(data);
   };
@@ -126,7 +127,7 @@ const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
         )}
         <Title>{entry.media.title.userPreferred}</Title>
         <Progress>
-          Progress: {entry.progress} {totalContent && '/ ' + totalContent}
+          Progress: {progress} {totalContent && '/ ' + totalContent}
         </Progress>
       </MediaInformation>
     </CardWrapper>
