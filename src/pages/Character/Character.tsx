@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 
 import { Character } from './types';
-import { GET_CHARACTER, GET_CHARACTER_APPEARANCES } from './query';
+import { GET_CHARACTER, GET_CHARACTER_APPEARANCES } from './queries';
 import { MONTHS } from '../../constants';
 
 import ParsedMarkdown from '../../components/ParsedMarkdown';
@@ -12,9 +12,13 @@ import AppearanceCard from './components/AppearanceCard';
 import FetchMoreButton from '../../components/FetchMoreButton';
 
 const Character = () => {
+  const [checked, setChecked] = useState(false);
   const { id } = useParams<{ id: string }>();
-  const { data, loading, error, fetchMore } = useQuery(GET_CHARACTER, {
-    variables: { id }
+  const { data, loading, error, fetchMore, refetch } = useQuery<
+    any,
+    { id: string; page: number; onList?: boolean }
+  >(GET_CHARACTER, {
+    variables: { id, page: 1 }
   });
 
   if (loading) return <p>Loading...</p>;
@@ -43,9 +47,35 @@ const Character = () => {
       : birthMonth + ' ' + character.dateOfBirth.day;
   }
 
+  const handleOnMyList = () => {
+    const oldChecked = checked;
+
+    setChecked(!checked);
+
+    // if checked === true, refetch with onList=true
+    if (!oldChecked) {
+      refetch({ id, page: 1, onList: true });
+    }
+
+    // if checked === false, refetch without onList
+    if (oldChecked) {
+      refetch({ id, page: 1, onList: undefined });
+    }
+  };
+
   const handleMoreAppearances = () => {
     let page = character.media.pageInfo.currentPage + 1;
-    fetchMore({ variables: { id, page }, query: GET_CHARACTER_APPEARANCES });
+    if (checked) {
+      fetchMore({
+        variables: { id, page, onList: true },
+        query: GET_CHARACTER_APPEARANCES
+      });
+    } else {
+      fetchMore({
+        variables: { id, page, onList: undefined },
+        query: GET_CHARACTER_APPEARANCES
+      });
+    }
   };
 
   return (
@@ -80,19 +110,31 @@ const Character = () => {
         )}
       </Description>
 
-      <CardSection>
-        <CardHeading>Appearances</CardHeading>
-        <CardWrapper>
-          {character.media.edges.map(appearance => {
-            return <AppearanceCard appearance={appearance} key={appearance.id} />;
-          })}
-        </CardWrapper>
-        {character.media.pageInfo.hasNextPage && (
-          <FetchMoreButton onClick={handleMoreAppearances}>
-            Show More Appearances
-          </FetchMoreButton>
-        )}
-      </CardSection>
+      <div>
+        <OnMyListLabel htmlFor='on-my-list'>
+          <input
+            type='checkbox'
+            name='on-my-list'
+            id='on-my-list'
+            onChange={handleOnMyList}
+            checked={checked}
+          />
+          On My List
+        </OnMyListLabel>
+        <CardSection>
+          <CardHeading>Appearances</CardHeading>
+          <CardWrapper>
+            {character.media.edges.map(appearance => {
+              return <AppearanceCard appearance={appearance} key={appearance.id} />;
+            })}
+          </CardWrapper>
+          {character.media.pageInfo.hasNextPage && (
+            <FetchMoreButton onClick={handleMoreAppearances}>
+              Show More Appearances
+            </FetchMoreButton>
+          )}
+        </CardSection>
+      </div>
     </main>
   );
 };
@@ -122,6 +164,16 @@ const Description = styled.section`
 
 const DescRow = styled.p`
   margin: 0;
+`;
+
+const OnMyListLabel = styled.label`
+  position: relative;
+  left: 324px;
+  top: 42px;
+  display: flex;
+  gap: 8px;
+  width: -moz-fit-content;
+  width: fit-content;
 `;
 
 const CardSection = styled.section`

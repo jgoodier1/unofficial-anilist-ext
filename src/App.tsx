@@ -136,6 +136,18 @@ function App() {
       MediaCoverImage: {
         keyFields: ['medium']
       },
+      StaffImage: {
+        keyFields: ['medium']
+      },
+      StaffName: {
+        keyFields: ['full']
+      },
+      CharacterImage: {
+        keyFields: ['medium']
+      },
+      CharacterName: {
+        keyFields: ['full']
+      },
       Media: {
         fields: {
           characters: {
@@ -203,7 +215,7 @@ function App() {
       Staff: {
         fields: {
           characterMedia: {
-            keyArgs: false,
+            keyArgs: ['onList'],
             merge(existing: CacheInterface, incoming: CacheInterface) {
               if (!incoming) return existing;
               if (!existing) return incoming;
@@ -228,7 +240,7 @@ function App() {
             }
           },
           staffMedia: {
-            keyArgs: false,
+            keyArgs: ['onList'],
             merge(existing: CacheInterface, incoming: CacheInterface) {
               if (!incoming) return existing;
               if (!existing) return incoming;
@@ -257,9 +269,8 @@ function App() {
       Character: {
         fields: {
           media: {
-            keyArgs: false,
+            keyArgs: ['onList'],
             merge(existing: CacheInterface, incoming: CacheInterface) {
-              console.log(existing, incoming);
               if (!incoming) return existing;
               if (!existing) return incoming;
 
