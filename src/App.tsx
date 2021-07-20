@@ -11,6 +11,7 @@ import Search from './pages/Search';
 import Edit from './pages/Edit';
 import Staff from './pages/Staff';
 import { UserIdContext } from './context';
+import Character from './pages/Character';
 
 interface Edge {
   __ref: string;
@@ -94,6 +95,9 @@ function App() {
       </Route>
       <Route path='/staff/:id'>
         <Staff />
+      </Route>
+      <Route path='/character/:id'>
+        <Character />
       </Route>
       {authState === 'auth' && (
         <Route path='/'>
@@ -226,6 +230,36 @@ function App() {
           staffMedia: {
             keyArgs: false,
             merge(existing: CacheInterface, incoming: CacheInterface) {
+              if (!incoming) return existing;
+              if (!existing) return incoming;
+
+              const existingValues = existing.edges.map((edge: ObjKey) => {
+                for (const ref in edge) {
+                  return edge[ref];
+                }
+              });
+
+              const edges: Edge[] = [];
+              existing.edges.forEach(edge => {
+                edges.push(edge);
+              });
+              incoming.edges.forEach(edge => {
+                if (!existingValues.includes(edge['__ref'])) {
+                  edges.push(edge);
+                }
+              });
+
+              return { edges, pageInfo: incoming.pageInfo };
+            }
+          }
+        }
+      },
+      Character: {
+        fields: {
+          media: {
+            keyArgs: false,
+            merge(existing: CacheInterface, incoming: CacheInterface) {
+              console.log(existing, incoming);
               if (!incoming) return existing;
               if (!existing) return incoming;
 
