@@ -3,22 +3,13 @@ import { useQuery, gql } from '@apollo/client';
 import styled from 'styled-components';
 
 import CharacterCard from './CharacterCard';
-import FetchMoreButton from '../FetchMoreButton';
+import FetchMoreButton from '../../../components/FetchMoreButton';
 
 interface Props {
   id: string;
 }
 
-export interface Characters {
-  edges: Character[];
-  pageInfo: {
-    total: number;
-    currentPage: number;
-    hasNextPage: boolean;
-  };
-}
-
-export interface Character {
+interface Character {
   id: number;
   role: string;
   name: string;

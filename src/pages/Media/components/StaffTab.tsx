@@ -3,22 +3,13 @@ import { useQuery, gql } from '@apollo/client';
 import styled from 'styled-components';
 
 import StaffCard from './StaffCard';
-import FetchMoreButton from '../FetchMoreButton';
+import FetchMoreButton from '../../../components/FetchMoreButton';
 
 interface Props {
   id: string;
 }
 
-export interface Staff {
-  edges: StaffEdge[];
-  pageInfo: {
-    total: number;
-    currentPage: number;
-    hasNextPage: number;
-  };
-}
-
-export interface StaffEdge {
+interface Staff {
   id: number;
   role: string;
   node: {
@@ -80,7 +71,7 @@ const StaffTab: React.FC<Props> = ({ id }) => {
   return (
     <Wrapper>
       <div>
-        {data.Media.staffPreview.edges.map((member: StaffEdge) => {
+        {data.Media.staffPreview.edges.map((member: Staff) => {
           return <StaffCard staff={member} key={member.id} />;
         })}
       </div>

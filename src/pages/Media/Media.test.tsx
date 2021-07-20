@@ -5,7 +5,8 @@ import { MemoryRouter } from 'react-router-dom';
 
 import { expect } from 'chai';
 
-import Media, { GET_MEDIA } from './Media';
+import Media from './Media';
+import { GET_MEDIA } from './queries';
 
 const mocks = [
   {
