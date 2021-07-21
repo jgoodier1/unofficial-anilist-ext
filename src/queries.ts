@@ -42,6 +42,7 @@ export const GET_LISTS = gql`
   query GetList($userId: Int, $type: MediaType) {
     MediaListCollection(userId: $userId, type: $type) {
       lists {
+        status
         entries {
           id
           status

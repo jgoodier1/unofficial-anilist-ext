@@ -4,6 +4,7 @@ import { useQuery, useMutation, gql } from '@apollo/client';
 import styled from 'styled-components';
 
 import { UserIdContext } from '../context';
+import { GET_LISTS } from '../queries';
 
 interface Media {
   id: number;
@@ -52,6 +53,25 @@ interface Variable {
   score: number;
   status: 'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED';
   id?: number;
+}
+
+interface MediaListCollection {
+  MediaListCollection: {
+    __typename: string;
+    lists: {
+      __typename: string;
+      status: Status;
+      entries: {
+        __typename: string;
+        id: number;
+        // this Media is a different shape, but works for now
+        media: Media;
+        progress: number;
+        status: Status;
+        updatedAt: number;
+      }[];
+    }[];
+  };
 }
 
 const GET_EDIT_DATA = gql`
@@ -119,8 +139,24 @@ const EDIT_ENTRY = gql`
       score
       progress
       status
+      updatedAt
       media {
+        id
+        title {
+          userPreferred
+        }
+        episodes
+        chapters
+        coverImage {
+          medium
+        }
         type
+        status
+        nextAiringEpisode {
+          airingAt
+          timeUntilAiring
+          episode
+        }
       }
     }
   }
@@ -135,9 +171,10 @@ const DELETE_ENTRY = gql`
 `;
 
 const CACHE = gql`
-  query cache($status: MediaListStatus, $type: MediaType, $userId: Int) {
-    MediaListCollection(status: $status, type: $type, userId: $userId) {
+  query cache($type: MediaType, $userId: Int, $status: MediaListStatus) {
+    MediaListCollection(type: $type, userId: $userId, status: $status) {
       lists {
+        status
         entries {
           id
           status
@@ -147,6 +184,18 @@ const CACHE = gql`
             id
             title {
               userPreferred
+            }
+            episodes
+            chapters
+            coverImage {
+              medium
+            }
+            type
+            status
+            nextAiringEpisode {
+              airingAt
+              timeUntilAiring
+              episode
             }
           }
         }
@@ -173,35 +222,58 @@ const Edit = () => {
     error: queryError
   } = useQuery(GET_EDIT_DATA, { variables: { id } });
 
-  const [
-    editEntry,
-    { data: mutationData, loading: mutationLoading, error: mutationError }
-  ] = useMutation(EDIT_ENTRY, {
-    // this doesn't do anything
-    update(cache, { data: { SaveMediaListEntry } }) {
-      // console.log(cache.data.data);
+  const [editEntry, { data: editData, loading: editLoading, error: editError }] =
+    useMutation(EDIT_ENTRY, {
+      update(cache, { data: { SaveMediaListEntry } }) {
+        const listsFromCache: MediaListCollection | null = cache.readQuery({
+          query: CACHE,
+          // query: GET_LISTS,
+          variables: {
+            userId,
+            type: SaveMediaListEntry.media.type,
+            status: SaveMediaListEntry.status
+          }
+        });
 
-      // this always returns  null
-      const MediaList = cache.readQuery({
-        query: CACHE,
-        variables: {
-          status: SaveMediaListEntry.status,
-          type: SaveMediaListEntry.media.type,
-          userId
+        // const MediaListCollection: MediaListCollection = listsFromCache.MediaListCollection;
+        console.log(cache);
+
+        if (listsFromCache !== null) {
+          console.log(listsFromCache);
+
+          const newEntry = {
+            ...SaveMediaListEntry,
+            __typename: 'MediaList'
+          };
+          const entries = [
+            ...listsFromCache.MediaListCollection.lists[0].entries,
+            newEntry
+          ];
+
+          cache.writeQuery({
+            query: CACHE,
+            // query: GET_LISTS,
+            data: {
+              MediaListCollection: {
+                __typename: listsFromCache.MediaListCollection.__typename,
+                lists: [
+                  {
+                    __typename: listsFromCache.MediaListCollection.lists[0].__typename,
+                    entries,
+                    status: listsFromCache.MediaListCollection.lists[0].status
+                  }
+                ]
+              }
+            },
+            variables: {
+              userId,
+              type: SaveMediaListEntry.media.type,
+              status: SaveMediaListEntry.status
+            }
+          });
         }
-      });
-      console.log(MediaList);
-      // cache.modify({
-      //   fields: {
-      //     MediaListCollection(existingCollection: {}) {
-      //       console.log(existingCollection);
-      //       console.log(data);
-      //       return existingCollection;
-      //     }
-      //   }
-      // });
-    }
-  });
+      }
+    });
 
   const [deleteEntry, { data: deleteData, loading: deleteLoading, error: deleteError }] =
     useMutation(DELETE_ENTRY);
@@ -227,7 +299,7 @@ const Edit = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (mutationLoading) return;
+    if (editLoading) return;
     setError(false);
 
     const variables: Variable = {
@@ -245,15 +317,15 @@ const Edit = () => {
     });
 
     // TODO: Mutation errors don't work
-    if (mutationError) {
+    if (editError) {
       setError(true);
-      console.log(mutationError, '1');
+      console.log(editError, '1');
     }
-    if (!mutationLoading) {
+    if (!editLoading) {
       // this will always go to the else block, even when there is an error
-      if (mutationError) {
+      if (editError) {
         setError(true);
-        console.log(mutationError, '2');
+        console.log(editError, '2');
       } else history.goBack();
     }
   };
