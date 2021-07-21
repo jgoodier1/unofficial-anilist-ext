@@ -170,40 +170,6 @@ const DELETE_ENTRY = gql`
   }
 `;
 
-const CACHE = gql`
-  query cache($type: MediaType, $userId: Int, $status: MediaListStatus) {
-    MediaListCollection(type: $type, userId: $userId, status: $status) {
-      lists {
-        status
-        entries {
-          id
-          status
-          progress
-          updatedAt
-          media {
-            id
-            title {
-              userPreferred
-            }
-            episodes
-            chapters
-            coverImage {
-              medium
-            }
-            type
-            status
-            nextAiringEpisode {
-              airingAt
-              timeUntilAiring
-              episode
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
 const Edit = () => {
   const [status, setStatus] = useState<
     'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED'
@@ -226,52 +192,48 @@ const Edit = () => {
     useMutation(EDIT_ENTRY, {
       update(cache, { data: { SaveMediaListEntry } }) {
         const listsFromCache: MediaListCollection | null = cache.readQuery({
-          query: CACHE,
-          // query: GET_LISTS,
+          query: GET_LISTS,
           variables: {
             userId,
-            type: SaveMediaListEntry.media.type,
-            status: SaveMediaListEntry.status
+            type: SaveMediaListEntry.media.type
           }
         });
 
-        // const MediaListCollection: MediaListCollection = listsFromCache.MediaListCollection;
-        console.log(cache);
-
         if (listsFromCache !== null) {
-          console.log(listsFromCache);
-
           const newEntry = {
             ...SaveMediaListEntry,
             __typename: 'MediaList'
           };
-          const entries = [
-            ...listsFromCache.MediaListCollection.lists[0].entries,
-            newEntry
-          ];
+
+          // find the right object
+          const listToEdit = listsFromCache.MediaListCollection.lists.filter(
+            list => list.status === SaveMediaListEntry.status
+          );
+          // edit that list
+          const newList = {
+            ...listToEdit[0],
+            entries: [...listToEdit[0].entries, newEntry]
+          };
+          // put that list in with the others, replacing the old one
+          const oldLists = listsFromCache.MediaListCollection.lists.filter(
+            list => list.status !== SaveMediaListEntry.status
+          );
+          const lists = [...oldLists, newList];
 
           cache.writeQuery({
-            query: CACHE,
-            // query: GET_LISTS,
+            query: GET_LISTS,
             data: {
               MediaListCollection: {
                 __typename: listsFromCache.MediaListCollection.__typename,
-                lists: [
-                  {
-                    __typename: listsFromCache.MediaListCollection.lists[0].__typename,
-                    entries,
-                    status: listsFromCache.MediaListCollection.lists[0].status
-                  }
-                ]
+                lists
               }
             },
             variables: {
               userId,
-              type: SaveMediaListEntry.media.type,
-              status: SaveMediaListEntry.status
+              type: SaveMediaListEntry.media.type
             }
           });
-        }
+        } else console.log('query is null');
       }
     });
 
@@ -311,7 +273,6 @@ const Edit = () => {
 
     if (entryId) variables.id = entryId;
 
-    // this doesn't make the home page refresh
     editEntry({
       variables
     });
