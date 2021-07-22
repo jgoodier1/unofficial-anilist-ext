@@ -3,7 +3,7 @@ import { useParams, useHistory } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client';
 import styled from 'styled-components';
 
-import { Media, MediaListCollection, Variable, Status } from './types';
+import { Media, MediaListCollection, Variable, Status, Lists } from './types';
 import { GET_EDIT_DATA, EDIT_ENTRY, DELETE_ENTRY, READ_CACHE } from './queries';
 import { UserIdContext } from '../../context';
 import { GET_LISTS } from '../../queries';
@@ -38,6 +38,45 @@ const Edit = () => {
           }
         });
 
+        function addEntryToCache(lists: Lists[], listCollection: MediaListCollection) {
+          // create new entry and add it to the right list, the add that list back with the others
+          const newEntry = {
+            ...SaveMediaListEntry,
+            __typename: 'MediaList'
+          };
+          console.log(newEntry);
+
+          console.log(listCollection);
+          // find the right object
+          const listToEdit = lists.filter(
+            list => list.status === SaveMediaListEntry.status
+          );
+          // edit that list
+          const newList = {
+            ...listToEdit[0],
+            entries: [...listToEdit[0].entries, newEntry]
+          };
+          // put that list in with the others, replacing the old one
+          const oldLists = lists.filter(
+            list => list.status !== SaveMediaListEntry.status
+          );
+          const combinedLists = [...oldLists, newList];
+
+          cache.writeQuery({
+            query: GET_LISTS,
+            data: {
+              MediaListCollection: {
+                __typename: listCollection.MediaListCollection.__typename,
+                lists: combinedLists
+              }
+            },
+            variables: {
+              userId,
+              type: SaveMediaListEntry.media.type
+            }
+          });
+        }
+
         if (listsFromCache !== null) {
           // look through the lists to see if the entry already exists
           // if it does, remove it. If not, continue
@@ -49,7 +88,7 @@ const Edit = () => {
               });
             }
           );
-          const newLists = [];
+
           if (listWithExistingEntry.length > 0) {
             // remove that entry from the list
             const listWithEntryRemoved = listWithExistingEntry.map(list => {
@@ -66,49 +105,11 @@ const Edit = () => {
                 return entry.media.id === SaveMediaListEntry.mediaId;
               });
             });
-            newLists.push(...otherLists, ...listWithEntryRemoved);
-          }
+            const newLists = [...otherLists, ...listWithEntryRemoved];
 
-          let cachedLists;
-          if (newLists.length > 0) cachedLists = newLists;
-          else cachedLists = listsFromCache.MediaListCollection.lists;
-
-          // create new entry and add it to the right list, the add that list back with the others
-          const newEntry = {
-            ...SaveMediaListEntry,
-            __typename: 'MediaList'
-          };
-          console.log(newEntry);
-
-          console.log(listsFromCache);
-          // find the right object
-          const listToEdit = cachedLists.filter(
-            list => list.status === SaveMediaListEntry.status
-          );
-          // edit that list
-          const newList = {
-            ...listToEdit[0],
-            entries: [...listToEdit[0].entries, newEntry]
-          };
-          // put that list in with the others, replacing the old one
-          const oldLists = cachedLists.filter(
-            list => list.status !== SaveMediaListEntry.status
-          );
-          const lists = [...oldLists, newList];
-
-          cache.writeQuery({
-            query: GET_LISTS,
-            data: {
-              MediaListCollection: {
-                __typename: listsFromCache.MediaListCollection.__typename,
-                lists
-              }
-            },
-            variables: {
-              userId,
-              type: SaveMediaListEntry.media.type
-            }
-          });
+            addEntryToCache(newLists, listsFromCache);
+          } else
+            addEntryToCache(listsFromCache.MediaListCollection.lists, listsFromCache);
         } else console.log('query is null');
 
         // get and update the media page (so that the edit button gets updated)

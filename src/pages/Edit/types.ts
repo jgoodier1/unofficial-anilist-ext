@@ -56,18 +56,20 @@ export interface Variable {
 export interface MediaListCollection {
   MediaListCollection: {
     __typename: string;
-    lists: {
-      __typename: string;
-      status: Status;
-      entries: {
-        __typename: string;
-        id: number;
-        // this Media is a different shape, but works for now
-        media: Media;
-        progress: number;
-        status: Status;
-        updatedAt: number;
-      }[];
-    }[];
+    lists: Lists[];
   };
+}
+
+export interface Lists {
+  __typename: string;
+  status: Status;
+  entries: {
+    __typename: string;
+    id: number;
+    // this Media is a different shape, but works for now
+    media: Media;
+    progress: number;
+    status: Status;
+    updatedAt: number;
+  }[];
 }
