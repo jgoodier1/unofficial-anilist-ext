@@ -103,10 +103,6 @@ const Media = () => {
     else return -1;
   });
 
-  const largestAmount = media.stats.scoreDistribution.reduce((max, score) => {
-    return max.amount > score.amount ? max : score;
-  });
-
   return (
     <Wrapper>
       {media.bannerImage && <BannerImage src={media.bannerImage} alt='' />}
@@ -284,74 +280,94 @@ const Media = () => {
             ></Description>
           </Section>
 
-          <Section>
-            <Heading>Relations</Heading>
-            <Carousel>
-              {media.relations.edges.map(relation => {
-                return <RelationCard relation={relation} key={relation.id} />;
+          {media.relations.edges.length > 0 && (
+            <Section>
+              <Heading>Relations</Heading>
+              <Carousel>
+                {media.relations.edges.map(relation => {
+                  return <RelationCard relation={relation} key={relation.id} />;
+                })}
+              </Carousel>
+            </Section>
+          )}
+
+          {media.characters.edges.length > 0 && (
+            <Section>
+              <Heading>Characters</Heading>
+              {media.characters.edges.map(character => {
+                return <CharacterCard character={character} key={character.id} />;
               })}
-            </Carousel>
-          </Section>
+            </Section>
+          )}
 
-          <Section>
-            <Heading>Characters</Heading>
-            {media.characters.edges.map(character => {
-              return <CharacterCard character={character} key={character.id} />;
-            })}
-          </Section>
-
-          <Section>
-            <Heading>Staff</Heading>
-            {media.staffPreview.edges.map(staff => {
-              if (staff.id === 127053) console.log('staff', staff);
-              return <StaffCard staff={staff} key={staff.id} />;
-            })}
-          </Section>
-
-          <Section>
-            <Heading>Status Distribution</Heading>
-            <StatusWrapper>
-              {sortedStatuses.map((status, i) => {
-                return <StatusCard status={status} index={i} key={status.status} />;
+          {media.staffPreview.edges.length > 0 && (
+            <Section>
+              <Heading>Staff</Heading>
+              {media.staffPreview.edges.map(staff => {
+                if (staff.id === 127053) console.log('staff', staff);
+                return <StaffCard staff={staff} key={staff.id} />;
               })}
-              <StatusPercentBarWrapper>
+            </Section>
+          )}
+
+          {sortedStatuses.length > 0 && (
+            <Section>
+              <Heading>Status Distribution</Heading>
+              <StatusWrapper>
                 {sortedStatuses.map((status, i) => {
+                  return <StatusCard status={status} index={i} key={status.status} />;
+                })}
+                <StatusPercentBarWrapper>
+                  {sortedStatuses.map((status, i) => {
+                    return (
+                      <StatusPercentBar
+                        width={(status.amount / media.popularity) * 400}
+                        index={i}
+                        key={status.status}
+                      />
+                    );
+                  })}
+                </StatusPercentBarWrapper>
+              </StatusWrapper>
+            </Section>
+          )}
+
+          {media.stats.scoreDistribution.length > 0 && (
+            <Section>
+              <Heading>Score Distribution</Heading>
+              <ScoreWrapper>
+                {media.stats.scoreDistribution.map(score => {
                   return (
-                    <StatusPercentBar
-                      width={(status.amount / media.popularity) * 400}
-                      index={i}
-                      key={status.status}
+                    <GraphBar
+                      score={score}
+                      max={
+                        media.stats.scoreDistribution.reduce((max, score) => {
+                          return max.amount > score.amount ? max : score;
+                        }).amount
+                      }
+                      key={score.score}
                     />
                   );
                 })}
-              </StatusPercentBarWrapper>
-            </StatusWrapper>
-          </Section>
+              </ScoreWrapper>
+            </Section>
+          )}
 
-          <Section>
-            <Heading>Score Distribution</Heading>
-            <ScoreWrapper>
-              {media.stats.scoreDistribution.map(score => {
-                return (
-                  <GraphBar score={score} max={largestAmount.amount} key={score.score} />
-                );
-              })}
-            </ScoreWrapper>
-          </Section>
-
-          <Section>
-            <Heading>Recommendations</Heading>
-            <Carousel>
-              {media.recommendations.nodes.map(recommendation => {
-                return (
-                  <RecommendationCard
-                    recommendation={recommendation}
-                    key={recommendation.id}
-                  />
-                );
-              })}
-            </Carousel>
-          </Section>
+          {media.recommendations.nodes.length > 0 && (
+            <Section>
+              <Heading>Recommendations</Heading>
+              <Carousel>
+                {media.recommendations.nodes.map(recommendation => {
+                  return (
+                    <RecommendationCard
+                      recommendation={recommendation}
+                      key={recommendation.id}
+                    />
+                  );
+                })}
+              </Carousel>
+            </Section>
+          )}
         </div>
       )}
 
