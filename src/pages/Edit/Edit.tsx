@@ -1,179 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
 import styled from 'styled-components';
 
-import { UserIdContext } from '../context';
-import { GET_LISTS } from '../queries';
-
-interface Media {
-  id: number;
-  title: {
-    userPreferred: string;
-  };
-  coverImage: {
-    large: string;
-  };
-  bannerImage: string;
-  type: 'ANIME' | 'MANGA';
-  status: 'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS';
-  episodes: number | null;
-  chapters: number | null;
-  volumes: number | null;
-  mediaListEntry: {
-    id: number;
-    mediaId: number;
-    status: 'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED';
-    score: number;
-    progress: number;
-    progressVolumes: number | null;
-    repeat: number;
-    private: boolean;
-    hiddenFromStatusLists: boolean;
-    notes: string | null;
-    updatedAt: number;
-    startedAt: {
-      year: number | null;
-      month: number | null;
-      day: number | null;
-    };
-    completedAt: {
-      year: number | null;
-      month: number | null;
-      day: number | null;
-    };
-  } | null;
-}
-
-type Status = 'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED';
-
-interface Variable {
-  mediaId: number;
-  progress: number;
-  score: number;
-  status: 'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED';
-  id?: number;
-}
-
-interface MediaListCollection {
-  MediaListCollection: {
-    __typename: string;
-    lists: {
-      __typename: string;
-      status: Status;
-      entries: {
-        __typename: string;
-        id: number;
-        // this Media is a different shape, but works for now
-        media: Media;
-        progress: number;
-        status: Status;
-        updatedAt: number;
-      }[];
-    }[];
-  };
-}
-
-const GET_EDIT_DATA = gql`
-  query getEditData($id: Int) {
-    Media(id: $id) {
-      id
-      title {
-        userPreferred
-      }
-      coverImage {
-        large
-        # not using this. Taking it so that it can be used as keyfield
-        medium
-      }
-      bannerImage
-      type
-      status(version: 2)
-      episodes
-      chapters
-      volumes
-      mediaListEntry {
-        id
-        mediaId
-        status
-        score
-        progress
-        progressVolumes
-        repeat
-        private
-        hiddenFromStatusLists
-        notes
-        updatedAt
-        startedAt {
-          year
-          month
-          day
-        }
-        completedAt {
-          year
-          month
-          day
-        }
-      }
-    }
-  }
-`;
-
-const EDIT_ENTRY = gql`
-  mutation editEntry(
-    $id: Int
-    $mediaId: Int
-    $status: MediaListStatus
-    $score: Float
-    $progress: Int
-  ) {
-    SaveMediaListEntry(
-      id: $id
-      mediaId: $mediaId
-      status: $status
-      progress: $progress
-      score: $score
-    ) {
-      id
-      mediaId
-      score
-      progress
-      status
-      updatedAt
-      media {
-        id
-        title {
-          userPreferred
-        }
-        episodes
-        chapters
-        coverImage {
-          medium
-        }
-        type
-        status
-        nextAiringEpisode {
-          airingAt
-          timeUntilAiring
-          episode
-        }
-      }
-    }
-  }
-`;
-
-const DELETE_ENTRY = gql`
-  mutation deleteEntry($id: Int) {
-    DeleteMediaListEntry(id: $id) {
-      deleted
-    }
-  }
-`;
+import { Media, MediaListCollection, Variable, Status } from './types';
+import { GET_EDIT_DATA, EDIT_ENTRY, DELETE_ENTRY, READ_CACHE } from './queries';
+import { UserIdContext } from '../../context';
+import { GET_LISTS } from '../../queries';
 
 const Edit = () => {
-  const [status, setStatus] = useState<
-    'CURRENT' | 'COMPLETED' | 'REPEATING' | 'DROPPED' | 'PLANNING' | 'PAUSED'
-  >('CURRENT');
+  const [status, setStatus] = useState<Status>('CURRENT');
   const [score, setScore] = useState(0);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(false);
@@ -191,6 +27,9 @@ const Edit = () => {
   const [editEntry, { data: editData, loading: editLoading, error: editError }] =
     useMutation(EDIT_ENTRY, {
       update(cache, { data: { SaveMediaListEntry } }) {
+        console.log(cache);
+
+        //get and update the lists
         const listsFromCache: MediaListCollection | null = cache.readQuery({
           query: GET_LISTS,
           variables: {
@@ -200,13 +39,50 @@ const Edit = () => {
         });
 
         if (listsFromCache !== null) {
+          // look through the lists to see if the entry already exists
+          // if it does, remove it. If not, continue
+          const listWithExistingEntry = listsFromCache.MediaListCollection.lists.filter(
+            list => {
+              // search each list for the entry
+              return list.entries.some(entry => {
+                return entry.media.id === SaveMediaListEntry.mediaId;
+              });
+            }
+          );
+          const newLists = [];
+          if (listWithExistingEntry.length > 0) {
+            // remove that entry from the list
+            const listWithEntryRemoved = listWithExistingEntry.map(list => {
+              return {
+                ...list,
+                entries: list.entries.filter(entry => {
+                  return entry.media.id !== SaveMediaListEntry.mediaId;
+                })
+              };
+            });
+            const otherLists = listsFromCache.MediaListCollection.lists.filter(list => {
+              // return lists that don't have the entry
+              return !list.entries.some(entry => {
+                return entry.media.id === SaveMediaListEntry.mediaId;
+              });
+            });
+            newLists.push(...otherLists, ...listWithEntryRemoved);
+          }
+
+          let cachedLists;
+          if (newLists.length > 0) cachedLists = newLists;
+          else cachedLists = listsFromCache.MediaListCollection.lists;
+
+          // create new entry and add it to the right list, the add that list back with the others
           const newEntry = {
             ...SaveMediaListEntry,
             __typename: 'MediaList'
           };
+          console.log(newEntry);
 
+          console.log(listsFromCache);
           // find the right object
-          const listToEdit = listsFromCache.MediaListCollection.lists.filter(
+          const listToEdit = cachedLists.filter(
             list => list.status === SaveMediaListEntry.status
           );
           // edit that list
@@ -215,7 +91,7 @@ const Edit = () => {
             entries: [...listToEdit[0].entries, newEntry]
           };
           // put that list in with the others, replacing the old one
-          const oldLists = listsFromCache.MediaListCollection.lists.filter(
+          const oldLists = cachedLists.filter(
             list => list.status !== SaveMediaListEntry.status
           );
           const lists = [...oldLists, newList];
@@ -234,6 +110,16 @@ const Edit = () => {
             }
           });
         } else console.log('query is null');
+
+        // get and update the media page (so that the edit button gets updated)
+        // console.log(SaveMediaListEntry.media.id);
+        // const mediaPage = cache.readQuery({
+        //   query: READ_CACHE,
+        //   variables: {
+        //     id: SaveMediaListEntry.media.id
+        //   }
+        // });
+        // console.log(mediaPage);
       }
     });
 
@@ -287,7 +173,7 @@ const Edit = () => {
       if (editError) {
         setError(true);
         console.log(editError, '2');
-      } else history.goBack();
+      } else history.push(`/media/${media.id}`);
     }
   };
 
@@ -297,7 +183,7 @@ const Edit = () => {
       if (deleteLoading) return;
       deleteEntry({ variables: { id: media.mediaListEntry.id } });
       // this is getting pushed back 2 pages because of an error on the with editEntry
-      if (!deleteLoading) history.goBack();
+      if (!deleteLoading) history.push(`/media/${media.id}`);
     } else return;
   };
 
