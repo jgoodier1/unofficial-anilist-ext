@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation, gql } from '@apollo/client';
 import styled from 'styled-components';
 
 import { Media, MediaListCollection, Variable, Status, Lists } from './types';
-import { GET_EDIT_DATA, EDIT_ENTRY, DELETE_ENTRY, READ_CACHE } from './queries';
+import { GET_EDIT_DATA, EDIT_ENTRY, DELETE_ENTRY } from './queries';
 import { UserIdContext } from '../../context';
 import { GET_LISTS } from '../../queries';
 
@@ -13,6 +13,11 @@ const Edit = () => {
   const [score, setScore] = useState(0);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(false);
+  const [deletedMediaList, setDeletedMediaList] = useState({
+    id: 0,
+    type: '',
+    mediaId: 0
+  });
 
   const userId = useContext(UserIdContext);
   const { id } = useParams<{ id: string }>();
@@ -27,8 +32,6 @@ const Edit = () => {
   const [editEntry, { data: editData, loading: editLoading, error: editError }] =
     useMutation(EDIT_ENTRY, {
       update(cache, { data: { SaveMediaListEntry } }) {
-        console.log(cache);
-
         //get and update the lists
         const listsFromCache: MediaListCollection | null = cache.readQuery({
           query: GET_LISTS,
@@ -44,9 +47,7 @@ const Edit = () => {
             ...SaveMediaListEntry,
             __typename: 'MediaList'
           };
-          console.log(newEntry);
 
-          console.log(listCollection);
           // find the right object
           const listToEdit = lists.filter(
             list => list.status === SaveMediaListEntry.status
@@ -73,6 +74,27 @@ const Edit = () => {
             variables: {
               userId,
               type: SaveMediaListEntry.media.type
+            }
+          });
+
+          // also need to add the entry to the Media object
+          // this will update the 'add to list' button and the edit page
+          cache.writeFragment({
+            id: `Media:${SaveMediaListEntry.mediaId}`,
+            fragment: gql`
+              fragment NewEntry on Media {
+                mediaListEntry {
+                  id
+                  mediaId
+                  score
+                  progress
+                  status
+                  updatedAt
+                }
+              }
+            `,
+            data: {
+              mediaListEntry: SaveMediaListEntry
             }
           });
         }
@@ -111,21 +133,82 @@ const Edit = () => {
           } else
             addEntryToCache(listsFromCache.MediaListCollection.lists, listsFromCache);
         } else console.log('query is null');
-
-        // get and update the media page (so that the edit button gets updated)
-        // console.log(SaveMediaListEntry.media.id);
-        // const mediaPage = cache.readQuery({
-        //   query: READ_CACHE,
-        //   variables: {
-        //     id: SaveMediaListEntry.media.id
-        //   }
-        // });
-        // console.log(mediaPage);
       }
     });
 
-  const [deleteEntry, { data: deleteData, loading: deleteLoading, error: deleteError }] =
-    useMutation(DELETE_ENTRY);
+  const [deleteEntry, { loading: deleteLoading, error: deleteError }] = useMutation(
+    DELETE_ENTRY,
+    {
+      update(cache, { data: { DeleteMediaListEntry } }) {
+        if (DeleteMediaListEntry.deleted) {
+          // get the list from the cache
+          const listsFromCache: MediaListCollection | null = cache.readQuery({
+            query: GET_LISTS,
+            variables: {
+              userId,
+              type: deletedMediaList.type
+            }
+          });
+          if (listsFromCache) {
+            const listWithExistingEntry = listsFromCache.MediaListCollection.lists.filter(
+              list => {
+                // search each list for the entry
+                return list.entries.some(entry => {
+                  return entry.id === deletedMediaList.id;
+                });
+              }
+            );
+            if (listWithExistingEntry.length > 0) {
+              // remove that entry from the list
+              const listWithEntryRemoved = listWithExistingEntry.map(list => {
+                return {
+                  ...list,
+                  entries: list.entries.filter(entry => {
+                    return entry.id !== deletedMediaList.id;
+                  })
+                };
+              });
+              const otherLists = listsFromCache.MediaListCollection.lists.filter(list => {
+                // return lists that don't have the entry
+                return !list.entries.some(entry => {
+                  return entry.id === deletedMediaList.id;
+                });
+              });
+              const lists = [...otherLists, ...listWithEntryRemoved];
+
+              cache.writeQuery({
+                query: GET_LISTS,
+                data: {
+                  MediaListCollection: {
+                    __typename: listsFromCache.MediaListCollection.__typename,
+                    lists
+                  }
+                },
+                variables: {
+                  userId,
+                  type: deletedMediaList.type
+                }
+              });
+
+              // also remove the entry from the media object
+              // this will update the 'add to list' button and the edit page
+              cache.writeFragment({
+                id: `Media:${deletedMediaList.mediaId}`,
+                fragment: gql`
+                  fragment DeletedEntry on Media {
+                    mediaListEntry
+                  }
+                `,
+                data: {
+                  mediaListEntry: null
+                }
+              });
+            }
+          }
+        }
+      }
+    }
+  );
 
   useEffect(() => {
     if (queryData && queryData.Media.mediaListEntry) {
@@ -164,7 +247,6 @@ const Edit = () => {
       variables
     });
 
-    // TODO: Mutation errors don't work
     if (editError) {
       setError(true);
       console.log(editError, '1');
@@ -178,13 +260,20 @@ const Edit = () => {
     }
   };
 
-  // TODO: error handling
   const handleDelete = () => {
     if (media.mediaListEntry) {
       if (deleteLoading) return;
-      deleteEntry({ variables: { id: media.mediaListEntry.id } });
-      // this is getting pushed back 2 pages because of an error on the with editEntry
-      if (!deleteLoading) history.push(`/media/${media.id}`);
+      setDeletedMediaList({
+        id: media.mediaListEntry.id,
+        type: media.type,
+        mediaId: media.id
+      });
+      setTimeout(() => {
+        if (media.mediaListEntry) {
+          deleteEntry({ variables: { id: media.mediaListEntry.id } });
+          if (!deleteLoading) history.push(`/media/${media.id}`);
+        }
+      }, 500);
     } else return;
   };
 
@@ -230,6 +319,8 @@ const Edit = () => {
             step='0.5'
             onChange={e => setScore(Number(e.currentTarget.value))}
             value={score}
+            min='0'
+            max='10'
           />
         </ScoreLabel>
 
@@ -241,6 +332,8 @@ const Edit = () => {
             step='1'
             onChange={e => setProgress(Number(e.currentTarget.value))}
             value={progress}
+            min='0'
+            max={media.chapters ? media.chapters : media.episodes ? media.episodes : 9999}
           />
         </ProgressLabel>
 

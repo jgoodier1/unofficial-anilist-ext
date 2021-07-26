@@ -95,34 +95,3 @@ export const DELETE_ENTRY = gql`
     }
   }
 `;
-
-export const READ_CACHE = gql`
-  query ReadCache($id: Int) {
-    Media(id: $id) {
-      id
-      mediaListEntry {
-        id
-        mediaId
-        status
-        score
-        progress
-        progressVolumes
-        repeat
-        private
-        hiddenFromStatusLists
-        notes
-        updatedAt
-        startedAt {
-          year
-          month
-          day
-        }
-        completedAt {
-          year
-          month
-          day
-        }
-      }
-    }
-  }
-`;
