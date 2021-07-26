@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
-import ParsedMarkdown from '../../components/ParsedMarkdown';
+import ReactMarkdown from 'react-markdown';
 
 import { GET_STAFF, GET_MORE_CHARACTER, GET_MORE_ROLES } from './queries';
-import { Staff, StaffRole } from './types';
+import { Staff } from './types';
 import { MONTHS } from '../../constants';
 
 import CharacterCard from './components/CharacterCard';
@@ -162,7 +162,7 @@ const Staff = () => {
         )}
         {staff.description && (
           <div style={{ marginTop: '-16px' }}>
-            <ParsedMarkdown string={staff.description} />
+            <ReactMarkdown>{staff.description}</ReactMarkdown>
           </div>
         )}
       </Description>

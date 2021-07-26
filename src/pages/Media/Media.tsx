@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 
 import RelationCard from './components/RelationCard';
 import CharacterCard from './components/CharacterCard';
@@ -288,8 +291,10 @@ const Media = () => {
             <Heading>Description</Heading>
             {/* not displaying properly. There are html elements in the string */}
             <Description
-              dangerouslySetInnerHTML={{ __html: media.description }}
-            ></Description>
+              rehypePlugins={[rehypeRaw, [rehypeSanitize, { tagNames: ['br', 'i'] }]]}
+            >
+              {media.description}
+            </Description>
           </Section>
 
           {media.relations.edges.length > 0 && (
@@ -502,9 +507,13 @@ const Heading = styled.h2`
   font-size: 16px;
 `;
 
-const Description = styled.p`
+const Description = styled(ReactMarkdown)`
   background-color: #fafafa;
   padding: 16px;
+
+  & > p {
+    margin: 0;
+  }
 `;
 
 const Carousel = styled.div`

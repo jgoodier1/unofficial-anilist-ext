@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
+import ReactMarkdown from 'react-markdown';
 
 import { Character } from './types';
 import { GET_CHARACTER, GET_CHARACTER_APPEARANCES } from './queries';
 import { MONTHS } from '../../constants';
 
-import ParsedMarkdown from '../../components/ParsedMarkdown';
 import AppearanceCard from './components/AppearanceCard';
 import FetchMoreButton from '../../components/FetchMoreButton';
 
@@ -109,7 +109,7 @@ const Character = () => {
         )}
         {character.description && (
           <div style={{ marginTop: '-16px' }}>
-            <ParsedMarkdown string={character.description} />
+            <ReactMarkdown>{character.description}</ReactMarkdown>
           </div>
         )}
       </Description>
