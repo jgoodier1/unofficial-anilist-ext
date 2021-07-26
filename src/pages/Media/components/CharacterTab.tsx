@@ -78,8 +78,6 @@ const CharacterTab: React.FC<Props> = ({ id }) => {
     variables: { id, page: 1 }
   });
 
-  // console.log(data);
-
   if (loading) return <p>Loading</p>;
 
   if (error) {

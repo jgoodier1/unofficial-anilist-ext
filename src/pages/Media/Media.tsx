@@ -321,7 +321,6 @@ const Media = () => {
             <Section>
               <Heading>Staff</Heading>
               {media.staffPreview.edges.map(staff => {
-                if (staff.id === 127053) console.log('staff', staff);
                 return <StaffCard staff={staff} key={staff.id} />;
               })}
             </Section>

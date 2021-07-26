@@ -36,7 +36,6 @@ function App() {
   const [authState, setAuthState] = useState<'auth' | 'unauth' | 'error'>('unauth');
 
   useEffect(() => {
-    // setAuthState('auth');
     browser.storage.local.get('token').then(result => {
       if (result.token && typeof result.token === 'string') {
         setToken(result.token);
@@ -119,17 +118,6 @@ function App() {
 
   const cache = new InMemoryCache({
     typePolicies: {
-      MediaListCollection: {
-        // keyFields(obj1, { typename }) {
-        //   console.log(obj1, typename);
-        //   if (typename) {
-        //     const keyField = typename + ':' + obj1.lists[0].entries[0].media.type;
-
-        //     return [keyField];
-        //   } else return false;
-        // }
-        keyFields: false
-      },
       MediaTitle: {
         keyFields: ['userPreferred']
       },

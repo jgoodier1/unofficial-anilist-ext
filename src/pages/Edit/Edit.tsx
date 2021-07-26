@@ -249,13 +249,11 @@ const Edit = () => {
 
     if (editError) {
       setError(true);
-      console.log(editError, '1');
     }
     if (!editLoading) {
       // this will always go to the else block, even when there is an error
       if (editError) {
         setError(true);
-        console.log(editError, '2');
       } else history.push(`/media/${media.id}`);
     }
   };

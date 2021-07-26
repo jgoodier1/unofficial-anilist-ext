@@ -29,7 +29,6 @@ const Character = () => {
   }
 
   const character: Character = data.Character;
-  // console.log(character);
 
   const getNames = (character: Character) => {
     if (character.name.native) {

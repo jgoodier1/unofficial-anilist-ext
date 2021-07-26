@@ -32,7 +32,6 @@ const Staff = () => {
   }
 
   const staff: Staff = data.Staff;
-  // console.log(staff);
 
   const getNames = (staff: Staff) => {
     if (staff.name.native) {

@@ -64,7 +64,6 @@ const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
     updateEntry({
       variables: { id: entry.id, status: entry.status, progress: progress + 1 }
     });
-    console.log(data);
   };
 
   const totalContent =
