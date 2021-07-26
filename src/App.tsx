@@ -56,7 +56,7 @@ function App() {
   const submitToken = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    let newToken = e.currentTarget.token.value;
+    const newToken = e.currentTarget.token.value;
     newToken.trim();
 
     const res = await getUser(newToken);
