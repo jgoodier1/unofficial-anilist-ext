@@ -212,11 +212,15 @@ const PersonHeading = styled(ResultHeading)`
 
 const SearchSection: React.FC<Props> = ({ value, type }) => {
   if (value === '') return <div></div>;
-  let query;
-  if (type === 'Anime') query = SEARCH_ANIME;
-  else if (type === 'Manga') query = SEARCH_MANGA;
-  else if (type === 'Character') query = SEACH_CHARACTER;
-  else if (type === 'Staff') query = SEACH_STAFF;
+
+  const getQuery = (type: string) => {
+    if (type === 'Anime') return SEARCH_ANIME;
+    else if (type === 'Manga') return SEARCH_MANGA;
+    else if (type === 'Character') return SEACH_CHARACTER;
+    else return SEACH_STAFF;
+  };
+
+  const query = getQuery(type);
 
   const { data, loading, error } = useQuery(query as DocumentNode, {
     variables: { search: value }
@@ -303,7 +307,7 @@ const Search = () => {
 
   const search = (e: React.FocusEvent<HTMLInputElement>) => {
     clearTimeout(timeout);
-    let localValue = e.currentTarget.value;
+    const localValue = e.currentTarget.value;
     setSearchValue(localValue);
     setTimeout(
       window.setTimeout(() => {

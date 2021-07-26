@@ -31,21 +31,25 @@ const Character = () => {
   const character: Character = data.Character;
   // console.log(character);
 
-  let names = '';
-  if (character.name.native) {
-    if (character.name.alternative[0] !== '') {
-      const altNames = character.name.alternative.join(', ');
-      names = (character.name.native ? character.name.native : '') + ', ' + altNames;
-    } else names = character.name.native;
-  }
+  const getNames = (character: Character) => {
+    if (character.name.native) {
+      if (character.name.alternative[0] !== '') {
+        const altNames = character.name.alternative.join(', ');
+        return (character.name.native ? character.name.native : '') + ', ' + altNames;
+      } else return character.name.native;
+    } else return null;
+  };
+  const names = getNames(character);
 
-  let birthday = '';
-  if (character.dateOfBirth.month !== null) {
-    const birthMonth = MONTHS[character.dateOfBirth.month];
-    birthday = character.dateOfBirth.year
-      ? `${birthMonth} ${character.dateOfBirth.day}, ${character.dateOfBirth.year} `
-      : birthMonth + ' ' + character.dateOfBirth.day;
-  }
+  const getBirthday = (character: Character) => {
+    if (character.dateOfBirth.month !== null) {
+      const birthMonth = MONTHS[character.dateOfBirth.month];
+      if (character.dateOfBirth.year) {
+        return `${birthMonth} ${character.dateOfBirth.day}, ${character.dateOfBirth.year} `;
+      } else return birthMonth + ' ' + character.dateOfBirth.day;
+    } else return null;
+  };
+  const birthday = getBirthday(character);
 
   const handleOnMyList = () => {
     const oldChecked = checked;
@@ -64,7 +68,7 @@ const Character = () => {
   };
 
   const handleMoreAppearances = () => {
-    let page = character.media.pageInfo.currentPage + 1;
+    const page = character.media.pageInfo.currentPage + 1;
     if (checked) {
       fetchMore({
         variables: { id, page, onList: true },

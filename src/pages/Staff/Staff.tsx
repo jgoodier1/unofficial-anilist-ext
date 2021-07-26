@@ -34,37 +34,50 @@ const Staff = () => {
   const staff: Staff = data.Staff;
   // console.log(staff);
 
-  let names = '';
-  if (staff.name.native) {
-    if (staff.name.alternative[0] !== '') {
-      const altNames = staff.name.alternative.join(', ');
-      names = (staff.name.native ? staff.name.native : '') + ', ' + altNames;
-    } else names = staff.name.native;
-  }
+  const getNames = (staff: Staff) => {
+    if (staff.name.native) {
+      if (staff.name.alternative[0] !== '') {
+        const altNames = staff.name.alternative.join(', ');
+        return (staff.name.native ? staff.name.native : '') + ', ' + altNames;
+      } else return staff.name.native;
+    } else return null;
+  };
+  const names = getNames(staff);
 
-  let dateOfBirth;
-  if (staff.dateOfBirth.year && staff.dateOfBirth.month && staff.dateOfBirth.day) {
-    dateOfBirth =
-      MONTHS[staff.dateOfBirth.month] +
-      ' ' +
-      staff.dateOfBirth.day +
-      ', ' +
-      staff.dateOfBirth.year;
-  }
+  const getBirthday = (staff: Staff) => {
+    if (staff.dateOfBirth.year && staff.dateOfBirth.month && staff.dateOfBirth.day) {
+      return (
+        MONTHS[staff.dateOfBirth.month] +
+        ' ' +
+        staff.dateOfBirth.day +
+        ', ' +
+        staff.dateOfBirth.year
+      );
+    } else return null;
+  };
+  const birthday = getBirthday(staff);
 
-  let yearsActive;
-  if (staff.yearsActive.length > 0) {
-    if (staff.yearsActive.length > 1) {
-      yearsActive = staff.yearsActive.join('-');
-    } else yearsActive = staff.yearsActive[0] + '-';
-  }
+  const getYearsActive = (staff: Staff) => {
+    if (staff.yearsActive.length > 0) {
+      if (staff.yearsActive.length > 1) {
+        return staff.yearsActive.join('-');
+      } else return staff.yearsActive[0] + '-';
+    } else return null;
+  };
+  const yearsActive = getYearsActive(staff);
 
-  let animeStaffRoles: StaffRole[] = [],
-    mangaStaffRoles: StaffRole[] = [];
-  if (staff.staffMedia.pageInfo.total !== 0) {
-    animeStaffRoles = staff.staffMedia.edges.filter(role => role.node.type === 'ANIME');
-    mangaStaffRoles = staff.staffMedia.edges.filter(role => role.node.type === 'MANGA');
-  }
+  const getStaffRoles = (staff: Staff) => {
+    if (staff.staffMedia.pageInfo.total !== 0) {
+      const animeStaffRoles = staff.staffMedia.edges.filter(
+        role => role.node.type === 'ANIME'
+      );
+      const mangaStaffRoles = staff.staffMedia.edges.filter(
+        role => role.node.type === 'MANGA'
+      );
+      return [animeStaffRoles, mangaStaffRoles];
+    } else return [[], []];
+  };
+  const [animeStaffRoles, mangaStaffRoles] = getStaffRoles(staff);
 
   const handleOnMyList = () => {
     const oldChecked = checked;
@@ -122,9 +135,9 @@ const Staff = () => {
         <Image src={staff.image.large} alt={`photo of ${staff.name.full}`} />
       </Header>
       <Description>
-        {dateOfBirth && (
+        {birthday && (
           <DescRow>
-            <strong>Birth:</strong> {dateOfBirth}
+            <strong>Birth:</strong> {birthday}
           </DescRow>
         )}
         {staff.age && (

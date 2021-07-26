@@ -48,6 +48,7 @@ const UPDATE_ENTRY = gql`
       id
       status
       progress
+      updatedAt
     }
   }
 `;
@@ -69,40 +70,47 @@ const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
   const totalContent =
     entry.media.type === 'ANIME' ? entry.media.episodes : entry.media.chapters;
 
-  let timeToNextEpisode;
-  if (entry.media.nextAiringEpisode && entry.media.nextAiringEpisode.timeUntilAiring) {
-    const DAY = 86400;
-    const HOUR = 3600;
-    const MINUTE = 60;
-    const days = Math.trunc(entry.media.nextAiringEpisode.timeUntilAiring / DAY);
-    const dayRemainder = entry.media.nextAiringEpisode.timeUntilAiring % DAY;
-    const hours = Math.trunc(dayRemainder / HOUR);
-    const hourRemainder = dayRemainder % HOUR;
-    const minutes = Math.trunc(hourRemainder / MINUTE);
+  const getTimeTilNextEpisode = (entry: Entry) => {
+    if (entry.media.nextAiringEpisode && entry.media.nextAiringEpisode.timeUntilAiring) {
+      const DAY = 86400;
+      const HOUR = 3600;
+      const MINUTE = 60;
+      const days = Math.trunc(entry.media.nextAiringEpisode.timeUntilAiring / DAY);
+      const dayRemainder = entry.media.nextAiringEpisode.timeUntilAiring % DAY;
+      const hours = Math.trunc(dayRemainder / HOUR);
+      const hourRemainder = dayRemainder % HOUR;
+      const minutes = Math.trunc(hourRemainder / MINUTE);
 
-    if (days === 0) {
-      if (hours === 0) timeToNextEpisode = `${minutes}m`;
-      else if (minutes === 0) timeToNextEpisode = `${hours}h`;
-      else timeToNextEpisode = `${hours}h ${minutes}m`;
-    } else {
-      if (hours === 0 && minutes === 0) {
-        timeToNextEpisode = `${days}d`;
-      } else if (minutes === 0) timeToNextEpisode = `${days}d ${hours}h`;
-      else if (hours === 0) timeToNextEpisode = `${days}d ${minutes}m`;
-      else timeToNextEpisode = `${days}d ${hours}h ${minutes}m`;
-    }
-  }
+      if (days === 0) {
+        if (hours === 0) return `${minutes}m`;
+        else if (minutes === 0) return `${hours}h`;
+        else return `${hours}h ${minutes}m`;
+      } else {
+        if (hours === 0 && minutes === 0) {
+          return `${days}d`;
+        } else if (minutes === 0) return `${days}d ${hours}h`;
+        else if (hours === 0) return `${days}d ${minutes}m`;
+        else return `${days}d ${hours}h ${minutes}m`;
+      }
+    } else return '';
+  };
+  const timeTilNextEpisode = getTimeTilNextEpisode(entry);
 
-  let episodesBehind;
-  let episodesBehindBool = false;
-  if (
-    entry.media.nextAiringEpisode &&
-    entry.media.nextAiringEpisode.episode &&
-    entry.media.nextAiringEpisode.episode - entry.progress > 1
-  ) {
-    episodesBehind = entry.media.nextAiringEpisode.episode - entry.progress - 1;
-    episodesBehindBool = true;
-  }
+  const getEpisodesBehind = (
+    entry: Entry
+  ): { episodesBehind: number | null; episodesBehindBool: boolean } => {
+    if (
+      entry.media.nextAiringEpisode &&
+      entry.media.nextAiringEpisode.episode &&
+      entry.media.nextAiringEpisode.episode - entry.progress > 1
+    ) {
+      return {
+        episodesBehind: entry.media.nextAiringEpisode.episode - entry.progress - 1,
+        episodesBehindBool: true
+      };
+    } else return { episodesBehind: null, episodesBehindBool: false };
+  };
+  const { episodesBehind, episodesBehindBool } = getEpisodesBehind(entry);
 
   const position = LEFT_POSITIONS.includes(index + 1) ? 'left' : 'right';
 
@@ -118,7 +126,7 @@ const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
       {entry.media.nextAiringEpisode && entry.media.nextAiringEpisode.episode && (
         <EpisodeWrapper behind={episodesBehindBool}>
           <EpisodeParagraph>Ep: {entry.media.nextAiringEpisode.episode}</EpisodeParagraph>
-          <EpisodeParagraph>{timeToNextEpisode}</EpisodeParagraph>
+          <EpisodeParagraph>{timeTilNextEpisode}</EpisodeParagraph>
         </EpisodeWrapper>
       )}
       <MediaInformation position={position}>

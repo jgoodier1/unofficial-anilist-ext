@@ -103,9 +103,12 @@ interface ListRowProps {
 
 const List = () => {
   const location = useLocation();
-  let type = '';
-  if (location.pathname === '/anime') type = 'ANIME';
-  else if (location.pathname === '/manga') type = 'MANGA';
+  const getType = (pathname: string) => {
+    if (pathname === '/anime') return 'ANIME';
+    else if (pathname === '/manga') return 'MANGA';
+    else return new Error(`unknown pathname: ${pathname}`);
+  };
+  const type = getType(location.pathname);
 
   const userId = useContext(UserIdContext);
 
@@ -179,8 +182,11 @@ const ListSection: React.FC<ListSectionProps> = ({ status, list }) => {
 };
 
 const ListRow: React.FC<ListRowProps> = ({ entry }) => {
-  let score = entry.score.toString();
-  if (entry.score === 0) score = '';
+  const getScore = (score: number) => {
+    if (score === 0) return '';
+    else return entry.score.toString();
+  };
+  const score = getScore(entry.score);
 
   return (
     <Row>

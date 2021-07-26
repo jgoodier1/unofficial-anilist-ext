@@ -65,36 +65,48 @@ const Media = () => {
 
   const media: Media = data.Media;
 
-  let timeTilEpisode;
-  if (media.nextAiringEpisode && media.nextAiringEpisode.timeUntilAiring) {
-    const DAY = 86400;
-    const HOUR = 3600;
-    const MINUTE = 60;
-    const days = Math.trunc(media.nextAiringEpisode.timeUntilAiring / DAY);
-    const dayRemainder = media.nextAiringEpisode.timeUntilAiring % DAY;
-    const hours = Math.trunc(dayRemainder / HOUR);
-    const hourRemainder = dayRemainder % HOUR;
-    const minutes = Math.trunc(hourRemainder / MINUTE);
-    if (days === 0) {
-      if (hours === 0) timeTilEpisode = `${minutes}m`;
-      else if (minutes === 0) timeTilEpisode = `${hours}h`;
-      else timeTilEpisode = `${hours}h ${minutes}m`;
-    } else {
-      if (hours !== 0 && minutes !== 0) {
-        timeTilEpisode = `${days}d ${hours}h ${minutes}m`;
-      } else if (minutes === 0) timeTilEpisode = `${days} ${hours}h`;
-      else if (hours === 0) timeTilEpisode = `${days}d ${minutes}m`;
-      else timeTilEpisode = `${days}d`;
-    }
-  }
-  let studio, producers;
-  if (media.type === 'ANIME' && media.studios) {
-    const mainStudio = media.studios.edges.filter(studio => studio.isMain);
-    if (mainStudio.length > 0) studio = mainStudio[0].node.name;
-    const allProducers = media.studios.edges.filter(studio => !studio.isMain);
-    const producerName = allProducers.map(prod => prod.node.name);
-    producers = producerName.join(', ');
-  }
+  const getTimeTilEpisode = (media: Media): string => {
+    if (media.nextAiringEpisode && media.nextAiringEpisode.timeUntilAiring) {
+      const DAY = 86400;
+      const HOUR = 3600;
+      const MINUTE = 60;
+      const days = Math.trunc(media.nextAiringEpisode.timeUntilAiring / DAY);
+      const dayRemainder = media.nextAiringEpisode.timeUntilAiring % DAY;
+      const hours = Math.trunc(dayRemainder / HOUR);
+      const hourRemainder = dayRemainder % HOUR;
+      const minutes = Math.trunc(hourRemainder / MINUTE);
+      if (days === 0) {
+        if (hours === 0) return `${minutes}m`;
+        else if (minutes === 0) return `${hours}h`;
+        else return `${hours}h ${minutes}m`;
+      } else {
+        if (hours !== 0 && minutes !== 0) {
+          return `${days}d ${hours}h ${minutes}m`;
+        } else if (minutes === 0) return `${days} ${hours}h`;
+        else if (hours === 0) return `${days}d ${minutes}m`;
+        else return `${days}d`;
+      }
+    } else return '';
+  };
+
+  const timeTilEpisode = getTimeTilEpisode(media);
+
+  const getStudioAndProducers = (media: Media): string[] => {
+    if (media.type === 'ANIME' && media.studios) {
+      let studio;
+      const mainStudio = media.studios.edges.filter(studio => studio.isMain);
+      if (mainStudio.length > 0) studio = mainStudio[0].node.name;
+      else studio = '';
+
+      const allProducers = media.studios.edges.filter(studio => !studio.isMain);
+      const producerName = allProducers.map(prod => prod.node.name);
+      const producers = producerName.join(', ');
+
+      return [studio, producers];
+    } else return ['', ''];
+  };
+
+  const [studio, producers] = getStudioAndProducers(media);
 
   // apollo didn't like how it was because the array was read-only
   const statuses = [...media.stats.statusDistribution];
