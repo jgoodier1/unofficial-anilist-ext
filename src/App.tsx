@@ -36,7 +36,7 @@ function App() {
   const [authState, setAuthState] = useState<'auth' | 'unauth' | 'error'>('unauth');
 
   useEffect(() => {
-    browser.storage.local.get('token').then(result => {
+    chrome.storage.local.get('token', result => {
       if (result.token && typeof result.token === 'string') {
         setToken(result.token);
         setAuthState('auth');
@@ -45,7 +45,7 @@ function App() {
   });
 
   useEffect(() => {
-    browser.storage.local.get('userId').then(result => {
+    chrome.storage.local.get('userId', result => {
       if (result.userId && typeof result.userId === 'number') {
         setUserId(result.userId);
       }
@@ -63,8 +63,8 @@ function App() {
       setToken(newToken);
       setUserId(res);
       setAuthState('auth');
-      await browser.storage.local.set({ token: newToken });
-      await browser.storage.local.set({ userId: res });
+      await chrome.storage.local.set({ token: newToken });
+      await chrome.storage.local.set({ userId: res });
     } else {
       setAuthState('error');
     }
@@ -72,7 +72,7 @@ function App() {
 
   const logOut = async () => {
     setAuthState('unauth');
-    await browser.storage.local.remove('token');
+    await chrome.storage.local.remove('token');
   };
 
   const routes = (

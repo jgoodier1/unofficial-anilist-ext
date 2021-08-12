@@ -442,6 +442,8 @@ const EditLink = styled(Link)`
   grid-row: 2;
   width: -moz-fit-content;
   height: -moz-fit-content;
+  width: fit-content;
+  height: fit-content;
   font-size: 16px;
   background-color: #02b2d9;
   padding: 5px 12px;
