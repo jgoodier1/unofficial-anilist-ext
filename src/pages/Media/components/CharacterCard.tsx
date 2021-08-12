@@ -39,8 +39,8 @@ const CharacterCard: React.FC<Character> = ({ character }) => {
       </CharacterLink>
       {character.voiceActors.length > 0 && (
         <ActorLink to={`/staff/${character.voiceActors[0].id}`}>
-          <Paragraph>{character.voiceActors[0].name.full}</Paragraph>
-          <Paragraph>{character.voiceActors[0].language}</Paragraph>
+          <CharacterParagraph>{character.voiceActors[0].name.full}</CharacterParagraph>
+          <CharacterParagraph>{character.voiceActors[0].language}</CharacterParagraph>
           <ActorImage src={character.voiceActors[0].image.medium} alt='' />
         </ActorLink>
       )}
@@ -93,4 +93,8 @@ const Paragraph = styled.p`
   align-self: center;
   font-size: 14px;
   text-align: left;
+`;
+
+const CharacterParagraph = styled(Paragraph)`
+  text-align: right;
 `;
