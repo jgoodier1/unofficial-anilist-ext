@@ -41,64 +41,6 @@ const Edit = () => {
           }
         });
 
-        function addEntryToCache(lists: Lists[], listCollection: MediaListCollection) {
-          // create new entry and add it to the right list, the add that list back with the others
-          const newEntry = {
-            ...SaveMediaListEntry,
-            __typename: 'MediaList'
-          };
-
-          // find the right object
-          const listToEdit = lists.filter(
-            list => list.status === SaveMediaListEntry.status
-          );
-          // edit that list
-          const newList = {
-            ...listToEdit[0],
-            entries: [...listToEdit[0].entries, newEntry]
-          };
-          // put that list in with the others, replacing the old one
-          const oldLists = lists.filter(
-            list => list.status !== SaveMediaListEntry.status
-          );
-          const combinedLists = [...oldLists, newList];
-
-          cache.writeQuery({
-            query: GET_LISTS,
-            data: {
-              MediaListCollection: {
-                __typename: listCollection.MediaListCollection.__typename,
-                lists: combinedLists
-              }
-            },
-            variables: {
-              userId,
-              type: SaveMediaListEntry.media.type
-            }
-          });
-
-          // also need to add the entry to the Media object
-          // this will update the 'add to list' button and the edit page
-          cache.writeFragment({
-            id: `Media:${SaveMediaListEntry.mediaId}`,
-            fragment: gql`
-              fragment NewEntry on Media {
-                mediaListEntry {
-                  id
-                  mediaId
-                  score
-                  progress
-                  status
-                  updatedAt
-                }
-              }
-            `,
-            data: {
-              mediaListEntry: SaveMediaListEntry
-            }
-          });
-        }
-
         if (listsFromCache !== null) {
           // look through the lists to see if the entry already exists
           // if it does, remove it. If not, continue
@@ -129,10 +71,94 @@ const Edit = () => {
             });
             const newLists = [...otherLists, ...listWithEntryRemoved];
 
-            addEntryToCache(newLists, listsFromCache);
+            if (listWithEntryRemoved.entries.length > 1) {
+              addEntryToCache(newLists, listsFromCache);
+            } else addEntryToCache(otherLists, listsFromCache);
           } else
             addEntryToCache(listsFromCache.MediaListCollection.lists, listsFromCache);
         } else console.log('query is null');
+
+        function addEntryToCache(lists: Lists[], listCollection: MediaListCollection) {
+          // create new entry and add it to the right list, the add that list back with the others
+          const newEntry = {
+            ...SaveMediaListEntry,
+            __typename: 'MediaList'
+          };
+
+          // find the right list (if it exists)
+          const listToEdit = lists.filter(
+            list => list.status === SaveMediaListEntry.status
+          );
+
+          // if the list exists, add the entry to it a write to the cache
+          if (listToEdit.length > 0) {
+            const newList = {
+              ...listToEdit[0],
+              entries: [...listToEdit[0].entries, newEntry]
+            };
+            // put that list in with the others, replacing the old one
+            const oldLists = lists.filter(
+              list => list.status !== SaveMediaListEntry.status
+            );
+            const combinedLists = [...oldLists, newList];
+
+            cache.writeQuery({
+              query: GET_LISTS,
+              data: {
+                MediaListCollection: {
+                  __typename: listCollection.MediaListCollection.__typename,
+                  lists: combinedLists
+                }
+              },
+              variables: {
+                userId,
+                type: SaveMediaListEntry.media.type
+              }
+            });
+            // if the list doesn't alread exist (ie. setting to REPEATING when nothing was there before)
+            // just create the list and add it to the lists parameter
+          } else {
+            const newList = {
+              entries: newEntry
+            };
+            const combinedLists = [...lists, newList];
+
+            cache.writeQuery({
+              query: GET_LISTS,
+              data: {
+                MediaListCollection: {
+                  __typename: listCollection.MediaListCollection.__typename,
+                  lists: combinedLists
+                }
+              },
+              variables: {
+                userId,
+                type: SaveMediaListEntry.media.type
+              }
+            });
+          }
+
+          // also need to add the entry to the Media object
+          // this will update the 'add to list' button and the edit page
+          cache.writeFragment({
+            id: `Media:${SaveMediaListEntry.mediaId}`,
+            fragment: gql`
+              fragment NewEntry on Media {
+                mediaListEntry {
+                  id
+                  mediaId
+                  score
+                  progress
+                  status
+                  updatedAt
+                }
+              }
+            `,
+            data: {
+              mediaListEntry: SaveMediaListEntry
+            }
+          });
+        }
       }
     });
 
