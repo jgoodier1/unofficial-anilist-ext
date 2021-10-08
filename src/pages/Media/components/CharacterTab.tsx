@@ -1,7 +1,8 @@
 import React from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 
+import { GET_CHARACTER_MEDIA } from '../queries';
 import CharacterCard from './CharacterCard';
 import FetchMoreButton from '../../../components/FetchMoreButton';
 
@@ -34,45 +35,6 @@ interface Character {
   };
 }
 
-export const GET_CHARACTER_MEDIA = gql`
-  query GetCharacters($id: Int, $page: Int) {
-    Media(id: $id) {
-      id
-      characters(page: $page, perPage: 25, sort: [ROLE, RELEVANCE, ID]) {
-        edges {
-          id
-          role
-          name
-          voiceActors(language: JAPANESE, sort: [RELEVANCE, ID]) {
-            id
-            name {
-              full
-            }
-            language: languageV2
-            image {
-              medium
-            }
-          }
-          node {
-            id
-            name {
-              full
-            }
-            image {
-              medium
-            }
-          }
-        }
-        pageInfo {
-          total
-          currentPage
-          hasNextPage
-        }
-      }
-    }
-  }
-`;
-
 const CharacterTab: React.FC<Props> = ({ id }) => {
   const { data, error, loading, fetchMore } = useQuery(GET_CHARACTER_MEDIA, {
     variables: { id, page: 1 }
@@ -82,7 +44,7 @@ const CharacterTab: React.FC<Props> = ({ id }) => {
 
   if (error) {
     console.log(error);
-    return <p>There was an error</p>;
+    return <p>There was an error fetching the characters</p>;
   }
 
   const loadMore = () => {

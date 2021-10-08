@@ -157,3 +157,42 @@ export const GET_MEDIA = gql`
     }
   }
 `;
+
+export const GET_CHARACTER_MEDIA = gql`
+  query GetCharacters($id: Int, $page: Int) {
+    Media(id: $id) {
+      id
+      characters(page: $page, perPage: 25, sort: [ROLE, RELEVANCE, ID]) {
+        edges {
+          id
+          role
+          name
+          voiceActors(language: JAPANESE, sort: [RELEVANCE, ID]) {
+            id
+            name {
+              full
+            }
+            language: languageV2
+            image {
+              medium
+            }
+          }
+          node {
+            id
+            name {
+              full
+            }
+            image {
+              medium
+            }
+          }
+        }
+        pageInfo {
+          total
+          currentPage
+          hasNextPage
+        }
+      }
+    }
+  }
+`;
