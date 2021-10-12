@@ -7,28 +7,27 @@ import {
   cleanup
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 import { MemoryRouter, Route } from 'react-router-dom';
-
-import { expect } from 'chai';
 
 import Media from './Media';
 import { GET_MEDIA, GET_CHARACTER_MEDIA } from './queries';
 import { cache } from '../../cache';
 
+// might be useless
+afterEach(cleanup);
+
 it('displays loading state', () => {
   render(
     <MemoryRouter initialEntries={['/media/1']}>
       <MockedProvider mocks={[getMediaMock]} cache={cache}>
-        <Route path='/media/:id'>
-          <Media />
-        </Route>
+        <Media />
       </MockedProvider>
     </MemoryRouter>
   );
 
-  // screen.debug();
-  expect(document.body.contains(screen.getByText(/loading/i)));
-  cleanup();
+  screen.debug();
+  expect(screen.getByText(/loading/i)).toBeInTheDocument();
 });
 
 it('renders the page with data from the API', async () => {
@@ -44,14 +43,12 @@ it('renders the page with data from the API', async () => {
   );
 
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
-
   // screen.debug();
-  expect(document.body.contains(screen.getByRole('heading', { name: /cowboy bebop/i })));
-  cleanup();
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/cowboy bebop/i);
 });
 
-// i don't know why this one doesn't need to wait for 'loading' to be removed like the others
-// it might be reusing the same environment from the previous one ???
+// // i don't know why this one doesn't need to wait for 'loading' to be removed like the others
+// // it might be reusing the same environment from the previous one ???
 it("renders the character tab when the 'Characters' button is clicked", async () => {
   render(
     <MemoryRouter initialEntries={['/media/1']}>
@@ -63,11 +60,10 @@ it("renders the character tab when the 'Characters' button is clicked", async ()
     </MemoryRouter>
   );
 
+  // screen.debug();
   userEvent.click(screen.getByRole('button', { name: /characters/i }));
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
-  // screen.debug();
-  expect(document.body.contains(screen.getByText(/Kouichi Yamadera/i)));
-  cleanup();
+  expect(screen.getByText(/Unshou Ishizuka/i)).toBeInTheDocument();
 });
 
 it('shows a "show more" button when there is `hasNextPage` is true', async () => {
@@ -84,8 +80,7 @@ it('shows a "show more" button when there is `hasNextPage` is true', async () =>
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
   userEvent.click(screen.getByRole('button', { name: /characters/i }));
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
-  expect(document.body.contains(screen.getByRole('button', { name: /show more/i })));
-  cleanup();
+  expect(screen.getByRole('button', { name: /show more/i })).toBeInTheDocument();
 });
 
 it("doesn't show a 'show more' button when `hasNextPage` is false", async () => {
@@ -101,8 +96,7 @@ it("doesn't show a 'show more' button when `hasNextPage` is false", async () => 
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
   userEvent.click(screen.getByRole('button', { name: /characters/i }));
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
-  expect(screen.queryByText(/show more/i)).to.be.null;
-  cleanup();
+  expect(screen.queryByText(/show more/i)).toBeNull();
 });
 
 it("renders the next set of characters from the API when the 'show more' button is pressed", async () => {
@@ -121,12 +115,11 @@ it("renders the next set of characters from the API when the 'show more' button 
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
   userEvent.click(screen.getByRole('button', { name: /characters/i }));
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
-  screen.debug();
+  // screen.debug();
   userEvent.click(screen.getByRole('button', { name: /show more/i }));
   // this shows an error with the GET_MEDIA query even though it has been called by this point
   // and shouldn't be called again after the first time
-  expect(document.body.contains(await screen.findByText(/Jet Black/i)));
-  cleanup();
+  expect(await screen.findByText(/Norio Wakamoto/i)).toBeInTheDocument();
 });
 
 const getMediaMock = {
@@ -446,6 +439,62 @@ const getCharacterMock = {
                     'https://s4.anilist.co/file/anilistcdn/character/medium/b2-0Iszg6Izgt4p.png'
                 }
               }
+            },
+            {
+              id: 31911,
+              role: 'MAIN',
+              name: null,
+              voiceActors: [
+                {
+                  id: 95357,
+                  name: {
+                    full: 'Unshou Ishizuka'
+                  },
+                  language: 'Japanese',
+                  image: {
+                    medium:
+                      'https://s4.anilist.co/file/anilistcdn/staff/medium/n95357-Eu4fSOugGbQ4.png'
+                  }
+                }
+              ],
+              node: {
+                id: 3,
+                name: {
+                  full: 'Jet Black'
+                },
+                image: {
+                  medium:
+                    'https://s4.anilist.co/file/anilistcdn/character/medium/b3-JjH9Si9UM1NZ.png'
+                }
+              }
+            },
+            {
+              id: 36164,
+              role: 'MAIN',
+              name: null,
+              voiceActors: [
+                {
+                  id: 95658,
+                  name: {
+                    full: 'Aoi Tada'
+                  },
+                  language: 'Japanese',
+                  image: {
+                    medium:
+                      'https://s4.anilist.co/file/anilistcdn/staff/medium/n95658-paHKYOWkhoOd.png'
+                  }
+                }
+              ],
+              node: {
+                id: 16,
+                name: {
+                  full: 'Edward Wong Hau Pepelu Tivrusky IV'
+                },
+                image: {
+                  medium:
+                    'https://s4.anilist.co/file/anilistcdn/character/medium/b16-80wd87nl1Rue.png'
+                }
+              }
             }
           ],
           pageInfo: {
@@ -556,58 +605,57 @@ const getCharacterMockPage2 = {
         characters: {
           edges: [
             {
-              id: 31911,
-              role: 'MAIN',
+              id: 2505,
+              role: 'SUPPORTING',
               name: null,
               voiceActors: [
                 {
-                  id: 95357,
+                  id: 95011,
                   name: {
-                    full: 'Unshou Ishizuka'
+                    full: 'Kouichi Yamadera'
                   },
                   language: 'Japanese',
                   image: {
                     medium:
-                      'https://s4.anilist.co/file/anilistcdn/staff/medium/n95357-Eu4fSOugGbQ4.png'
+                      'https://s4.anilist.co/file/anilistcdn/staff/medium/n95011-2RfLzncNyvbR.png'
                   }
                 }
               ],
               node: {
-                id: 3,
+                id: 4,
                 name: {
-                  full: 'Jet Black'
+                  full: 'Ein'
                 },
                 image: {
-                  medium:
-                    'https://s4.anilist.co/file/anilistcdn/character/medium/b3-JjH9Si9UM1NZ.png'
+                  medium: 'https://s4.anilist.co/file/anilistcdn/character/medium/4.jpg'
                 }
               }
             },
             {
-              id: 36164,
-              role: 'MAIN',
+              id: 10844,
+              role: 'SUPPORTING',
               name: null,
               voiceActors: [
                 {
-                  id: 95658,
+                  id: 95084,
                   name: {
-                    full: 'Aoi Tada'
+                    full: 'Norio Wakamoto'
                   },
                   language: 'Japanese',
                   image: {
                     medium:
-                      'https://s4.anilist.co/file/anilistcdn/staff/medium/n95658-paHKYOWkhoOd.png'
+                      'https://s4.anilist.co/file/anilistcdn/staff/medium/n95084-RTrZSU38POPF.png'
                   }
                 }
               ],
               node: {
-                id: 16,
+                id: 2734,
                 name: {
-                  full: 'Edward Wong Hau Pepelu Tivrusky IV'
+                  full: 'Vicious'
                 },
                 image: {
                   medium:
-                    'https://s4.anilist.co/file/anilistcdn/character/medium/b16-80wd87nl1Rue.png'
+                    'https://s4.anilist.co/file/anilistcdn/character/medium/b2734-aglO8RKNVxnn.jpg'
                 }
               }
             }

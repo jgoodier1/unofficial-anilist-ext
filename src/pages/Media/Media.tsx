@@ -16,7 +16,7 @@ import CharacterTab from './components/CharacterTab';
 import StaffTab from './components/StaffTab';
 
 import { GET_MEDIA } from './queries';
-import { Media } from './types';
+import { Media as MediaType } from './types';
 import { MONTHS, COLOURS } from '../../constants';
 
 interface CoverImageProps {
@@ -66,9 +66,9 @@ const Media = () => {
     return <p>There was an error loading the media</p>;
   }
 
-  const media: Media = data.Media;
+  const media: MediaType = data.Media;
 
-  const getTimeTilEpisode = (media: Media): string => {
+  const getTimeTilEpisode = (media: MediaType): string => {
     if (media.nextAiringEpisode && media.nextAiringEpisode.timeUntilAiring) {
       const DAY = 86400;
       const HOUR = 3600;
@@ -94,7 +94,7 @@ const Media = () => {
 
   const timeTilEpisode = getTimeTilEpisode(media);
 
-  const getStudioAndProducers = (media: Media): string[] => {
+  const getStudioAndProducers = (media: MediaType): string[] => {
     if (media.type === 'ANIME' && media.studios) {
       let studio;
       const mainStudio = media.studios.edges.filter(studio => studio.isMain);
