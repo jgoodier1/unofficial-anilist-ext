@@ -6,7 +6,7 @@ import '@testing-library/jest-dom';
 import { MemoryRouter, Route } from 'react-router-dom';
 
 import Media from './Media';
-import { GET_MEDIA, GET_CHARACTER_MEDIA } from './queries';
+import { GET_MEDIA, GET_CHARACTER_MEDIA, GET_STAFF } from './queries';
 import { cache } from '../../cache';
 
 it('displays loading state', () => {
@@ -58,10 +58,30 @@ it("renders the character tab when the 'Characters' button is clicked", async ()
   expect(screen.getByText(/Unshou Ishizuka/i)).toBeInTheDocument();
 });
 
+it('renders the staff tab when the "Staff" button is clicked', async () => {
+  render(
+    <MemoryRouter initialEntries={['/media/1']}>
+      <MockedProvider mocks={[getStaffMock]} cache={cache}>
+        <Route path='/media/:id'>
+          <Media />
+        </Route>
+      </MockedProvider>
+    </MemoryRouter>
+  );
+
+  userEvent.click(screen.getByRole('button', { name: /staff/i }));
+  await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
+  // screen.debug();
+  expect(screen.getByText(/Shinichirou Watanabe/i)).toBeInTheDocument();
+});
+
 it('shows a "show more" button when there is `hasNextPage` is true', async () => {
   render(
     <MemoryRouter initialEntries={['/media/1']}>
-      <MockedProvider mocks={[getCharacterMock, getMediaMock]} cache={cache}>
+      <MockedProvider
+        mocks={[getCharacterMock, getStaffMock, getMediaMock]}
+        cache={cache}
+      >
         <Route path='/media/:id'>
           <Media />
         </Route>
@@ -70,8 +90,9 @@ it('shows a "show more" button when there is `hasNextPage` is true', async () =>
   );
 
   userEvent.click(screen.getByRole('button', { name: /characters/i }));
-  // screen.debug();
   expect(screen.getByRole('button', { name: /show more/i })).toBeInTheDocument();
+  userEvent.click(screen.getByRole('button', { name: /staff/i }));
+  expect(screen.getByText(/Shinichirou Watanabe/i)).toBeInTheDocument();
 });
 
 // this one can't use the same cache or else it will fail
@@ -79,7 +100,9 @@ it('shows a "show more" button when there is `hasNextPage` is true', async () =>
 it("doesn't show a 'show more' button when `hasNextPage` is false", async () => {
   render(
     <MemoryRouter initialEntries={['/media/1']}>
-      <MockedProvider mocks={[getCharacterMockNextPageFalse, getMediaMock]}>
+      <MockedProvider
+        mocks={[getCharacterMockNextPageFalse, getStaffMockNextPageFalse, getMediaMock]}
+      >
         <Route path='/media/:id'>
           <Media />
         </Route>
@@ -88,6 +111,10 @@ it("doesn't show a 'show more' button when `hasNextPage` is false", async () => 
   );
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
   userEvent.click(screen.getByRole('button', { name: /characters/i }));
+  await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
+  expect(screen.queryByText(/show more/i)).toBeNull();
+
+  userEvent.click(screen.getByRole('button', { name: /staff/i }));
   await waitForElementToBeRemoved(() => screen.getByText(/loading/i));
   // screen.debug();
   expect(screen.queryByText(/show more/i)).toBeNull();
@@ -109,6 +136,25 @@ it("renders the next set of characters from the API when the 'show more' button 
   userEvent.click(screen.getByRole('button', { name: /characters/i }));
   userEvent.click(screen.getByRole('button', { name: /show more/i }));
   expect(await screen.findByText(/Norio Wakamoto/i)).toBeInTheDocument();
+  // screen.debug();
+});
+
+it("renders the next set of staff from the API when the 'show more' button is pressed", async () => {
+  render(
+    <MemoryRouter initialEntries={['/media/1']}>
+      <MockedProvider
+        mocks={[getStaffMock, getStaffMockPage2, getMediaMock]}
+        cache={cache}
+      >
+        <Route path='/media/:id'>
+          <Media />
+        </Route>
+      </MockedProvider>
+    </MemoryRouter>
+  );
+  userEvent.click(screen.getByRole('button', { name: /staff/i }));
+  userEvent.click(screen.getByRole('button', { name: /show more/i }));
+  expect(await screen.findByText(/Keiko Nobumoto/i)).toBeInTheDocument();
   // screen.debug();
 });
 
@@ -154,6 +200,32 @@ function createCharacterMock(
       __typename: 'Character'
     },
     __typename: 'CharacterEdge'
+  };
+}
+
+function createStaffMock(
+  id: number,
+  role: string,
+  staffId: number,
+  name: string,
+  image: string
+) {
+  return {
+    id,
+    role,
+    node: {
+      id: staffId,
+      name: {
+        full: name,
+        __typename: 'StaffName'
+      },
+      image: {
+        medium: image,
+        __typename: 'StaffImage'
+      },
+      __typename: 'Staff'
+    },
+    __typename: 'StaffEdge'
   };
 }
 
@@ -262,24 +334,13 @@ const getMediaMock = {
         },
         staffPreview: {
           edges: [
-            {
-              id: 4313,
-              role: 'Original Creator',
-              node: {
-                id: 97197,
-                name: {
-                  full: 'Hajime Yatate',
-                  __typename: 'StaffName'
-                },
-                image: {
-                  medium:
-                    'https://s4.anilist.co/file/anilistcdn/staff/medium/n97197-6NsKNt4EPoul.jpg',
-                  __typename: 'StaffImage'
-                },
-                __typename: 'Staff'
-              },
-              __typename: 'StaffEdge'
-            }
+            createStaffMock(
+              4313,
+              'Original Creator',
+              97197,
+              'Hajime Yatate',
+              'https://s4.anilist.co/file/anilistcdn/staff/medium/n97197-6NsKNt4EPoul.jpg'
+            )
           ],
           __typename: 'StaffConnection'
         },
@@ -609,6 +670,133 @@ const getCharacterMockPage2 = {
             __typename: 'PageInfo'
           },
           __typename: 'CharacterConnection'
+        },
+        __typename: 'Media'
+      }
+    }
+  }
+};
+
+const getStaffMock = {
+  request: {
+    query: GET_STAFF,
+    variables: {
+      id: '1'
+    }
+  },
+  result: {
+    data: {
+      Media: {
+        id: 1,
+        staffPreview: {
+          edges: [
+            createStaffMock(
+              4313,
+              'Original Creator',
+              97197,
+              'Hajime Yatate',
+              'https://s4.anilist.co/file/anilistcdn/staff/medium/n97197-6NsKNt4EPoul.jpg'
+            ),
+            createStaffMock(
+              3837,
+              'Director',
+              97009,
+              'Shinichirou Watanabe',
+              'https://s4.anilist.co/file/anilistcdn/staff/medium/n97009-4K1Wc7JG9iLR.png'
+            )
+          ],
+          pageInfo: {
+            total: 211,
+            currentPage: 1,
+            hasNextPage: true,
+            __typename: 'PageInfo'
+          },
+          __typename: 'StaffConnection'
+        },
+        __typename: 'Media'
+      }
+    }
+  }
+};
+
+const getStaffMockNextPageFalse = {
+  request: {
+    query: GET_STAFF,
+    variables: {
+      id: '1'
+    }
+  },
+  result: {
+    data: {
+      Media: {
+        id: 1,
+        staffPreview: {
+          edges: [
+            createStaffMock(
+              4313,
+              'Original Creator',
+              97197,
+              'Hajime Yatate',
+              'https://s4.anilist.co/file/anilistcdn/staff/medium/n97197-6NsKNt4EPoul.jpg'
+            ),
+            createStaffMock(
+              3837,
+              'Director',
+              97009,
+              'Shinichirou Watanabe',
+              'https://s4.anilist.co/file/anilistcdn/staff/medium/n97009-4K1Wc7JG9iLR.png'
+            )
+          ],
+          pageInfo: {
+            total: 211,
+            currentPage: 1,
+            hasNextPage: false,
+            __typename: 'PageInfo'
+          },
+          __typename: 'StaffConnection'
+        },
+        __typename: 'Media'
+      }
+    }
+  }
+};
+
+const getStaffMockPage2 = {
+  request: {
+    query: GET_STAFF,
+    variables: {
+      id: '1',
+      page: 2
+    }
+  },
+  result: {
+    data: {
+      Media: {
+        id: 1,
+        staffPreview: {
+          edges: [
+            createStaffMock(
+              4616,
+              'Series Composition',
+              97334,
+              'Keiko Nobumoto',
+              'https://s4.anilist.co/file/anilistcdn/staff/medium/n97334-ewqQWYWhU3wm.png'
+            ),
+            createStaffMock(
+              24691,
+              'Character Design',
+              103531,
+              'Toshihiro Kawamoto',
+              'https://s4.anilist.co/file/anilistcdn/staff/medium/8531.jpg'
+            )
+          ],
+          pageInfo: {
+            total: 211,
+            currentPage: 2,
+            hasNextPage: false,
+            __typename: 'PageInfo'
+          },
+          __typename: 'StaffConnection'
         },
         __typename: 'Media'
       }

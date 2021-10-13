@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { useQuery, gql } from '@apollo/client';
+import React from 'react';
+import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 
+import { GET_STAFF } from '../queries';
 import StaffCard from './StaffCard';
 import FetchMoreButton from '../../../components/FetchMoreButton';
 
@@ -22,34 +23,6 @@ interface Staff {
     };
   };
 }
-
-export const GET_STAFF = gql`
-  query GetStaffTab($id: Int, $page: Int) {
-    Media(id: $id) {
-      id
-      staffPreview: staff(page: $page, perPage: 25, sort: [RELEVANCE, ID]) {
-        edges {
-          id
-          role
-          node {
-            id
-            name {
-              full
-            }
-            image {
-              medium
-            }
-          }
-        }
-        pageInfo {
-          total
-          currentPage
-          hasNextPage
-        }
-      }
-    }
-  }
-`;
 
 const StaffTab: React.FC<Props> = ({ id }) => {
   const { data, error, loading, fetchMore } = useQuery(GET_STAFF, {

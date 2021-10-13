@@ -196,3 +196,31 @@ export const GET_CHARACTER_MEDIA = gql`
     }
   }
 `;
+
+export const GET_STAFF = gql`
+  query GetStaffTab($id: Int, $page: Int) {
+    Media(id: $id) {
+      id
+      staffPreview: staff(page: $page, perPage: 25, sort: [RELEVANCE, ID]) {
+        edges {
+          id
+          role
+          node {
+            id
+            name {
+              full
+            }
+            image {
+              medium
+            }
+          }
+        }
+        pageInfo {
+          total
+          currentPage
+          hasNextPage
+        }
+      }
+    }
+  }
+`;
