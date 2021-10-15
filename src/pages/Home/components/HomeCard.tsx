@@ -42,7 +42,7 @@ interface EpisodeStylingProps {
   behind: boolean;
 }
 
-const UPDATE_ENTRY = gql`
+export const UPDATE_ENTRY = gql`
   mutation updateEntry($id: Int, $status: MediaListStatus, $progress: Int) {
     SaveMediaListEntry(id: $id, status: $status, progress: $progress) {
       id
@@ -57,7 +57,11 @@ const LEFT_POSITIONS = [1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 3
 
 const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
   const [progress, setProgress] = useState(entry.progress);
-  const [updateEntry, { data, loading, error }] = useMutation(UPDATE_ENTRY);
+  const [updateEntry, { loading, error }] = useMutation(UPDATE_ENTRY, {
+    onCompleted: data => {
+      setProgress(data.SaveMediaListEntry.progress);
+    }
+  });
   const updateHandler = () => {
     if (loading) return;
     setProgress(progress => progress + 1);
@@ -117,10 +121,11 @@ const HomeCard: React.FC<HomeCardProps> = ({ entry, index }) => {
     <CardWrapper>
       <StyledLink
         to={`/media/${entry.media.id}`}
+        aria-label={entry.media.title.userPreferred}
         style={{ backgroundImage: `url(${entry.media.coverImage.medium})` }}
       ></StyledLink>
-      <Updater onClick={updateHandler}>
-        {loading ? 'Loading...' : entry.progress + ' +'}
+      <Updater role='button' onClick={updateHandler}>
+        {loading ? 'Loading...' : progress + ' +'}
       </Updater>
       {entry.media.nextAiringEpisode && entry.media.nextAiringEpisode.episode && (
         <EpisodeWrapper behind={episodesBehindBool}>

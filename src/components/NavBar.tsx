@@ -12,7 +12,7 @@ const NavBar: React.FC<Props> = ({ logOut }) => {
       <nav>
         <NavUl>
           <li>
-            <ResizedNavLink exact to='/'>
+            <ResizedNavLink exact to='/' aria-label='home'>
               <Svg
                 version='1.1'
                 xmlns='http://www.w3.org/2000/svg'
@@ -38,7 +38,7 @@ const NavBar: React.FC<Props> = ({ logOut }) => {
             </ResizedNavLink>
           </li>
           <li>
-            <ResizedNavLink to='/anime'>
+            <ResizedNavLink to='/anime' aria-label='anime-list'>
               <ListSvg
                 version='1.1'
                 xmlns='http://www.w3.org/2000/svg'
@@ -63,7 +63,7 @@ const NavBar: React.FC<Props> = ({ logOut }) => {
             </ResizedNavLink>
           </li>
           <li>
-            <ResizedNavLink to='/manga'>
+            <ResizedNavLink to='/manga' aria-label='manga-list'>
               <ListSvg
                 version='1.1'
                 xmlns='http://www.w3.org/2000/svg'
@@ -88,7 +88,7 @@ const NavBar: React.FC<Props> = ({ logOut }) => {
             </ResizedNavLink>
           </li>
           <li>
-            <ResizedNavLink to='/search'>
+            <ResizedNavLink to='/search' aria-label='search'>
               <Svg
                 version='1.1'
                 xmlns='http://www.w3.org/2000/svg'

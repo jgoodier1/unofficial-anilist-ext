@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
-import { UserIdContext } from '../context';
-import { GET_LISTS } from '../queries';
+import { UserIdContext } from '../../context';
+import { GET_LISTS } from '../../queries';
 
-import HomeCard from '../components/HomeCard';
+import HomeCard from './components/HomeCard';
 
 interface Props {
   type: 'ANIME' | 'MANGA';
